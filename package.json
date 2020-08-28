@@ -13,8 +13,10 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "test": "react-scripts test --watchAll=false",
+    "watch": "react-scripts test",
+    "eject": "react-scripts eject",
+    "test-dbg": "react-scripts --inspect-brk test --runInBand"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -30,5 +32,6 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "devDependencies": {}
 }
