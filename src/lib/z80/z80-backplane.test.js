@@ -2,7 +2,7 @@ import memory from './z80-memory';
 import cpu, { Z80FlagMasks as masks } from './z80-cpu';
 import backplane from './z80-backplane';
 import inst from './z80-inst';
-import { clamp8, parity } from '../bin-ops';
+import { clamp8, parity8 } from '../bin-ops';
 
 const build_cpu = () => {
   const mainboard = new backplane();
@@ -22,12 +22,12 @@ test('clamp', () => {
 });
 
 test('even parity', () => {
-  const p = parity(3);
+  const p = parity8(3);
   expect(p).toBe(1);
 });
 
 test('odd parity', () => {
-  const p = parity(2);
+  const p = parity8(2);
   expect(p).toBe(0);
 });
 
@@ -38,7 +38,7 @@ test('simple backplane test', () => {
     inst.nop,
     inst.nop,
     inst.nop,
-    inst.halt
+    inst.halt,
   ]);
 
   while (! proc.halted) {
@@ -54,7 +54,7 @@ test('ld bc test', () => {
 
   mem.load(0, [
     inst.ld_bc_imm, 0x10, 0x32,
-    inst.halt
+    inst.halt,
   ]);
 
   while (! proc.halted) {
@@ -73,7 +73,7 @@ test('inc b test', () => {
     inc_b,
     inc_b,
     inc_b,
-    inst.halt
+    inst.halt,
   ]);
 
   while (! proc.halted) {
@@ -94,7 +94,7 @@ test('dec b test', () => {
     inc_b,
     dec_b,
     dec_b,
-    inst.halt
+    inst.halt,
   ]);
 
   while (! proc.halted) {
@@ -112,7 +112,7 @@ test('ld b imm test', () => {
   mem.load(0, [
     inst.ld_b_imm, 0x01,
     inst.dec_b,
-    inst.halt
+    inst.halt,
   ]);
 
   while (! proc.halted) {
@@ -130,7 +130,7 @@ test('rlca test', () => {
   mem.load(0, [
     inst.ld_a_imm, 0x080,
     inst.rlca,
-    inst.halt
+    inst.halt,
   ]);
 
   while (! proc.halted) {
@@ -149,7 +149,7 @@ test('ex af test', () => {
     inst.ld_a_imm, 0x080,
     inst.rlca,
     inst.ex_af,
-    inst.halt
+    inst.halt,
   ]);
 
   while (! proc.halted) {
@@ -169,7 +169,7 @@ test('add hl bc test', () => {
     inst.ld_bc_imm, 0x10, 0x32,
     inst.ld_hl_imm, 0x54, 0x76,
     inst.add_hl_bc,
-    inst.halt
+    inst.halt,
   ]);
 
   while (! proc.halted) {
@@ -190,7 +190,7 @@ test('a ptr bc test', () => {
     inst.ld_ptr_bc_a,
     inst.ld_a_imm, 0,
     inst.ld_a_ptr_bc,
-    inst.halt
+    inst.halt,
   ]);
 
   while (! proc.halted) {
@@ -206,7 +206,7 @@ test('inc bc test', () => {
 
   mem.load(0, [
     inst.inc_bc,
-    inst.halt
+    inst.halt,
   ]);
 
   while (! proc.halted) {
@@ -223,7 +223,7 @@ test('dec bc test', () => {
   mem.load(0, [
     inst.ld_bc_imm, 0x02, 0x00,
     inst.dec_bc,
-    inst.halt
+    inst.halt,
   ]);
 
   while (! proc.halted) {
@@ -240,7 +240,7 @@ test('rrca test', () => {
   mem.load(0, [
     inst.ld_a_imm, 0x003,
     inst.rrca,
-    inst.halt
+    inst.halt,
   ]);
 
   while (! proc.halted) {
@@ -250,5 +250,25 @@ test('rrca test', () => {
   expect(proc.registers.pc).toBe(4);
   expect(proc.registers.a).toBe(129);
   expect(proc.readFlags().c).toBe(1);
+});
+
+test('djnz test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_b_imm, 0x0a,
+    inst.ld_c_imm, 0,
+    inst.inc_c,
+    inst.djnz_imm, 0xfd,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(8);
+  expect(proc.registers.b).toBe(0);
+  expect(proc.registers.c).toBe(10);
 });
 

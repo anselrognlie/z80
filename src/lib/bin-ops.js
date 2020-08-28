@@ -36,7 +36,7 @@ export function splitHiLo(value) {
   return { hi, lo };
 }
 
-export function parity(value) {
+export function parity8(value) {
   let p = 0;
   for (let i = 0; i < 8; ++i) {
     p += value % 2;
@@ -44,4 +44,8 @@ export function parity(value) {
   }
 
   return (p + 1) % 2;
+}
+
+export function signed8(value) {
+  return (0x080 & value) ? -(256 - value) : value;
 }

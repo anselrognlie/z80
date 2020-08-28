@@ -1,7 +1,7 @@
 import inst from './z80-inst';
 import { clamp4, clamp8, clamp16,
   getLo, getHi, splitHiLo,
-  parity, toBit } from '../bin-ops';
+  toBit, signed8 } from '../bin-ops';
 
 export class Z80Flags {}
 
@@ -92,7 +92,7 @@ class Z80Cpu {
       return;
     }
 
-    const inst = this.readFromPc();
+    const inst = this.readFromPcAdvance();
     const fn = this.inst[inst];
     fn.call(this);
   }
@@ -137,16 +137,13 @@ class Z80Cpu {
   }
 
   nop() {
-    this.advancePC();
   }
 
   halt() {
-    this.advancePC();
     this.halted = true;
   }
 
   ld_16_imm() {
-    this.advancePC();
     return this.readWordFromPcAdvance();
   }
 
@@ -165,7 +162,6 @@ class Z80Cpu {
   }
 
   ld_ptr_bc_a() {
-    this.advancePC();
     const bc = this.bc;
     const a = this.registers.a;
 
@@ -173,7 +169,6 @@ class Z80Cpu {
   }
 
   inc_16(value) {
-    this.advancePC();
     return value + 1;
   }
 
@@ -182,7 +177,6 @@ class Z80Cpu {
   }
 
   dec_16(value) {
-    this.advancePC();
     return value - 1;
   }
 
@@ -191,7 +185,6 @@ class Z80Cpu {
   }
 
   inc_08(value) {
-    this.advancePC();
     const [clamp, v] = clamp8(value + 1);
     const half = clamp4(value)[0] + 1;
 
@@ -215,7 +208,6 @@ class Z80Cpu {
   }
 
   dec_08(value) {
-    this.advancePC();
     const [clamp, v] = clamp8(value - 1);
     const half = clamp4(value)[0] - 1;
 
@@ -239,7 +231,6 @@ class Z80Cpu {
   }
 
   ld_08_imm() {
-    this.advancePC();
     return this.readFromPcAdvance();
   }
 
@@ -256,7 +247,6 @@ class Z80Cpu {
   }
 
   rlca() {
-    this.advancePC();
     const rla = this.registers.a << 1;
     const { hi, lo } = splitHiLo(rla);
     const c = hi;
@@ -271,7 +261,6 @@ class Z80Cpu {
   }
 
   rrca() {
-    this.advancePC();
     const c = this.registers.a % 2;
     const rra = this.registers.a >> 1;
     const a = rra | (c << 7);
@@ -285,7 +274,6 @@ class Z80Cpu {
   }
 
   ex_af() {
-    this.advancePC();
     const a = this.registers.a, f = this.registers.f;
     this.registers.a = this.registers.a$;
     this.registers.f = this.registers.f$;
@@ -294,7 +282,6 @@ class Z80Cpu {
   }
 
   add_hl_bc() {
-    this.advancePC();
     const hl = this.hl + this.bc;
     this.hl = hl;
 
@@ -305,10 +292,19 @@ class Z80Cpu {
   }
 
   ld_a_ptr_bc() {
-    this.advancePC();
     const bc = this.bc;
     const a = this.bus.readOne(bc);
     this.registers.a = a;
+  }
+
+  djnz_imm() {
+    const offset = signed8(this.readFromPcAdvance());
+    const b = this.registers.b - 1;
+    this.registers.b = b;
+
+    if (b) {
+      this.registers.pc += offset;
+    }
   }
 
   registerInstructions() {
@@ -331,6 +327,15 @@ class Z80Cpu {
     ref[inst.dec_c] = this.dec_c;
     ref[inst.ld_c_imm] = this.ld_c_imm;
     ref[inst.rrca] = this.rrca;
+
+    ref[inst.djnz_imm] = this.djnz_imm;
+    // ref[inst.ld_de_imm] = this.ld_de_imm;
+    // ref[inst.ld_ptr_de_a] = this.ld_ptr_de_a;
+    // ref[inst.inc_de] = this.inc_de;
+    // ref[inst.inc_d] = this.inc_d;
+    // ref[inst.dec_d] = this.dec_d;
+    // ref[inst.ld_d_imm] = this.ld_d_imm;
+    // ref[inst.rla] = this.rla;
 
     // gen.generate('ld bc imm');
     // (\b) (\b)
