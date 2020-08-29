@@ -34,6 +34,8 @@ class Z80Cpu {
     };
     this.intMode = Z80Cpu.INT_MODE_0;
     this.halted = false;
+    this.tStates = 0;
+    this.tStatesEnabled = true;
 
     this.registerInstructions();
   }
@@ -80,6 +82,23 @@ class Z80Cpu {
     return this.registers.iyl + (this.registers.iyh << 8);
   }
 
+  flagIsSet(mask) {
+    return this.registers.f & mask;
+  }
+
+  flagNotSet(mask) {
+    return ! (this.registers.f & mask);
+  }
+
+  setT(t) {
+    // the inst that set this already consumed 1 t cycle
+    this.tStates = t - 1;
+  }
+
+  useTStates(use) {
+    this.tStatesEnabled = use;
+  }
+
   reset() {
     const reg = this.registers;
     this.registers = { ...reg, iff1: 0, iff2: 0, pc: 0, i: 0, r: 0 };
@@ -88,6 +107,13 @@ class Z80Cpu {
   }
 
   clock() {
+    if (this.tStatesEnabled) {
+      if (this.tStates) {
+        this.tStates--;
+        return;
+      }
+    }
+
     if (this.halted) {
       return;
     }
@@ -107,10 +133,16 @@ class Z80Cpu {
     return byte;
   }
 
-  readWordFromPcAdvance() {
+  readWordPartsFromPcAdvance() {
     const lo = this.readFromPcAdvance();
     const hi = this.readFromPcAdvance();
     return { hi, lo };
+  }
+
+  readWordFromPcAdvance() {
+    const lo = this.readFromPcAdvance();
+    const hi = this.readFromPcAdvance();
+    return ((hi << 8) | lo);
   }
 
   advancePC(count = 1) {
@@ -137,14 +169,17 @@ class Z80Cpu {
   }
 
   nop() {
+    this.setT(4);
   }
 
   halt() {
+    this.setT(4);
     this.halted = true;
   }
 
   ld_16_imm() {
-    return this.readWordFromPcAdvance();
+    this.setT(10);
+    return this.readWordPartsFromPcAdvance();
   }
 
   ld_bc_imm() {
@@ -169,6 +204,7 @@ class Z80Cpu {
   }
 
   ld_ptr_16_a(addr) {
+    this.setT(7);
     const a = this.registers.a;
 
     this.bus.writeOne(addr, a);
@@ -182,7 +218,17 @@ class Z80Cpu {
     this.ld_ptr_16_a(this.de);
   }
 
+  ld_ptr_imm_hl() {
+    this.setT(20);
+    const addr = this.readWordFromPcAdvance();
+    const l = this.registers.l;
+    const h = this.registers.h;
+
+    this.bus.writeMany(addr, [l, h]);
+  }
+
   inc_16(value) {
+    this.setT(6);
     return value + 1;
   }
 
@@ -194,7 +240,12 @@ class Z80Cpu {
     this.de = this.inc_16(this.de);
   }
 
+  inc_hl() {
+    this.hl = this.inc_16(this.hl);
+  }
+
   dec_16(value) {
+    this.setT(6);
     return value - 1;
   }
 
@@ -206,7 +257,12 @@ class Z80Cpu {
     this.de = this.dec_16(this.de);
   }
 
+  dec_hl() {
+    this.hl = this.dec_16(this.hl);
+  }
+
   inc_08(value) {
+    this.setT(4);
     const [clamp, v] = clamp8(value + 1);
     const half = clamp4(value)[0] + 1;
 
@@ -237,7 +293,12 @@ class Z80Cpu {
     this.registers.e = this.inc_08(this.registers.e);
   }
 
+  inc_h() {
+    this.registers.h = this.inc_08(this.registers.h);
+  }
+
   dec_08(value) {
+    this.setT(4);
     const [clamp, v] = clamp8(value - 1);
     const half = clamp4(value)[0] - 1;
 
@@ -268,7 +329,12 @@ class Z80Cpu {
     this.registers.e = this.dec_08(this.registers.e);
   }
 
+  dec_h() {
+    this.registers.h = this.dec_08(this.registers.h);
+  }
+
   ld_08_imm() {
+    this.setT(7);
     return this.readFromPcAdvance();
   }
 
@@ -292,7 +358,12 @@ class Z80Cpu {
     this.registers.e = this.ld_08_imm();
   }
 
+  ld_h_imm() {
+    this.registers.h = this.ld_08_imm();
+  }
+
   rlXa() {
+    this.setT(4);
     const rla = this.registers.a << 1;
     const { hi, lo } = splitHiLo(rla);
     const c = hi;
@@ -317,6 +388,7 @@ class Z80Cpu {
   }
 
   rrXa() {
+    this.setT(4);
     const c = this.registers.a % 2;
     const rra = this.registers.a >> 1;
 
@@ -340,6 +412,7 @@ class Z80Cpu {
   }
 
   ex_af() {
+    this.setT(4);
     const a = this.registers.a, f = this.registers.f;
     this.registers.a = this.registers.a$;
     this.registers.f = this.registers.f$;
@@ -348,6 +421,7 @@ class Z80Cpu {
   }
 
   add_hl_16(value) {
+    this.setT(11);
     const hl = this.hl + value;
     this.hl = hl;
 
@@ -366,6 +440,7 @@ class Z80Cpu {
   }
 
   ld_a_ptr_16(value) {
+    this.setT(7);
     const a = this.bus.readOne(value);
     this.registers.a = a;
   }
@@ -378,19 +453,37 @@ class Z80Cpu {
     this.ld_a_ptr_16(this.bc);
   }
 
+  jr_08() {
+    this.setT(12);
+    return signed8(this.readFromPcAdvance());
+  }
+
   djnz_imm() {
-    const offset = signed8(this.readFromPcAdvance());
+    const offset = this.jr_08();
     const b = this.registers.b - 1;
     this.registers.b = b;
 
     if (b) {
+      this.setT(13);
       this.registers.pc += offset;
+    } else {
+      this.setT(8);
     }
   }
 
   jr_imm() {
-    const offset = signed8(this.readFromPcAdvance());
+    const offset = this.jr_08();
     this.registers.pc += offset;
+  }
+
+  jr_nz_imm() {
+    const offset = this.jr_08();
+
+    if (this.flagNotSet(Z80FlagMasks.Z)) {
+      this.registers.pc += offset;
+    } else {
+      this.setT(7);
+    }
   }
 
   registerInstructions() {
@@ -432,6 +525,15 @@ class Z80Cpu {
     ref[inst.ld_e_imm] = this.ld_e_imm;
     ref[inst.rra] = this.rra;
 
+    ref[inst.jr_nz_imm] = this.jr_nz_imm;
+    ref[inst.ld_hl_imm] = this.ld_hl_imm;
+    ref[inst.ld_ptr_imm_hl] = this.ld_ptr_imm_hl;
+    ref[inst.inc_hl] = this.inc_hl;
+    ref[inst.inc_h] = this.inc_h;
+    ref[inst.dec_h] = this.dec_h;
+    ref[inst.ld_h_imm] = this.ld_h_imm;
+    // ref[inst.daa] = this.daa;
+
     // gen.generate('ld bc imm');
     // (\b) (\b)
     // $1_$2
@@ -440,7 +542,7 @@ class Z80Cpu {
 
     ref[inst.halt] = this.halt;
     ref[inst.ld_a_imm] = this.ld_a_imm;
-    ref[inst.ld_hl_imm] = this.ld_hl_imm;
+    ref[inst.dec_hl] = this.dec_hl;
 
   }
 }

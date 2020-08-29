@@ -36,16 +36,17 @@ test('simple backplane test', () => {
 
   mem.load(0, [
     inst.nop,
-    inst.nop,
-    inst.nop,
     inst.halt,
   ]);
 
+  let t = 0;
   while (! proc.halted) {
+    ++t;
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.pc).toBe(2);
+  expect(t).toBe(5);
 });
 
 
@@ -365,5 +366,84 @@ test('rra test', () => {
   expect(proc.registers.pc).toBe(4);
   expect(proc.registers.a).toBe(1);
   expect(proc.readFlags().c).toBe(1);
+});
+
+test('jr nz test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_b_imm, 0x0a,
+    inst.inc_c,
+    inst.dec_b,
+    inst.jr_nz_imm, 0x0fc,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(7);
+  expect(proc.registers.b).toBe(0);
+  expect(proc.registers.c).toBe(10);
+});
+
+test('ld ptr imm hl test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x10, 0x32,
+    inst.ld_ptr_imm_hl, 0x00, 0x10,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(7);
+  expect(proc.hl).toBe(0x3210);
+  expect(mem.readOne(0x1000)).toBe(0x10);
+  expect(mem.readOne(0x1001)).toBe(0x32);
+});
+
+test('asst e test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_e_imm, 0x0a,
+    inst.dec_e,
+    inst.inc_e,
+    inst.inc_de,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(6);
+  expect(proc.registers.d).toBe(0);
+  expect(proc.registers.e).toBe(11);
+});
+
+test('asst h test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_h_imm, 0x0a,
+    inst.dec_h,
+    inst.inc_h,
+    inst.inc_hl,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(6);
+  expect(proc.registers.h).toBe(10);
+  expect(proc.registers.l).toBe(1);
 });
 
