@@ -49,3 +49,36 @@ export function parity8(value) {
 export function signed8(value) {
   return (0x080 & value) ? -(256 - value) : value;
 }
+
+export function add8(dst, op) {
+  const result = dst + op;
+  const a = result & 0x0ff;
+  const c = toBit(result & ~0x0ff);
+  const s = toBit(a & 0x080);
+  const z = toBit(a === 0);
+  const n = 0;
+  const half = (dst & 0x0f) + (op & 0x0f);
+  const h = toBit(half & 0x010);
+  const p = parity8(a);
+  const seven = (dst & 0x07f) + (op & 0x07f);
+  const cin = toBit(seven & 0x080);
+  const v = toBit(cin !== c);
+
+  return { a, s, z, h, p, v, n, c };
+}
+
+export function sub8(dst, op) {
+  const result = dst - op;
+  const a = result & 0x0ff;
+  const c = toBit(op > dst);
+  const s = toBit(a & 0x080);
+  const z = toBit(a === 0);
+  const n = 1;
+  const h = toBit((op & 0x0f) > (dst & 0x0f));
+  const p = parity8(a);
+  const seven = (dst & 0x07f) - (op & 0x07f);
+  const cout = toBit(seven & 0x080);
+  const v = toBit(c !== cout);
+
+  return { a, s, z, h, p, v, n, c };
+}

@@ -1,7 +1,8 @@
 import inst from './z80-inst';
 import { clamp4, clamp8, clamp16,
   getLo, getHi, splitHiLo,
-  toBit, signed8 } from '../bin-ops';
+  toBit, signed8, parity8,
+  add8, sub8 } from '../bin-ops';
 
 export class Z80Flags {}
 
@@ -22,6 +23,8 @@ Z80FlagMasks.P = 1 << Z80Flags.P;
 Z80FlagMasks.V = 1 << Z80Flags.V;
 Z80FlagMasks.N = 1 << Z80Flags.N;
 Z80FlagMasks.C = 1 << Z80Flags.C;
+
+class Z80Error extends Error {}
 
 class Z80Cpu {
   constructor() {
@@ -107,6 +110,8 @@ class Z80Cpu {
   }
 
   clock() {
+    let undefined;
+
     if (this.tStatesEnabled) {
       if (this.tStates) {
         this.tStates--;
@@ -119,8 +124,25 @@ class Z80Cpu {
     }
 
     const inst = this.readFromPcAdvance();
+    if (undefined === inst) {
+      const prevPc = (this.registers.pc - 1).toString(16);
+      throw new Z80Error(`encountered undefined inst at addr [${prevPc}]`);
+    }
+
     const fn = this.inst[inst];
+    if (! fn) {
+      const instStr = inst.toString(16);
+      throw new Z80Error(`inst [${instStr}] has no registered callback`);
+    }
+
     fn.call(this);
+
+    if (this.tStatesEnabled) {
+      if (! this.tStates) {
+        const instStr = inst.toString(16);
+        throw new Z80Error(`inst [${instStr}] invoked without setting t states`);
+      }
+    }
   }
 
   readFromPc() {
@@ -166,6 +188,21 @@ class Z80Cpu {
       s = toBit(f & Z80FlagMasks.S);
 
     return { c, n, p_v, h, z, s };
+  }
+
+  sub_08(dst, op) {
+    const result = dst - op;
+    const a = result & 0x0ff;
+    const c = toBit(result & ~0x0ff);
+    const s = toBit(result & 0x080);
+    const z = toBit(a === 0);
+    const half = (dst & 0x0f) + (op & 0x0f);
+    const h = toBit(half & 0x010);
+    const p = parity8(a);
+    const seven = (dst & 0x07f) + (op & 0x07f);
+    const v = toBit(seven & 0x080);
+
+    return { a, s, z, h, p, v, c };
   }
 
   nop() {
@@ -263,18 +300,17 @@ class Z80Cpu {
 
   inc_08(value) {
     this.setT(4);
-    const [clamp, v] = clamp8(value + 1);
-    const half = clamp4(value)[0] + 1;
+    const { a, s, z, h, v } = add8(value, 1);
 
     const f = this.readFlags();
-    f.n = 1;
+    f.n = 0;
     f.p_v = v;
-    f.h = toBit(half & 0x0100);
-    f.z = toBit(clamp === 0);
-    f.s = toBit((clamp & 0x80) > 0);
+    f.h = h;
+    f.z = z;
+    f.s = s;
     this.setFlags(f);
 
-    return clamp;
+    return a;
   }
 
   inc_b() {
@@ -484,6 +520,10 @@ class Z80Cpu {
     } else {
       this.setT(7);
     }
+  }
+
+  daa() {
+    this.setT(4);
   }
 
   registerInstructions() {

@@ -1,8 +1,7 @@
 import memory from './z80-memory';
-import cpu, { Z80FlagMasks as masks } from './z80-cpu';
+import cpu, { Z80FlagMasks as masks, Z80Error } from './z80-cpu';
 import backplane from './z80-backplane';
 import inst from './z80-inst';
-import { clamp8, parity8 } from '../bin-ops';
 
 const build_cpu = () => {
   const mainboard = new backplane();
@@ -15,20 +14,19 @@ const build_cpu = () => {
   return [mainboard, proc, mem];
 }
 
-test('clamp', () => {
-  const [b, v] = clamp8(0x1ff);
-  expect(b).toBe(0x0ff);
-  expect(v).toBe(1);
-});
+test('undefined opcode', () => {
+  const [mainboard, proc, mem ] = build_cpu();
 
-test('even parity', () => {
-  const p = parity8(3);
-  expect(p).toBe(1);
-});
+  mem.load(0, [
+    inst.INVALID,
+    inst.halt,
+  ]);
 
-test('odd parity', () => {
-  const p = parity8(2);
-  expect(p).toBe(0);
+  expect(() => {
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+  }).toThrow(Z80Error);
 });
 
 test('simple backplane test', () => {
@@ -48,7 +46,6 @@ test('simple backplane test', () => {
   expect(proc.registers.pc).toBe(2);
   expect(t).toBe(5);
 });
-
 
 test('ld bc test', () => {
   const [mainboard, proc, mem ] = build_cpu();
