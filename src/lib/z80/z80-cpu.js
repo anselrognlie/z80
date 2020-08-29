@@ -300,10 +300,10 @@ class Z80Cpu {
 
   inc_08(value) {
     this.setT(4);
-    const { a, s, z, h, v } = add8(value, 1);
+    const { a, s, z, h, v, n } = add8(value, 1);
 
     const f = this.readFlags();
-    f.n = 0;
+    f.n = n;
     f.p_v = v;
     f.h = h;
     f.z = z;
@@ -335,18 +335,17 @@ class Z80Cpu {
 
   dec_08(value) {
     this.setT(4);
-    const [clamp, v] = clamp8(value - 1);
-    const half = clamp4(value)[0] - 1;
+    const { a, s, z, h, v, n } = sub8(value, 1);
 
     const f = this.readFlags();
-    f.n = 0;
+    f.n = n;
     f.p_v = v;
-    f.h = toBit(half < 0);
-    f.z = toBit(clamp === 0);
-    f.s = toBit((clamp & 0x80) > 0);
+    f.h = h;
+    f.z = z;
+    f.s = s;
     this.setFlags(f);
 
-    return clamp;
+    return a;
   }
 
   dec_b() {
