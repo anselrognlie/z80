@@ -161,11 +161,25 @@ class Z80Cpu {
     this.registers.h = hi;
   }
 
-  ld_ptr_bc_a() {
-    const bc = this.bc;
+  ld_de_imm() {
+    const { lo, hi } = this.ld_16_imm()
+
+    this.registers.e = lo;
+    this.registers.d = hi;
+  }
+
+  ld_ptr_16_a(addr) {
     const a = this.registers.a;
 
-    this.bus.writeOne(bc, a);
+    this.bus.writeOne(addr, a);
+  }
+
+  ld_ptr_bc_a() {
+    this.ld_ptr_16_a(this.bc);
+  }
+
+  ld_ptr_de_a() {
+    this.ld_ptr_16_a(this.de);
   }
 
   inc_16(value) {
@@ -176,12 +190,20 @@ class Z80Cpu {
     this.bc = this.inc_16(this.bc);
   }
 
+  inc_de() {
+    this.de = this.inc_16(this.de);
+  }
+
   dec_16(value) {
     return value - 1;
   }
 
   dec_bc() {
     this.bc = this.dec_16(this.bc);
+  }
+
+  dec_de() {
+    this.de = this.dec_16(this.de);
   }
 
   inc_08(value) {
@@ -207,6 +229,14 @@ class Z80Cpu {
     this.registers.c = this.inc_08(this.registers.c);
   }
 
+  inc_d() {
+    this.registers.d = this.inc_08(this.registers.d);
+  }
+
+  inc_e() {
+    this.registers.e = this.inc_08(this.registers.e);
+  }
+
   dec_08(value) {
     const [clamp, v] = clamp8(value - 1);
     const half = clamp4(value)[0] - 1;
@@ -230,6 +260,14 @@ class Z80Cpu {
     this.registers.c = this.dec_08(this.registers.c);
   }
 
+  dec_d() {
+    this.registers.d = this.dec_08(this.registers.d);
+  }
+
+  dec_e() {
+    this.registers.e = this.dec_08(this.registers.e);
+  }
+
   ld_08_imm() {
     return this.readFromPcAdvance();
   }
@@ -246,31 +284,59 @@ class Z80Cpu {
     this.registers.c = this.ld_08_imm();
   }
 
-  rlca() {
+  ld_d_imm() {
+    this.registers.d = this.ld_08_imm();
+  }
+
+  ld_e_imm() {
+    this.registers.e = this.ld_08_imm();
+  }
+
+  rlXa() {
     const rla = this.registers.a << 1;
     const { hi, lo } = splitHiLo(rla);
     const c = hi;
-    const a = hi | lo;
-    this.registers.a = a;
 
     const f = this.readFlags();
     f.n = 0;
     f.c = c;
     f.h = 0;
     this.setFlags(f);
+
+    return { a: lo, c };
+  }
+
+  rlca() {
+    const { a, c } = this.rlXa();
+    this.registers.a = a | c;
+  }
+
+  rla() {
+    const { a } = this.rlXa();
+    this.registers.a = a;
+  }
+
+  rrXa() {
+    const c = this.registers.a % 2;
+    const rra = this.registers.a >> 1;
+
+    const f = this.readFlags();
+    f.n = 0;
+    f.c = c;
+    f.h = 0;
+    this.setFlags(f);
+
+    return { a: rra, c}
   }
 
   rrca() {
-    const c = this.registers.a % 2;
-    const rra = this.registers.a >> 1;
-    const a = rra | (c << 7);
-    this.registers.a = a;
+    const { a, c } = this.rrXa();
+    this.registers.a = a | (c << 7);;
+  }
 
-    const f = this.readFlags();
-    f.n = 0;
-    f.c = c;
-    f.h = 0;
-    this.setFlags(f);
+  rra() {
+    const { a } = this.rrXa();
+    this.registers.a = a;
   }
 
   ex_af() {
@@ -281,8 +347,8 @@ class Z80Cpu {
     this.registers.f$ = f;
   }
 
-  add_hl_bc() {
-    const hl = this.hl + this.bc;
+  add_hl_16(value) {
+    const hl = this.hl + value;
     this.hl = hl;
 
     const f = this.readFlags();
@@ -291,10 +357,25 @@ class Z80Cpu {
     this.setFlags(f);
   }
 
-  ld_a_ptr_bc() {
-    const bc = this.bc;
-    const a = this.bus.readOne(bc);
+  add_hl_bc() {
+    this.add_hl_16(this.bc);
+  }
+
+  add_hl_de() {
+    this.add_hl_16(this.de);
+  }
+
+  ld_a_ptr_16(value) {
+    const a = this.bus.readOne(value);
     this.registers.a = a;
+  }
+
+  ld_a_ptr_bc() {
+    this.ld_a_ptr_16(this.bc);
+  }
+
+  ld_a_ptr_de() {
+    this.ld_a_ptr_16(this.bc);
   }
 
   djnz_imm() {
@@ -305,6 +386,11 @@ class Z80Cpu {
     if (b) {
       this.registers.pc += offset;
     }
+  }
+
+  jr_imm() {
+    const offset = signed8(this.readFromPcAdvance());
+    this.registers.pc += offset;
   }
 
   registerInstructions() {
@@ -329,13 +415,22 @@ class Z80Cpu {
     ref[inst.rrca] = this.rrca;
 
     ref[inst.djnz_imm] = this.djnz_imm;
-    // ref[inst.ld_de_imm] = this.ld_de_imm;
-    // ref[inst.ld_ptr_de_a] = this.ld_ptr_de_a;
-    // ref[inst.inc_de] = this.inc_de;
-    // ref[inst.inc_d] = this.inc_d;
-    // ref[inst.dec_d] = this.dec_d;
-    // ref[inst.ld_d_imm] = this.ld_d_imm;
-    // ref[inst.rla] = this.rla;
+    ref[inst.ld_de_imm] = this.ld_de_imm;
+    ref[inst.ld_ptr_de_a] = this.ld_ptr_de_a;
+    ref[inst.inc_de] = this.inc_de;
+    ref[inst.inc_d] = this.inc_d;
+    ref[inst.dec_d] = this.dec_d;
+    ref[inst.ld_d_imm] = this.ld_d_imm;
+    ref[inst.rla] = this.rla;
+
+    ref[inst.jr_imm] = this.jr_imm;
+    ref[inst.add_hl_de] = this.add_hl_de;
+    ref[inst.ld_a_ptr_de] = this.ld_a_ptr_de;
+    ref[inst.dec_de] = this.dec_de;
+    ref[inst.inc_e] = this.inc_e;
+    ref[inst.dec_e] = this.dec_e;
+    ref[inst.ld_e_imm] = this.ld_e_imm;
+    ref[inst.rra] = this.rra;
 
     // gen.generate('ld bc imm');
     // (\b) (\b)

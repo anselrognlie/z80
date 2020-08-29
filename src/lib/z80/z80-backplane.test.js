@@ -272,3 +272,98 @@ test('djnz test', () => {
   expect(proc.registers.c).toBe(10);
 });
 
+test('asst d test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_d_imm, 0x0a,
+    inst.dec_d,
+    inst.inc_d,
+    inst.inc_de,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(6);
+  expect(proc.registers.d).toBe(10);
+  expect(proc.registers.e).toBe(1);
+});
+
+test('asst de test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_de_imm, 0xff, 0x01,
+    inst.inc_de,
+    inst.ld_a_imm, 0x0a,
+    inst.ld_ptr_de_a,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(8);
+  expect(proc.de).toBe(0x0200);
+  expect(mem.readOne(0x0200)).toBe(10);
+});
+
+test('rla test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_a_imm, 0x080,
+    inst.rla,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.a).toBe(0);
+  expect(proc.readFlags().c).toBe(1);
+});
+
+test('jr test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.jr_imm, 0x02,
+    inst.jr_imm, 0x04,
+    inst.jr_imm, 0xfc,
+    inst.ld_a_imm, 0x0a,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(9);
+  expect(proc.registers.a).toBe(0);
+});
+
+test('rra test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_a_imm, 0x003,
+    inst.rra,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.a).toBe(1);
+  expect(proc.readFlags().c).toBe(1);
+});
+
