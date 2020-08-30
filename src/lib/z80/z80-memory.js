@@ -10,6 +10,11 @@ class Z80Memory {
     this.writeMany(addr, values);
   }
 
+  readWord(addr) {
+    const values = this.readMany(addr, 2);
+    return (values[1] << 8) | values[0];
+  }
+
   // consumer api
 
   get size() {

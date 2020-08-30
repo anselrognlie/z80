@@ -483,3 +483,100 @@ test('add_a_h test', () => {
   expect(proc.registers.a).toBe(0x014);
 });
 
+test('jr z test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_b_imm, 0x01,
+    inst.inc_c,
+    inst.dec_b,
+    inst.jr_z_imm, 0x0fc,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(7);
+  expect(proc.registers.b).toBe(0x0ff);
+  expect(proc.registers.c).toBe(2);
+});
+
+test('ld hl ptr imm test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x23, 0x01,
+    inst.ld_ptr_imm_hl, 0x45, 0x67,
+    inst.ld_hl_imm, 0x00, 0x00,
+    inst.ld_hl_ptr_imm, 0x45, 0x67,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(13);
+  expect(proc.hl).toBe(0x0123);
+  expect(mem.readWord(0x6745)).toBe(0x0123);
+});
+
+test('asst l test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_l_imm, 0x0a,
+    inst.dec_l,
+    inst.inc_l,
+    inst.inc_hl,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(6);
+  expect(proc.registers.h).toBe(0);
+  expect(proc.registers.l).toBe(11);
+});
+
+test('asst hl test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0xff, 0x01,
+    inst.inc_hl,
+    inst.ld_a_imm, 0x0a,
+    inst.ld_ptr_hl_a,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(8);
+  expect(proc.hl).toBe(0x0200);
+  expect(mem.readOne(0x0200)).toBe(10);
+});
+
+test('cpl test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_a_imm, 0x0aa,
+    inst.cpl,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.a).toBe(0x055);
+});
+
