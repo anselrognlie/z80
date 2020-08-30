@@ -178,7 +178,7 @@ class Z80Cpu {
     this.registers.f = f;
   }
 
-  readFlags() {
+  getFlags() {
     const f = this.registers.f;
     const c = toBit(f & Z80FlagMasks.C),
       n = toBit(f & Z80FlagMasks.N),
@@ -306,7 +306,7 @@ class Z80Cpu {
     this.setT(4);
     const { a, s, z, h, v, n } = add8(value, 1);
 
-    const f = this.readFlags();
+    const f = this.getFlags();
     f.n = n;
     f.p_v = v;
     f.h = h;
@@ -341,7 +341,7 @@ class Z80Cpu {
     this.setT(4);
     const { a, s, z, h, v, n } = sub8(value, 1);
 
-    const f = this.readFlags();
+    const f = this.getFlags();
     f.n = n;
     f.p_v = v;
     f.h = h;
@@ -407,7 +407,7 @@ class Z80Cpu {
     const { hi, lo } = splitHiLo(rla);
     const c = hi;
 
-    const f = this.readFlags();
+    const f = this.getFlags();
     f.n = 0;
     f.c = c;
     f.h = 0;
@@ -431,7 +431,7 @@ class Z80Cpu {
     const c = this.registers.a % 2;
     const rra = this.registers.a >> 1;
 
-    const f = this.readFlags();
+    const f = this.getFlags();
     f.n = 0;
     f.c = c;
     f.h = 0;
@@ -464,11 +464,10 @@ class Z80Cpu {
     const { a, h, n, c } = add16(this.hl, value);
     this.hl = a;
 
-    const f = this.readFlags();
+    const f = this.getFlags();
     f.n = n;
     f.c = c;
     f.h = h;
-    f.n = n;
     this.setFlags(f);
   }
 
@@ -529,6 +528,117 @@ class Z80Cpu {
 
   daa() {
     this.setT(4);
+
+    const f = this.getFlags();
+    let a = this.registers.a;
+    const hn = (a & 0x0f0) >> 4;
+    const ln = (a & 0x0f);
+
+    let diff;
+    if (f.c) {
+      if (ln >= 0x0a) {
+        diff = 0x066;
+      } else {
+        if (f.h) {
+          diff = 0x066;
+        } else {
+          diff = 0x060;
+        }
+      }
+    } else {  // !f.c
+      if (ln >= 0x0a) {
+        if (hn >= 0x09) {
+          diff = 0x066;
+        } else {
+          diff = 0x06;
+        }
+      } else {
+        if (f.h) {
+          if (hn >= 0x0a) {
+            diff = 0x066;
+          } else {
+            diff = 0x06;
+          }
+        } else {  // !f.h
+          if (hn >= 0x0a) {
+            diff = 0x060;
+          } else {
+            diff = 0;
+          }
+        }
+      }
+    }
+
+    a = (f.n) ? a - diff : a + diff;
+
+    let c;
+    if (f.c) {
+      c = f.c;
+    } else {
+      if (ln >= 0x0a) {
+        if (hn >= 0x09) {
+          c = 1;
+        } else {
+          c = 0;
+        }
+      } else {
+        if (hn >= 0x0a) {
+          c = 1;
+        } else {
+          c = 0;
+        }
+      }
+    }
+
+    let h;
+    if (f.n) {
+      if (f.h) {
+        if (ln >= 6) {
+          h = 0;
+        } else {
+          h = 1;
+        }
+      } else {  // !f.h
+        h = 0;
+      }
+    } else {  // !f.n
+      if (ln >= 0x0a) {
+        h = 1;
+      } else {
+        h = 0;
+      }
+    }
+
+    this.registers.a = a;
+    f.c = c;
+    f.h = h;
+    f.p_v = parity8(a);
+    f.z = toBit(a === 0);
+    f.s = toBit(a & 0x080);
+    this.setFlags(f);
+  }
+
+  add_08(value) {
+    const { a, s, z, h, v, n, c } = add8(this.registers.a, value);
+    this.registers.a = a;
+
+    const f = this.getFlags();
+    f.s = s;
+    f.z = z;
+    f.h = h;
+    f.p_v = v;
+    f.n = n;
+    f.c = c;
+    this.setFlags(f);
+  }
+
+  add_a_r(value) {
+    this.setT(4);
+    this.add_08(value);
+  }
+
+  add_a_h() {
+    this.add_a_r(this.registers.h);
   }
 
   registerInstructions() {
@@ -577,7 +687,7 @@ class Z80Cpu {
     ref[inst.inc_h] = this.inc_h;
     ref[inst.dec_h] = this.dec_h;
     ref[inst.ld_h_imm] = this.ld_h_imm;
-    // ref[inst.daa] = this.daa;
+    ref[inst.daa] = this.daa;
 
     // gen.generate('ld bc imm');
     // (\b) (\b)
@@ -588,6 +698,7 @@ class Z80Cpu {
     ref[inst.halt] = this.halt;
     ref[inst.ld_a_imm] = this.ld_a_imm;
     ref[inst.dec_hl] = this.dec_hl;
+    ref[inst.add_a_h] = this.add_a_h;
 
   }
 }

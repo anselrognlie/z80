@@ -101,7 +101,7 @@ test('dec b test', () => {
 
   expect(proc.registers.pc).toBe(5);
   expect(proc.registers.b).toBe(0);
-  expect(proc.readFlags().z).toBe(1);
+  expect(proc.getFlags().z).toBe(1);
 });
 
 test('ld b imm test', () => {
@@ -119,7 +119,7 @@ test('ld b imm test', () => {
 
   expect(proc.registers.pc).toBe(4);
   expect(proc.registers.b).toBe(0);
-  expect(proc.readFlags().z).toBe(1);
+  expect(proc.getFlags().z).toBe(1);
 });
 
 test('rlca test', () => {
@@ -137,7 +137,7 @@ test('rlca test', () => {
 
   expect(proc.registers.pc).toBe(4);
   expect(proc.registers.a).toBe(1);
-  expect(proc.readFlags().c).toBe(1);
+  expect(proc.getFlags().c).toBe(1);
 });
 
 test('ex af test', () => {
@@ -156,7 +156,7 @@ test('ex af test', () => {
 
   expect(proc.registers.pc).toBe(5);
   expect(proc.registers.a$).toBe(1);
-  expect(proc.readFlags().c).toBe(0);
+  expect(proc.getFlags().c).toBe(0);
   expect(proc.registers.f$ & masks.C).not.toBe(0);
 });
 
@@ -247,7 +247,7 @@ test('rrca test', () => {
 
   expect(proc.registers.pc).toBe(4);
   expect(proc.registers.a).toBe(129);
-  expect(proc.readFlags().c).toBe(1);
+  expect(proc.getFlags().c).toBe(1);
 });
 
 test('djnz test', () => {
@@ -325,7 +325,7 @@ test('rla test', () => {
 
   expect(proc.registers.pc).toBe(4);
   expect(proc.registers.a).toBe(0);
-  expect(proc.readFlags().c).toBe(1);
+  expect(proc.getFlags().c).toBe(1);
 });
 
 test('jr test', () => {
@@ -362,7 +362,7 @@ test('rra test', () => {
 
   expect(proc.registers.pc).toBe(4);
   expect(proc.registers.a).toBe(1);
-  expect(proc.readFlags().c).toBe(1);
+  expect(proc.getFlags().c).toBe(1);
 });
 
 test('jr nz test', () => {
@@ -442,5 +442,44 @@ test('asst h test', () => {
   expect(proc.registers.pc).toBe(6);
   expect(proc.registers.h).toBe(10);
   expect(proc.registers.l).toBe(1);
+});
+
+test('daa test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_a_imm, 0x015,
+    inst.ld_h_imm, 0x027,
+    inst.add_a_h,
+    inst.daa,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(7);
+  expect(proc.registers.h).toBe(0x027);
+  expect(proc.registers.a).toBe(0x042);
+});
+
+test('add_a_h test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_a_imm, 0x0a,
+    inst.ld_h_imm, 0x0a,
+    inst.add_a_h,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(6);
+  expect(proc.registers.h).toBe(10);
+  expect(proc.registers.a).toBe(0x014);
 });
 
