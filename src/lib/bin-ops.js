@@ -46,6 +46,16 @@ export function parity8(value) {
   return (p + 1) % 2;
 }
 
+export function parity16(value) {
+  let p = 0;
+  for (let i = 0; i < 16; ++i) {
+    p += value % 2;
+    value = value >> 1;
+  }
+
+  return (p + 1) % 2;
+}
+
 export function signed8(value) {
   return (0x080 & value) ? -(256 - value) : value;
 }
@@ -67,17 +77,48 @@ export function add8(dst, op) {
   return { a, s, z, h, p, v, n, c };
 }
 
+export function add16(dst, op) {
+  const result = dst + op;
+  const a = result & 0x0ffff;
+  const c = toBit(result & ~0x0ffff);
+  const s = toBit(a & 0x08000);
+  const z = toBit(a === 0);
+  const n = 0;
+  const half = (dst & 0x0fff) + (op & 0x0fff);
+  const h = toBit(half & 0x01000);
+  const p = parity16(a);
+  const m1 = (dst & 0x07fff) + (op & 0x07fff);
+  const cin = toBit(m1 & 0x08000);
+  const v = toBit(cin !== c);
+
+  return { a, s, z, h, p, v, n, c };
+}
+
 export function sub8(dst, op) {
   const result = dst - op;
   const a = result & 0x0ff;
-  const c = toBit(op > dst);
+  const c = toBit(dst < op);
   const s = toBit(a & 0x080);
   const z = toBit(a === 0);
   const n = 1;
-  const h = toBit((op & 0x0f) > (dst & 0x0f));
+  const h = toBit((dst & 0x0f) < (op & 0x0f));
   const p = parity8(a);
-  const seven = (dst & 0x07f) - (op & 0x07f);
-  const cout = toBit(seven & 0x080);
+  const cout = toBit((dst & 0x07f) < (op & 0x07f));
+  const v = toBit(c !== cout);
+
+  return { a, s, z, h, p, v, n, c };
+}
+
+export function sub16(dst, op) {
+  const result = dst - op;
+  const a = result & 0x0ffff;
+  const c = toBit(dst < op);
+  const s = toBit(a & 0x08000);
+  const z = toBit(a === 0);
+  const n = 1;
+  const h = toBit((dst & 0x0fff) < (op & 0x0fff));
+  const p = parity16(a);
+  const cout = toBit((dst & 0x07fff) < (op & 0x07fff));
   const v = toBit(c !== cout);
 
   return { a, s, z, h, p, v, n, c };

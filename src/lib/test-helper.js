@@ -3,11 +3,20 @@ expect.extend({
     // console.log({ s0, s1 });
     for (let k of Object.keys(s1)) {
       const value = s1[k];
-      const pass = (Object.prototype.hasOwnProperty.call(s0, k) && (value === s0[k]));
-      if (! pass) {
+      if (! Object.prototype.hasOwnProperty.call(s0, k)) {
         return {
           message: () => (
             `expected struct to have key [${k}] with value [${value}]`
+          ),
+          pass: false,
+        };
+      }
+
+      const found = s0[k];
+      if (! (value === found)) {
+        return {
+          message: () => (
+            `expected struct to have key [${k}] with value [${value}], found [${found}]`
           ),
           pass: false,
         };

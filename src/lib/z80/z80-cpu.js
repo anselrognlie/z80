@@ -1,8 +1,8 @@
 import inst from './z80-inst';
-import { clamp4, clamp8, clamp16,
+import { clamp16,
   getLo, getHi, splitHiLo,
   toBit, signed8, parity8,
-  add8, sub8 } from '../bin-ops';
+  add8, sub8, add16, sub16 } from '../bin-ops';
 
 export class Z80Flags {}
 
@@ -266,7 +266,9 @@ class Z80Cpu {
 
   inc_16(value) {
     this.setT(6);
-    return value + 1;
+    const { a } = add16(value, 1);
+
+    return a;
   }
 
   inc_bc() {
@@ -283,7 +285,9 @@ class Z80Cpu {
 
   dec_16(value) {
     this.setT(6);
-    return value - 1;
+    const { a } = sub16(value, 1);
+
+    return a;
   }
 
   dec_bc() {
@@ -457,12 +461,14 @@ class Z80Cpu {
 
   add_hl_16(value) {
     this.setT(11);
-    const hl = this.hl + value;
-    this.hl = hl;
+    const { a, h, n, c } = add16(this.hl, value);
+    this.hl = a;
 
     const f = this.readFlags();
-    f.n = 1;
-    f.c = toBit(hl > 0x0ffff);
+    f.n = n;
+    f.c = c;
+    f.h = h;
+    f.n = n;
     this.setFlags(f);
   }
 
