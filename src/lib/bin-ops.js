@@ -36,6 +36,10 @@ export function splitHiLo(value) {
   return { hi, lo };
 }
 
+export function makeWord({ hi, lo }) {
+  return ((0x0ff & hi) << 8) | (0x0ff & lo);
+}
+
 export function parity8(value) {
   let p = 0;
   for (let i = 0; i < 8; ++i) {

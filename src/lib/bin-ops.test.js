@@ -2,6 +2,7 @@ import {
   clamp8, parity8,
   add8, sub8,
   add16, sub16,
+  makeWord,
 } from './bin-ops';
 import './test-helper.js';
 
@@ -94,3 +95,9 @@ test('sub16', () => {
   });
 });
 
+test('makeWord', () => {
+  let result;
+
+  result = makeWord({ hi: 0x012, lo: 0x034 });
+  expect(result).toBe(0x01234);
+});
