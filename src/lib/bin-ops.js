@@ -64,8 +64,8 @@ export function signed8(value) {
   return (0x080 & value) ? -(256 - value) : value;
 }
 
-export function add8(dst, op) {
-  const result = dst + op;
+export function adc8(dst, op, cIn) {
+  const result = dst + op + cIn;
   const a = result & 0x0ff;
   const c = toBit(result & ~0x0ff);
   const s = toBit(a & 0x080);
@@ -81,8 +81,8 @@ export function add8(dst, op) {
   return { a, s, z, h, p, v, n, c };
 }
 
-export function add16(dst, op) {
-  const result = dst + op;
+export function adc16(dst, op, cIn) {
+  const result = dst + op + cIn;
   const a = result & 0x0ffff;
   const c = toBit(result & ~0x0ffff);
   const s = toBit(a & 0x08000);
@@ -96,6 +96,14 @@ export function add16(dst, op) {
   const v = toBit(cin !== c);
 
   return { a, s, z, h, p, v, n, c };
+}
+
+export function add8(dst, op) {
+  return adc8(dst, op, 0);
+}
+
+export function add16(dst, op) {
+  return adc16(dst, op, 0);
 }
 
 export function sub8(dst, op) {
