@@ -2,6 +2,7 @@ import memory from './z80-memory';
 import cpu, { Z80FlagMasks as masks, Z80Error } from './z80-cpu';
 import backplane from './z80-backplane';
 import inst from './z80-inst';
+import '../test-helper'
 
 const build_cpu = () => {
   const mainboard = new backplane();
@@ -580,3 +581,163 @@ test('cpl test', () => {
   expect(proc.registers.a).toBe(0x055);
 });
 
+test('ld ptr imm a test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_a_imm, 0x0aa,
+    inst.ld_ptr_imm_a, 0x10, 0x32,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(6);
+  expect(mem.readOne(0x3210)).toBe(0x0aa);
+});
+
+test('simple sp test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_sp_imm, 0x00, 0x10,
+    inst.inc_sp,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(5);
+  expect(proc.registers.sp).toBe(0x1001);
+});
+
+test('ld ptr hl imm test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x00, 0x10,
+    inst.ld_ptr_hl_imm, 0xa0,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(6);
+  expect(mem.readOne(0x1000)).toBe(0x0a0);
+});
+
+test('scf test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.scf,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(2);
+  const f = proc.getFlags();
+  expect(f).toMatchStruct({ c:1, h:0, n:0 });
+});
+
+test('jr c nc test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_a_imm, 0x0ff,
+    inst.ld_h_imm, 0x01,
+    inst.add_a_h,
+    inst.jr_c_imm, 0x01,
+    inst.inc_b,
+    inst.add_a_h,
+    inst.jr_nc_imm, 0x02,
+    inst.ld_b_imm, 0x0b,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(14);
+  expect(proc.registers.a).toBe(1);
+  expect(proc.registers.b).toBe(0);
+});
+
+test('ld hl sp test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_sp_imm, 0x01, 0x23,
+    inst.ld_hl_imm, 0x23, 0x45,
+    inst.add_hl_sp,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(8);
+  expect(proc.hl).toBe(0x6824);
+});
+
+test('ld a ptr imm test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x10, 0x32,
+    inst.ld_ptr_hl_imm, 0x0a,
+    inst.ld_a_ptr_imm, 0x10, 0x32,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(9);
+  expect(proc.registers.a).toBe(0x0a);
+});
+
+test('ccf 1 test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ccf,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(2);
+  expect(proc.getFlags()).toMatchStruct({ c:1 });
+});
+
+test('ccf 0 test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ccf,
+    inst.ccf,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(3);
+  expect(proc.getFlags()).toMatchStruct({ c:0 });
+});
