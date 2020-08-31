@@ -357,32 +357,20 @@ class Z80Cpu {
     return a;
   }
 
-  inc_b() {
-    this.registers.b = this.inc_08(this.registers.b);
+  make_inc_r8(dst) {
+    return () => {
+      this.registers[dst] = this.inc_08(this.registers[dst]);
+    }
   }
 
-  inc_c() {
-    this.registers.c = this.inc_08(this.registers.c);
-  }
-
-  inc_d() {
-    this.registers.d = this.inc_08(this.registers.d);
-  }
-
-  inc_e() {
-    this.registers.e = this.inc_08(this.registers.e);
-  }
-
-  inc_h() {
-    this.registers.h = this.inc_08(this.registers.h);
-  }
-
-  inc_l() {
-    this.registers.l = this.inc_08(this.registers.l);
-  }
-
-  inc_a() {
-    this.registers.a = this.inc_08(this.registers.a);
+  register_inc_r8(ref) {
+    // covers the majority of 0x40 through 0x7f
+    // misses ptr hl variants and halt (0x76)
+    const r8List = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
+    for (let dst of r8List) {
+      const key = `inc_${dst}`;
+      ref[inst[key]] = this.make_inc_r8(dst);
+    }
   }
 
   inc_ptr_hl() {
@@ -408,32 +396,20 @@ class Z80Cpu {
     return a;
   }
 
-  dec_b() {
-    this.registers.b = this.dec_08(this.registers.b);
+  make_dec_r8(dst) {
+    return () => {
+      this.registers[dst] = this.dec_08(this.registers[dst]);
+    }
   }
 
-  dec_c() {
-    this.registers.c = this.dec_08(this.registers.c);
-  }
-
-  dec_d() {
-    this.registers.d = this.dec_08(this.registers.d);
-  }
-
-  dec_e() {
-    this.registers.e = this.dec_08(this.registers.e);
-  }
-
-  dec_h() {
-    this.registers.h = this.dec_08(this.registers.h);
-  }
-
-  dec_l() {
-    this.registers.l = this.dec_08(this.registers.l);
-  }
-
-  dec_a() {
-    this.registers.a = this.dec_08(this.registers.a);
+  register_dec_r8(ref) {
+    // covers the majority of 0x40 through 0x7f
+    // misses ptr hl variants and halt (0x76)
+    const r8List = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
+    for (let dst of r8List) {
+      const key = `dec_${dst}`;
+      ref[inst[key]] = this.make_dec_r8(dst);
+    }
   }
 
   dec_ptr_hl() {
@@ -449,32 +425,20 @@ class Z80Cpu {
     return this.readFromPcAdvance();
   }
 
-  ld_a_imm() {
-    this.registers.a = this.ld_08_imm();
+  make_ld_r8_imm(dst) {
+    return () => {
+      this.registers[dst] = this.ld_08_imm();
+    }
   }
 
-  ld_b_imm() {
-    this.registers.b = this.ld_08_imm();
-  }
-
-  ld_c_imm() {
-    this.registers.c = this.ld_08_imm();
-  }
-
-  ld_d_imm() {
-    this.registers.d = this.ld_08_imm();
-  }
-
-  ld_e_imm() {
-    this.registers.e = this.ld_08_imm();
-  }
-
-  ld_h_imm() {
-    this.registers.h = this.ld_08_imm();
-  }
-
-  ld_l_imm() {
-    this.registers.l = this.ld_08_imm();
+  register_ld_r8_imm(ref) {
+    // covers the majority of 0x40 through 0x7f
+    // misses ptr hl variants and halt (0x76)
+    const r8List = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
+    for (let dst of r8List) {
+      const key = `ld_${dst}_imm`;
+      ref[inst[key]] = this.make_ld_r8_imm(dst);
+    }
   }
 
   rlXa() {
@@ -838,54 +802,36 @@ class Z80Cpu {
     ref[inst.ld_bc_imm] = this.ld_bc_imm;
     ref[inst.ld_ptr_bc_a] = this.ld_ptr_bc_a;
     ref[inst.inc_bc] = this.inc_bc;
-    ref[inst.inc_b] = this.inc_b;
-    ref[inst.dec_b] = this.dec_b;
-    ref[inst.ld_b_imm] = this.ld_b_imm;
     ref[inst.rlca] = this.rlca;
 
     ref[inst.ex_af] = this.ex_af;
     ref[inst.add_hl_bc] = this.add_hl_bc;
     ref[inst.ld_a_ptr_bc] = this.ld_a_ptr_bc;
     ref[inst.dec_bc] = this.dec_bc;
-    ref[inst.inc_c] = this.inc_c;
-    ref[inst.dec_c] = this.dec_c;
-    ref[inst.ld_c_imm] = this.ld_c_imm;
     ref[inst.rrca] = this.rrca;
 
     ref[inst.djnz_imm] = this.djnz_imm;
     ref[inst.ld_de_imm] = this.ld_de_imm;
     ref[inst.ld_ptr_de_a] = this.ld_ptr_de_a;
     ref[inst.inc_de] = this.inc_de;
-    ref[inst.inc_d] = this.inc_d;
-    ref[inst.dec_d] = this.dec_d;
-    ref[inst.ld_d_imm] = this.ld_d_imm;
     ref[inst.rla] = this.rla;
 
     ref[inst.jr_imm] = this.jr_imm;
     ref[inst.add_hl_de] = this.add_hl_de;
     ref[inst.ld_a_ptr_de] = this.ld_a_ptr_de;
     ref[inst.dec_de] = this.dec_de;
-    ref[inst.inc_e] = this.inc_e;
-    ref[inst.dec_e] = this.dec_e;
-    ref[inst.ld_e_imm] = this.ld_e_imm;
     ref[inst.rra] = this.rra;
 
     ref[inst.jr_nz_imm] = this.jr_nz_imm;
     ref[inst.ld_hl_imm] = this.ld_hl_imm;
     ref[inst.ld_ptr_imm_hl] = this.ld_ptr_imm_hl;
     ref[inst.inc_hl] = this.inc_hl;
-    ref[inst.inc_h] = this.inc_h;
-    ref[inst.dec_h] = this.dec_h;
-    ref[inst.ld_h_imm] = this.ld_h_imm;
     ref[inst.daa] = this.daa;
 
     ref[inst.jr_z_imm] = this.jr_z_imm;
     ref[inst.add_hl_hl] = this.add_hl_hl;
     ref[inst.ld_hl_ptr_imm] = this.ld_hl_ptr_imm;
     ref[inst.dec_hl] = this.dec_hl;
-    ref[inst.inc_l] = this.inc_l;
-    ref[inst.dec_l] = this.dec_l;
-    ref[inst.ld_l_imm] = this.ld_l_imm;
     ref[inst.cpl] = this.cpl;
 
     ref[inst.jr_nc_imm] = this.jr_nc_imm;
@@ -901,10 +847,11 @@ class Z80Cpu {
     ref[inst.add_hl_sp] = this.add_hl_sp;
     ref[inst.ld_a_ptr_imm] = this.ld_a_ptr_imm;
     ref[inst.dec_sp] = this.dec_sp;
-    ref[inst.inc_a] = this.inc_a;
-    ref[inst.dec_a] = this.dec_a;
-    ref[inst.ld_a_imm] = this.ld_a_imm;
     ref[inst.ccf] = this.ccf;
+
+    this.register_ld_r8_imm(ref);
+    this.register_inc_r8(ref);
+    this.register_dec_r8(ref);
 
     this.register_ld_r8_r8(ref);
     this.register_ld_r8_ptr_hl(ref);
