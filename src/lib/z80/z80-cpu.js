@@ -780,6 +780,57 @@ class Z80Cpu {
     this.setFlags(f);
   }
 
+  make_ld_r8_r8(dst, src) {
+    return () => {
+      this.setT(4);
+      this.registers[dst] = this.registers[src];
+    };
+  }
+
+  register_ld_r8_r8(ref) {
+    // covers the majority of 0x40 through 0x7f
+    // misses ptr hl variants and halt (0x76)
+    const r8List = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
+    for (let dst of r8List) {
+      for (let src of r8List) {
+        const instKey = `ld_${dst}_${src}`;
+        ref[inst[instKey]] = this.make_ld_r8_r8(dst, src);
+      }
+    }
+  }
+
+  make_ld_r8_ptr_hl(dst) {
+    return () => {
+      this.setT(7);
+      const value = this.bus.readOne(this.hl);
+      this.registers[dst] = value;
+    };
+  }
+
+  register_ld_r8_ptr_hl(ref) {
+    const r8List = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
+    for (let dst of r8List) {
+      const instKey = `ld_${dst}_ptr_hl`;
+      ref[inst[instKey]] = this.make_ld_r8_ptr_hl(dst);
+    }
+  }
+
+  make_ld_ptr_hl_r8(src) {
+    return () => {
+      this.setT(7);
+      const value = this.registers[src];
+      this.bus.writeOne(this.hl, value);
+    };
+  }
+
+  register_ld_ptr_hl_r8(ref) {
+    const r8List = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
+    for (let src of r8List) {
+      const instKey = `ld_ptr_hl_${src}`;
+      ref[inst[instKey]] = this.make_ld_ptr_hl_r8(src);
+    }
+  }
+
   registerInstructions() {
     this.inst = {};
     const ref = this.inst;
@@ -855,16 +906,19 @@ class Z80Cpu {
     ref[inst.ld_a_imm] = this.ld_a_imm;
     ref[inst.ccf] = this.ccf;
 
+    this.register_ld_r8_r8(ref);
+    this.register_ld_r8_ptr_hl(ref);
+    this.register_ld_ptr_hl_r8(ref);
+    ref[inst.halt] = this.halt;
+
     // gen.generate('ld bc imm');
     // (\b) (\b)
     // $1_$2
     // g.*'([^']*)'.*
     // ref[inst.$1] = this.$1;
 
-    ref[inst.halt] = this.halt;
     ref[inst.add_a_h] = this.add_a_h;
     ref[inst.ld_ptr_hl_a] = this.ld_ptr_hl_a;
-
   }
 }
 
