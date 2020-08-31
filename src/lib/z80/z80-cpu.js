@@ -190,21 +190,6 @@ class Z80Cpu {
     return { c, n, p_v, h, z, s };
   }
 
-  sub_08(dst, op) {
-    const result = dst - op;
-    const a = result & 0x0ff;
-    const c = toBit(result & ~0x0ff);
-    const s = toBit(result & 0x080);
-    const z = toBit(a === 0);
-    const half = (dst & 0x0f) + (op & 0x0f);
-    const h = toBit(half & 0x010);
-    const p = parity8(a);
-    const seven = (dst & 0x07f) + (op & 0x07f);
-    const v = toBit(seven & 0x080);
-
-    return { a, s, z, h, p, v, c };
-  }
-
   nop() {
     this.setT(4);
   }
