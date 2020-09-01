@@ -1009,3 +1009,124 @@ test('adc a ptr hl test', () => {
   expect(proc.registers.pc).toBe(10);
   expect(proc.registers.a).toBe(0x0fe);
 });
+
+test('sub r8 variants test', () => {
+  const r8List = [ 'b', 'c', 'd', 'e', 'h', 'l' ];
+  for (let src of r8List) {
+    const initKey = `ld_${src}_imm`;
+    const subKey = `sub_${src}`;
+
+    const [mainboard, proc, mem ] = build_cpu();
+
+    mem.load(0, [
+      inst[initKey], 0x0a,
+      inst[subKey],
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(4);
+    expect(proc.registers.a).toBe(0xf6);
+  }
+});
+
+test('sub a test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_a_imm, 0x0a,
+    inst.sub_a,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.a).toBe(0);
+});
+
+test('sub ptr hl test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x10, 0x32,
+    inst.ld_ptr_hl_imm, 0x0a,
+    inst.sub_ptr_hl,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(7);
+  expect(proc.registers.a).toBe(0xf6);
+});
+
+test('sbc a r8 variants test', () => {
+  const r8List = [ 'b', 'c', 'd', 'e', 'h', 'l' ];
+  for (let src of r8List) {
+    const initKey = `ld_${src}_imm`;
+    const sbcKey = `sbc_a_${src}`;
+
+    const [mainboard, proc, mem ] = build_cpu();
+
+    mem.load(0, [
+      inst[initKey], 0x01,
+      inst[sbcKey],
+      inst[sbcKey],
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(5);
+    expect(proc.registers.a).toBe(0x0fd);
+  }
+});
+
+test('sbc a a test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_a_imm, 0xff,
+    inst.add_a_a,
+    inst.sbc_a_a,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(5);
+  expect(proc.registers.a).toBe(0x0ff);
+});
+
+test('sbc a ptr hl test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x10, 0x32,
+    inst.ld_ptr_hl_imm, 0x1,
+    inst.ld_a_imm, 0x00,
+    inst.sbc_a_ptr_hl,
+    inst.sbc_a_ptr_hl,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(10);
+  expect(proc.registers.a).toBe(0x0fd);
+});
+

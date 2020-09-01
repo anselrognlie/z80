@@ -2,7 +2,7 @@ import inst from './z80-inst';
 import { clamp16, makeWord,
   getLo, getHi, splitHiLo,
   toBit, signed8, parity8,
-  add8, sub8, add16, sub16, adc8 } from '../bin-ops';
+  add8, sub8, add16, sub16, adc8, sbc8 } from '../bin-ops';
 
 export class Z80Flags {}
 
@@ -757,6 +757,86 @@ class Z80Cpu {
     this.adc_08(value);
   }
 
+  sub_08(value) {
+    const { a, s, z, h, v, n, c } = sub8(this.registers.a, value);
+    this.registers.a = a;
+
+    const f = this.getFlags();
+    f.s = s;
+    f.z = z;
+    f.h = h;
+    f.p_v = v;
+    f.n = n;
+    f.c = c;
+    this.setFlags(f);
+  }
+
+  sub_r8(value) {
+    this.setT(4);
+    this.sub_08(value);
+  }
+
+  make_sub_r8(src) {
+    return () => {
+      this.sub_r8(this.registers[src]);
+    }
+  }
+
+  register_sub_r8(ref) {
+    const r8List = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
+    for (let src of r8List) {
+      const key = `sub_${src}`;
+      ref[inst[key]] = this.make_sub_r8(src);
+    }
+  }
+
+  sub_ptr_hl() {
+    const addr = this.hl;
+    const value = this.bus.readOne(addr);
+    this.setT(7);
+    this.sub_08(value);
+  }
+
+  sbc_08(value) {
+    const f = this.getFlags();
+    const { a, s, z, h, v, n, c } = sbc8(this.registers.a, value, f.c);
+    this.registers.a = a;
+
+    f.s = s;
+    f.z = z;
+    f.h = h;
+    f.p_v = v;
+    f.n = n;
+    f.c = c;
+    this.setFlags(f);
+  }
+
+  sbc_a_r8(value) {
+    this.setT(4);
+    this.sbc_08(value);
+  }
+
+  make_sbc_a_r8(src) {
+    return () => {
+      this.sbc_a_r8(this.registers[src]);
+    }
+  }
+
+  register_sbc_a_r8(ref) {
+    const r8List = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
+    for (let src of r8List) {
+      const key = `sbc_a_${src}`;
+      ref[inst[key]] = this.make_sbc_a_r8(src);
+    }
+  }
+
+  sbc_a_ptr_hl() {
+    const addr = this.hl;
+    const value = this.bus.readOne(addr);
+    this.setT(7);
+    this.sbc_08(value);
+  }
+
   cpl() {
     this.setT(4);
     const a = ~this.registers.a & 0x0ff;
@@ -901,6 +981,12 @@ class Z80Cpu {
 
     this.register_adc_a_r8(ref);
     ref[inst.adc_a_ptr_hl] = this.adc_a_ptr_hl;
+
+    this.register_sub_r8(ref);
+    ref[inst.sub_ptr_hl] = this.sub_ptr_hl;
+
+    this.register_sbc_a_r8(ref);
+    ref[inst.sbc_a_ptr_hl] = this.sbc_a_ptr_hl;
 
     // gen.generate('ld bc imm');
     // (\b) (\b)

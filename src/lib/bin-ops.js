@@ -65,7 +65,8 @@ export function signed8(value) {
 }
 
 export function adc8(dst, op, cIn) {
-  const result = dst + op + cIn;
+  op += cIn;
+  const result = dst + op;
   const a = result & 0x0ff;
   const c = toBit(result & ~0x0ff);
   const s = toBit(a & 0x080);
@@ -82,7 +83,8 @@ export function adc8(dst, op, cIn) {
 }
 
 export function adc16(dst, op, cIn) {
-  const result = dst + op + cIn;
+  op += cIn;
+  const result = dst + op;
   const a = result & 0x0ffff;
   const c = toBit(result & ~0x0ffff);
   const s = toBit(a & 0x08000);
@@ -106,7 +108,8 @@ export function add16(dst, op) {
   return adc16(dst, op, 0);
 }
 
-export function sub8(dst, op) {
+export function sbc8(dst, op, cIn) {
+  op = op + cIn;
   const result = dst - op;
   const a = result & 0x0ff;
   const c = toBit(dst < op);
@@ -121,7 +124,8 @@ export function sub8(dst, op) {
   return { a, s, z, h, p, v, n, c };
 }
 
-export function sub16(dst, op) {
+export function sbc16(dst, op, cIn) {
+  op += cIn;
   const result = dst - op;
   const a = result & 0x0ffff;
   const c = toBit(dst < op);
@@ -134,4 +138,12 @@ export function sub16(dst, op) {
   const v = toBit(c !== cout);
 
   return { a, s, z, h, p, v, n, c };
+}
+
+export function sub8(dst, op) {
+  return sbc8(dst, op, 0);
+}
+
+export function sub16(dst, op) {
+  return sbc16(dst, op, 0);
 }
