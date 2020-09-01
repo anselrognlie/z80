@@ -1376,3 +1376,92 @@ test('call ret test', () => {
   expect(proc.registers.a).toBe(0x01);
 });
 
+test('ret z test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_a_imm, 0x0a,
+    inst.call_imm, 0x06, 0x00,
+    inst.halt,
+    inst.inc_b,
+    inst.dec_a,
+    inst.ret_z,
+    inst.jr_imm, 0xfb,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(5);
+  expect(proc.registers.a).toBe(0);
+  expect(proc.registers.b).toBe(10);
+});
+
+test('call z test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_a_imm, 0x02,
+    inst.call_z_imm, 0x0e, 0x00,
+    inst.dec_a,
+    inst.call_z_imm, 0x0e, 0x00,
+    inst.dec_a,
+    inst.call_z_imm, 0x10, 0x00,
+    inst.halt,
+    inst.inc_b,
+    inst.ret,
+    inst.inc_c,
+    inst.ret,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(13);
+  expect(proc.registers.a).toBe(0);
+  expect(proc.registers.b).toBe(0);
+  expect(proc.registers.c).toBe(1);
+});
+
+test('jp imm test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.jp_imm, 0x05, 0x00,
+    inst.ld_b_imm, 0x0a,
+    inst.ld_a_imm, 0x0a,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(7);
+  expect(proc.registers.a).toBe(10);
+  expect(proc.registers.b).toBe(0);
+});
+
+test('jp z nz imm test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_a_imm, 0x0a,
+    inst.inc_b,
+    inst.dec_a,
+    inst.jp_z_imm, 0x0a, 0x00,
+    inst.jp_imm, 0x02, 0x00,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(10);
+  expect(proc.registers.a).toBe(0);
+  expect(proc.registers.b).toBe(10);
+});
+

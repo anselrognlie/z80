@@ -1085,31 +1085,105 @@ class Z80Cpu {
     this.cp_08(value);
   }
 
-  ret_nz() {
-    if (this.flagIsSet(Z80FlagMasks.Z)) {
-      this.setT(11);
-      const addr = this.registers.sp;
-      this.registers.pc = this.readWord(addr);
-    } else {
-      this.setT(5);
-    }
+  make_call_cond_imm(condFn) {
+    return () => {
+      const newPc = this.readWordFromPcAdvance();
+      if (condFn()) {
+        this.setT(17);
+        this.call_imm_internal(newPc);
+      } else {
+        this.setT(10);
+      }
+    };
+  }
+
+  register_call_cond_imm(ref) {
+    ref[inst.call_nz_imm] = this.make_call_cond_imm(() => this.flagNotSet(Z80FlagMasks.Z));
+    ref[inst.call_z_imm] = this.make_call_cond_imm(() => this.flagIsSet(Z80FlagMasks.Z));
+    ref[inst.call_nc_imm] = this.make_call_cond_imm(() => this.flagNotSet(Z80FlagMasks.C));
+    ref[inst.call_c_imm] = this.make_call_cond_imm(() => this.flagIsSet(Z80FlagMasks.C));
+    ref[inst.call_po_imm] = this.make_call_cond_imm(() => this.flagNotSet(Z80FlagMasks.P));
+    ref[inst.call_pe_imm] = this.make_call_cond_imm(() => this.flagIsSet(Z80FlagMasks.P));
+    ref[inst.call_p_imm] = this.make_call_cond_imm(() => this.flagNotSet(Z80FlagMasks.S));
+    ref[inst.call_m_imm] = this.make_call_cond_imm(() => this.flagIsSet(Z80FlagMasks.S));
+  }
+
+  make_ret_cond(condFn) {
+    return () => {
+      if (condFn()) {
+        this.setT(11);
+        this.ret_internal();
+      } else {
+        this.setT(5);
+      }
+    };
+  }
+
+  register_ret_cond(ref) {
+    ref[inst.ret_nz] = this.make_ret_cond(() => this.flagNotSet(Z80FlagMasks.Z));
+    ref[inst.ret_z] = this.make_ret_cond(() => this.flagIsSet(Z80FlagMasks.Z));
+    ref[inst.ret_nc] = this.make_ret_cond(() => this.flagNotSet(Z80FlagMasks.C));
+    ref[inst.ret_c] = this.make_ret_cond(() => this.flagIsSet(Z80FlagMasks.C));
+    ref[inst.ret_po] = this.make_ret_cond(() => this.flagNotSet(Z80FlagMasks.P));
+    ref[inst.ret_pe] = this.make_ret_cond(() => this.flagIsSet(Z80FlagMasks.P));
+    ref[inst.ret_p] = this.make_ret_cond(() => this.flagNotSet(Z80FlagMasks.S));
+    ref[inst.ret_m] = this.make_ret_cond(() => this.flagIsSet(Z80FlagMasks.S));
   }
 
   call_imm() {
     this.setT(17);
     const newPc = this.readWordFromPcAdvance();
+    this.call_imm_internal(newPc);
+  }
+
+  call_imm_internal(pc) {
     const sp = (this.registers.sp - 2) & 0x0ffff;
     this.writeWord(sp, this.registers.pc);
     this.registers.sp = sp;
-    this.registers.pc = newPc;
+    this.registers.pc = pc;
   }
 
   ret() {
     this.setT(10);
+    this.ret_internal();
+  }
+
+  ret_internal() {
     const sp = this.registers.sp
     const newPc = this.readWord(sp);
     this.registers.sp = (sp + 2) & 0x0ffff;
     this.registers.pc = newPc;
+  }
+
+  jp_imm_internal(pc) {
+    this.registers.pc = pc;
+  }
+
+  jp_imm() {
+    this.setT(10)
+    const newPc = this.readWordFromPcAdvance();
+    this.jp_imm_internal(newPc);
+  }
+
+  make_jp_cond_imm(condFn) {
+    return () => {
+      const newPc = this.readWordFromPcAdvance();
+      this.setT(10);
+      if (condFn()) {
+        this.jp_imm_internal(newPc);
+      }
+    };
+  }
+
+  register_jp_cond_imm(ref) {
+    ref[inst.jp_nz_imm] = this.make_jp_cond_imm(() => this.flagNotSet(Z80FlagMasks.Z));
+    ref[inst.jp_z_imm] = this.make_jp_cond_imm(() => this.flagIsSet(Z80FlagMasks.Z));
+    ref[inst.jp_nc_imm] = this.make_jp_cond_imm(() => this.flagNotSet(Z80FlagMasks.C));
+    ref[inst.jp_c_imm] = this.make_jp_cond_imm(() => this.flagIsSet(Z80FlagMasks.C));
+    ref[inst.jp_po_imm] = this.make_jp_cond_imm(() => this.flagNotSet(Z80FlagMasks.P));
+    ref[inst.jp_pe_imm] = this.make_jp_cond_imm(() => this.flagIsSet(Z80FlagMasks.P));
+    ref[inst.jp_p_imm] = this.make_jp_cond_imm(() => this.flagNotSet(Z80FlagMasks.S));
+    ref[inst.jp_m_imm] = this.make_jp_cond_imm(() => this.flagIsSet(Z80FlagMasks.S));
   }
 
   registerInstructions() {
@@ -1199,20 +1273,20 @@ class Z80Cpu {
     this.register_cp_r8(ref);
     ref[inst.cp_ptr_hl] = this.cp_ptr_hl;
 
-    ref[inst.ret_nz] = this.ret_nz;
+    this.register_ret_cond(ref);
+    this.register_call_cond_imm(ref);
+    this.register_jp_cond_imm(ref);
+
     // ref[inst.pop_bc] = this.pop_bc;
     // ref[inst.jp_nz_imm] = this.jp_nz_imm;
-    // ref[inst.jp_imm] = this.jp_imm;
-    // ref[inst.call_nz_imm] = this.call_nz_imm;
+    ref[inst.jp_imm] = this.jp_imm;
     // ref[inst.push_bc] = this.push_bc;
     // ref[inst.add_a_imm] = this.add_a_imm;
     // ref[inst.rst_00] = this.rst_00;
 
-    // ref[inst.ret_z] = this.ret_z;
     ref[inst.ret] = this.ret;
     // ref[inst.jp_z_imm] = this.jp_z_imm;
     // ref[inst.pre_bit] = this.pre_bit;
-    // ref[inst.call_z_imm] = this.call_z_imm;
     ref[inst.call_imm] = this.call_imm;
     // ref[inst.adc_a_imm] = this.adc_a_imm;
     // ref[inst.rst_08] = this.rst_08;
