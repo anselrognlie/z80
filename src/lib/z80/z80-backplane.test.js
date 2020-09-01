@@ -11,6 +11,7 @@ const build_cpu = () => {
 
   mainboard.registerDevice(proc);
   mainboard.mapAddress(0, mem);
+  proc.useTStates(false);
 
   return [mainboard, proc, mem];
 }
@@ -32,6 +33,8 @@ test('undefined opcode', () => {
 
 test('simple backplane test', () => {
   const [mainboard, proc, mem ] = build_cpu();
+
+  proc.useTStates(true);
 
   mem.load(0, [
     inst.nop,
@@ -1353,5 +1356,23 @@ test('cp ptr hl test', () => {
   expect(proc.registers.pc).toBe(8);
   expect(proc.registers.a).toBe(0x0aa);
   expect(proc.getFlags().z).toBe(1);
+});
+
+test('call ret test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.call_imm, 0x04, 0x00,
+    inst.halt,
+    inst.inc_a,
+    inst.ret,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(3);
+  expect(proc.registers.a).toBe(0x01);
 });
 

@@ -142,6 +142,17 @@ class Z80Cpu {
     }
   }
 
+  readWord(addr) {
+    const values = this.bus.readMany(addr, 2);
+    return (((values[1] & 0x0ff) << 8) | (values[0] & 0x0ff)) & 0x0ff;
+  }
+
+  writeWord(addr, word) {
+    const hi = ((word & 0x0ff00) >> 8) & 0x0ff;
+    const lo = word & 0x0ff;
+    this.bus.writeMany(addr, [lo, hi]);
+  }
+
   readFromPc() {
     return this.bus.readOne(this.registers.pc);
   }
@@ -1074,6 +1085,33 @@ class Z80Cpu {
     this.cp_08(value);
   }
 
+  ret_nz() {
+    if (this.flagIsSet(Z80FlagMasks.Z)) {
+      this.setT(11);
+      const addr = this.registers.sp;
+      this.registers.pc = this.readWord(addr);
+    } else {
+      this.setT(5);
+    }
+  }
+
+  call_imm() {
+    this.setT(17);
+    const newPc = this.readWordFromPcAdvance();
+    const sp = (this.registers.sp - 2) & 0x0ffff;
+    this.writeWord(sp, this.registers.pc);
+    this.registers.sp = sp;
+    this.registers.pc = newPc;
+  }
+
+  ret() {
+    this.setT(10);
+    const sp = this.registers.sp
+    const newPc = this.readWord(sp);
+    this.registers.sp = (sp + 2) & 0x0ffff;
+    this.registers.pc = newPc;
+  }
+
   registerInstructions() {
     this.inst = {};
     const ref = this.inst;
@@ -1160,6 +1198,24 @@ class Z80Cpu {
 
     this.register_cp_r8(ref);
     ref[inst.cp_ptr_hl] = this.cp_ptr_hl;
+
+    ref[inst.ret_nz] = this.ret_nz;
+    // ref[inst.pop_bc] = this.pop_bc;
+    // ref[inst.jp_nz_imm] = this.jp_nz_imm;
+    // ref[inst.jp_imm] = this.jp_imm;
+    // ref[inst.call_nz_imm] = this.call_nz_imm;
+    // ref[inst.push_bc] = this.push_bc;
+    // ref[inst.add_a_imm] = this.add_a_imm;
+    // ref[inst.rst_00] = this.rst_00;
+
+    // ref[inst.ret_z] = this.ret_z;
+    ref[inst.ret] = this.ret;
+    // ref[inst.jp_z_imm] = this.jp_z_imm;
+    // ref[inst.pre_bit] = this.pre_bit;
+    // ref[inst.call_z_imm] = this.call_z_imm;
+    ref[inst.call_imm] = this.call_imm;
+    // ref[inst.adc_a_imm] = this.adc_a_imm;
+    // ref[inst.rst_08] = this.rst_08;
 
     // gen.generate('ld bc imm');
     // (\b) (\b)
