@@ -1,3 +1,5 @@
+// some flag settings from http://www.z80.info/z80sflag.htm
+
 export function toBit(value) {
   return value ? 1 : 0;
 }
@@ -146,4 +148,43 @@ export function sub8(dst, op) {
 
 export function sub16(dst, op) {
   return sbc16(dst, op, 0);
+}
+
+export function and8(dst, op) {
+  const result = dst & op;
+  const a = result & 0x0ff;
+  const c = 0;
+  const s = toBit(a & 0x080);
+  const z = toBit(a === 0);
+  const n = 0;
+  const h = 1;
+  const p = parity8(a);
+
+  return { a, s, z, h, p, n, c };
+}
+
+export function or8(dst, op) {
+  const result = dst | op;
+  const a = result & 0x0ff;
+  const c = 0;
+  const s = toBit(a & 0x080);
+  const z = toBit(a === 0);
+  const n = 0;
+  const h = 0;
+  const p = parity8(a);
+
+  return { a, s, z, h, p, n, c };
+}
+
+export function xor8(dst, op) {
+  const result = dst ^ op;
+  const a = result & 0x0ff;
+  const c = 0;
+  const s = toBit(a & 0x080);
+  const z = toBit(a === 0);
+  const n = 0;
+  const h = 0;
+  const p = parity8(a);
+
+  return { a, s, z, h, p, n, c };
 }

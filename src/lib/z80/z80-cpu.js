@@ -2,7 +2,8 @@ import inst from './z80-inst';
 import { clamp16, makeWord,
   getLo, getHi, splitHiLo,
   toBit, signed8, parity8,
-  add8, sub8, add16, sub16, adc8, sbc8 } from '../bin-ops';
+  add8, sub8, add16, sub16, adc8, sbc8,
+  and8, or8, xor8 } from '../bin-ops';
 
 export class Z80Flags {}
 
@@ -914,6 +915,165 @@ class Z80Cpu {
     }
   }
 
+  and_08(value) {
+    const { a, s, z, h, p, n, c } = and8(this.registers.a, value);
+    this.registers.a = a;
+
+    const f = this.getFlags();
+    f.s = s;
+    f.z = z;
+    f.h = h;
+    f.p_v = p;
+    f.n = n;
+    f.c = c;
+    this.setFlags(f);
+  }
+
+  and_r8(value) {
+    this.setT(4);
+    this.and_08(value);
+  }
+
+  make_and_r8(src) {
+    return () => {
+      this.and_r8(this.registers[src]);
+    }
+  }
+
+  register_and_r8(ref) {
+    const r8List = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
+    for (let src of r8List) {
+      const key = `and_${src}`;
+      ref[inst[key]] = this.make_and_r8(src);
+    }
+  }
+
+  and_ptr_hl() {
+    const addr = this.hl;
+    const value = this.bus.readOne(addr);
+    this.setT(7);
+    this.and_08(value);
+  }
+
+  or_08(value) {
+    const { a, s, z, h, p, n, c } = or8(this.registers.a, value);
+    this.registers.a = a;
+
+    const f = this.getFlags();
+    f.s = s;
+    f.z = z;
+    f.h = h;
+    f.p_v = p;
+    f.n = n;
+    f.c = c;
+    this.setFlags(f);
+  }
+
+  or_r8(value) {
+    this.setT(4);
+    this.or_08(value);
+  }
+
+  make_or_r8(src) {
+    return () => {
+      this.or_r8(this.registers[src]);
+    }
+  }
+
+  register_or_r8(ref) {
+    const r8List = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
+    for (let src of r8List) {
+      const key = `or_${src}`;
+      ref[inst[key]] = this.make_or_r8(src);
+    }
+  }
+
+  or_ptr_hl() {
+    const addr = this.hl;
+    const value = this.bus.readOne(addr);
+    this.setT(7);
+    this.or_08(value);
+  }
+
+  xor_08(value) {
+    const { a, s, z, h, p, n, c } = xor8(this.registers.a, value);
+    this.registers.a = a;
+
+    const f = this.getFlags();
+    f.s = s;
+    f.z = z;
+    f.h = h;
+    f.p_v = p;
+    f.n = n;
+    f.c = c;
+    this.setFlags(f);
+  }
+
+  xor_r8(value) {
+    this.setT(4);
+    this.xor_08(value);
+  }
+
+  make_xor_r8(src) {
+    return () => {
+      this.xor_r8(this.registers[src]);
+    }
+  }
+
+  register_xor_r8(ref) {
+    const r8List = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
+    for (let src of r8List) {
+      const key = `xor_${src}`;
+      ref[inst[key]] = this.make_xor_r8(src);
+    }
+  }
+
+  xor_ptr_hl() {
+    const addr = this.hl;
+    const value = this.bus.readOne(addr);
+    this.setT(7);
+    this.xor_08(value);
+  }
+
+  cp_08(value) {
+    const { s, z, h, v, n, c } = sub8(this.registers.a, value);
+
+    const f = this.getFlags();
+    f.s = s;
+    f.z = z;
+    f.h = h;
+    f.p_v = v;
+    f.n = n;
+    f.c = c;
+    this.setFlags(f);
+  }
+
+  cp_r8(value) {
+    this.setT(4);
+    this.cp_08(value);
+  }
+
+  make_cp_r8(src) {
+    return () => {
+      this.cp_r8(this.registers[src]);
+    }
+  }
+
+  register_cp_r8(ref) {
+    const r8List = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
+    for (let src of r8List) {
+      const key = `cp_${src}`;
+      ref[inst[key]] = this.make_cp_r8(src);
+    }
+  }
+
+  cp_ptr_hl() {
+    const addr = this.hl;
+    const value = this.bus.readOne(addr);
+    this.setT(7);
+    this.cp_08(value);
+  }
+
   registerInstructions() {
     this.inst = {};
     const ref = this.inst;
@@ -988,6 +1148,18 @@ class Z80Cpu {
 
     this.register_sbc_a_r8(ref);
     ref[inst.sbc_a_ptr_hl] = this.sbc_a_ptr_hl;
+
+    this.register_and_r8(ref);
+    ref[inst.and_ptr_hl] = this.and_ptr_hl;
+
+    this.register_or_r8(ref);
+    ref[inst.or_ptr_hl] = this.or_ptr_hl;
+
+    this.register_xor_r8(ref);
+    ref[inst.xor_ptr_hl] = this.xor_ptr_hl;
+
+    this.register_cp_r8(ref);
+    ref[inst.cp_ptr_hl] = this.cp_ptr_hl;
 
     // gen.generate('ld bc imm');
     // (\b) (\b)
