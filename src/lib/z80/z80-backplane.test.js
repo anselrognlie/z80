@@ -44,7 +44,7 @@ test('simple backplane test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(2);
+  expect(proc.registers.pc).toBe(1);
   expect(t).toBe(5);
 });
 
@@ -60,7 +60,7 @@ test('ld bc test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.pc).toBe(3);
   expect(proc.bc).toBe(0x3210);
 });
 
@@ -79,7 +79,7 @@ test('inc b test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.pc).toBe(3);
   expect(proc.registers.b).toBe(3);
 });
 
@@ -100,7 +100,7 @@ test('dec b test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(5);
+  expect(proc.registers.pc).toBe(4);
   expect(proc.registers.b).toBe(0);
   expect(proc.getFlags().z).toBe(1);
 });
@@ -118,7 +118,7 @@ test('ld b imm test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.pc).toBe(3);
   expect(proc.registers.b).toBe(0);
   expect(proc.getFlags().z).toBe(1);
 });
@@ -136,7 +136,7 @@ test('rlca test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.pc).toBe(3);
   expect(proc.registers.a).toBe(1);
   expect(proc.getFlags().c).toBe(1);
 });
@@ -155,7 +155,7 @@ test('ex af test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(5);
+  expect(proc.registers.pc).toBe(4);
   expect(proc.registers.a$).toBe(1);
   expect(proc.getFlags().c).toBe(0);
   expect(proc.registers.f$ & masks.C).not.toBe(0);
@@ -175,7 +175,7 @@ test('add hl bc test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(8);
+  expect(proc.registers.pc).toBe(7);
   expect(proc.bc).toBe(0x3210);
   expect(proc.hl).toBe(0xa864);
 });
@@ -196,7 +196,7 @@ test('a ptr bc test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(10);
+  expect(proc.registers.pc).toBe(9);
   expect(proc.registers.a).toBe(0x0a0);
 });
 
@@ -212,7 +212,7 @@ test('inc bc test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(2);
+  expect(proc.registers.pc).toBe(1);
   expect(proc.bc).toBe(1);
 });
 
@@ -229,7 +229,7 @@ test('dec bc test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(5);
+  expect(proc.registers.pc).toBe(4);
   expect(proc.bc).toBe(1);
 });
 
@@ -246,7 +246,7 @@ test('rrca test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.pc).toBe(3);
   expect(proc.registers.a).toBe(129);
   expect(proc.getFlags().c).toBe(1);
 });
@@ -266,7 +266,7 @@ test('djnz test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(8);
+  expect(proc.registers.pc).toBe(7);
   expect(proc.registers.b).toBe(0);
   expect(proc.registers.c).toBe(10);
 });
@@ -286,7 +286,7 @@ test('asst d test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(6);
+  expect(proc.registers.pc).toBe(5);
   expect(proc.registers.d).toBe(10);
   expect(proc.registers.e).toBe(1);
 });
@@ -306,7 +306,7 @@ test('asst de test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(8);
+  expect(proc.registers.pc).toBe(7);
   expect(proc.de).toBe(0x0200);
   expect(mem.readOne(0x0200)).toBe(10);
 });
@@ -324,7 +324,7 @@ test('rla test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.pc).toBe(3);
   expect(proc.registers.a).toBe(0);
   expect(proc.getFlags().c).toBe(1);
 });
@@ -344,7 +344,7 @@ test('jr test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(9);
+  expect(proc.registers.pc).toBe(8);
   expect(proc.registers.a).toBe(0);
 });
 
@@ -361,7 +361,7 @@ test('rra test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.pc).toBe(3);
   expect(proc.registers.a).toBe(1);
   expect(proc.getFlags().c).toBe(1);
 });
@@ -381,7 +381,7 @@ test('jr nz test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(7);
+  expect(proc.registers.pc).toBe(6);
   expect(proc.registers.b).toBe(0);
   expect(proc.registers.c).toBe(10);
 });
@@ -399,7 +399,7 @@ test('ld ptr imm hl test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(7);
+  expect(proc.registers.pc).toBe(6);
   expect(proc.hl).toBe(0x3210);
   expect(mem.readOne(0x1000)).toBe(0x10);
   expect(mem.readOne(0x1001)).toBe(0x32);
@@ -420,7 +420,7 @@ test('asst e test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(6);
+  expect(proc.registers.pc).toBe(5);
   expect(proc.registers.d).toBe(0);
   expect(proc.registers.e).toBe(11);
 });
@@ -440,7 +440,7 @@ test('asst h test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(6);
+  expect(proc.registers.pc).toBe(5);
   expect(proc.registers.h).toBe(10);
   expect(proc.registers.l).toBe(1);
 });
@@ -460,7 +460,7 @@ test('daa test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(7);
+  expect(proc.registers.pc).toBe(6);
   expect(proc.registers.h).toBe(0x027);
   expect(proc.registers.a).toBe(0x042);
 });
@@ -479,7 +479,7 @@ test('add_a_h test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(6);
+  expect(proc.registers.pc).toBe(5);
   expect(proc.registers.h).toBe(10);
   expect(proc.registers.a).toBe(0x014);
 });
@@ -499,7 +499,7 @@ test('jr z test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(7);
+  expect(proc.registers.pc).toBe(6);
   expect(proc.registers.b).toBe(0x0ff);
   expect(proc.registers.c).toBe(2);
 });
@@ -519,7 +519,7 @@ test('ld hl ptr imm test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(13);
+  expect(proc.registers.pc).toBe(12);
   expect(proc.hl).toBe(0x0123);
   expect(mem.readWord(0x6745)).toBe(0x0123);
 });
@@ -539,7 +539,7 @@ test('asst l test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(6);
+  expect(proc.registers.pc).toBe(5);
   expect(proc.registers.h).toBe(0);
   expect(proc.registers.l).toBe(11);
 });
@@ -559,7 +559,7 @@ test('asst hl test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(8);
+  expect(proc.registers.pc).toBe(7);
   expect(proc.hl).toBe(0x0200);
   expect(mem.readOne(0x0200)).toBe(10);
 });
@@ -577,7 +577,7 @@ test('cpl test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.pc).toBe(3);
   expect(proc.registers.a).toBe(0x055);
 });
 
@@ -594,7 +594,7 @@ test('ld ptr imm a test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(6);
+  expect(proc.registers.pc).toBe(5);
   expect(mem.readOne(0x3210)).toBe(0x0aa);
 });
 
@@ -611,7 +611,7 @@ test('simple sp test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(5);
+  expect(proc.registers.pc).toBe(4);
   expect(proc.registers.sp).toBe(0x1001);
 });
 
@@ -628,7 +628,7 @@ test('ld ptr hl imm test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(6);
+  expect(proc.registers.pc).toBe(5);
   expect(mem.readOne(0x1000)).toBe(0x0a0);
 });
 
@@ -644,7 +644,7 @@ test('scf test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(2);
+  expect(proc.registers.pc).toBe(1);
   const f = proc.getFlags();
   expect(f).toMatchStruct({ c:1, h:0, n:0 });
 });
@@ -668,7 +668,7 @@ test('jr c nc test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(14);
+  expect(proc.registers.pc).toBe(13);
   expect(proc.registers.a).toBe(1);
   expect(proc.registers.b).toBe(0);
 });
@@ -687,7 +687,7 @@ test('ld hl sp test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(8);
+  expect(proc.registers.pc).toBe(7);
   expect(proc.hl).toBe(0x6824);
 });
 
@@ -705,7 +705,7 @@ test('ld a ptr imm test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(9);
+  expect(proc.registers.pc).toBe(8);
   expect(proc.registers.a).toBe(0x0a);
 });
 
@@ -721,7 +721,7 @@ test('ccf 1 test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(2);
+  expect(proc.registers.pc).toBe(1);
   expect(proc.getFlags()).toMatchStruct({ c:1 });
 });
 
@@ -738,7 +738,7 @@ test('ccf 0 test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(3);
+  expect(proc.registers.pc).toBe(2);
   expect(proc.getFlags()).toMatchStruct({ c:0 });
 });
 
@@ -761,7 +761,7 @@ test('ld r8 r8 variants test', () => {
         mainboard.clock();
       }
 
-      expect(proc.registers.pc).toBe(4);
+      expect(proc.registers.pc).toBe(3);
       expect(proc.registers[dst]).toBe(0x0a);
     }
   }
@@ -786,7 +786,7 @@ test('ld ptr hl r8 variants test', () => {
       mainboard.clock();
     }
 
-    expect(proc.registers.pc).toBe(7);
+    expect(proc.registers.pc).toBe(6);
     expect(mem.readOne(0x3210)).toBe(0x0a);
   }
 });
@@ -804,7 +804,7 @@ test('ld ptr hl h test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(5);
+  expect(proc.registers.pc).toBe(4);
   expect(mem.readOne(0x3210)).toBe(0x32);
 });
 
@@ -821,7 +821,7 @@ test('ld ptr hl l test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(5);
+  expect(proc.registers.pc).toBe(4);
   expect(mem.readOne(0x3210)).toBe(0x10);
 });
 
@@ -845,7 +845,7 @@ test('ld r8 ptr hl variants test', () => {
       mainboard.clock();
     }
 
-    expect(proc.registers.pc).toBe(11);
+    expect(proc.registers.pc).toBe(10);
     expect(proc.registers[dst]).toBe(0x0a);
   }
 });
@@ -866,7 +866,7 @@ test('ld h ptr hl test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(11);
+  expect(proc.registers.pc).toBe(10);
   expect(proc.registers.h).toBe(0x0a);
 });
 
@@ -886,7 +886,7 @@ test('ld l ptr hl test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(11);
+  expect(proc.registers.pc).toBe(10);
   expect(proc.registers.l).toBe(0x0a);
 });
 
@@ -908,7 +908,7 @@ test('add a r8 variants test', () => {
       mainboard.clock();
     }
 
-    expect(proc.registers.pc).toBe(4);
+    expect(proc.registers.pc).toBe(3);
     expect(proc.registers.a).toBe(0x0a);
   }
 });
@@ -926,7 +926,7 @@ test('add a a test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.pc).toBe(3);
   expect(proc.registers.a).toBe(20);
 });
 
@@ -944,7 +944,7 @@ test('add a ptr hl test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(7);
+  expect(proc.registers.pc).toBe(6);
   expect(proc.registers.a).toBe(10);
 });
 
@@ -967,7 +967,7 @@ test('adc a r8 variants test', () => {
       mainboard.clock();
     }
 
-    expect(proc.registers.pc).toBe(5);
+    expect(proc.registers.pc).toBe(4);
     expect(proc.registers.a).toBe(0x0fe);
   }
 });
@@ -986,7 +986,7 @@ test('adc a a test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(5);
+  expect(proc.registers.pc).toBe(4);
   expect(proc.registers.a).toBe(0x0fd);
 });
 
@@ -1006,7 +1006,7 @@ test('adc a ptr hl test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(10);
+  expect(proc.registers.pc).toBe(9);
   expect(proc.registers.a).toBe(0x0fe);
 });
 
@@ -1028,7 +1028,7 @@ test('sub r8 variants test', () => {
       mainboard.clock();
     }
 
-    expect(proc.registers.pc).toBe(4);
+    expect(proc.registers.pc).toBe(3);
     expect(proc.registers.a).toBe(0xf6);
   }
 });
@@ -1046,7 +1046,7 @@ test('sub a test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.pc).toBe(3);
   expect(proc.registers.a).toBe(0);
 });
 
@@ -1064,7 +1064,7 @@ test('sub ptr hl test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(7);
+  expect(proc.registers.pc).toBe(6);
   expect(proc.registers.a).toBe(0xf6);
 });
 
@@ -1087,7 +1087,7 @@ test('sbc a r8 variants test', () => {
       mainboard.clock();
     }
 
-    expect(proc.registers.pc).toBe(5);
+    expect(proc.registers.pc).toBe(4);
     expect(proc.registers.a).toBe(0x0fd);
   }
 });
@@ -1106,7 +1106,7 @@ test('sbc a a test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(5);
+  expect(proc.registers.pc).toBe(4);
   expect(proc.registers.a).toBe(0x0ff);
 });
 
@@ -1126,7 +1126,7 @@ test('sbc a ptr hl test', () => {
     mainboard.clock();
   }
 
-  expect(proc.registers.pc).toBe(10);
+  expect(proc.registers.pc).toBe(9);
   expect(proc.registers.a).toBe(0x0fd);
 });
 

@@ -119,10 +119,6 @@ class Z80Cpu {
       }
     }
 
-    if (this.halted) {
-      return;
-    }
-
     const inst = this.readFromPcAdvance();
     if (undefined === inst) {
       const prevPc = (this.registers.pc - 1).toString(16);
@@ -168,7 +164,11 @@ class Z80Cpu {
   }
 
   advancePC(count = 1) {
-    this.registers.pc += count;
+    this.registers.pc = (this.registers.pc + count) & 0x0ffff;
+  }
+
+  reversePC(count = 1) {
+    this.registers.pc = (this.registers.pc - count) & 0x0ffff;
   }
 
   setFlags(flags) {
@@ -196,6 +196,7 @@ class Z80Cpu {
 
   halt() {
     this.setT(4);
+    this.reversePC();
     this.halted = true;
   }
 
