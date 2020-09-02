@@ -1483,3 +1483,62 @@ test('push pop test', () => {
   expect(proc.de).toBe(0x3210);
 });
 
+test('rst 08 test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.rst_08,
+    inst.nop,
+    inst.nop,
+    inst.nop,
+    inst.nop,
+    inst.nop,
+    inst.nop,
+    inst.nop,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(8);
+  expect(proc.registers.pc).toBe(0x08);
+  expect(proc.registers.sp).toBe(0x0fffe);
+});
+
+test('add adc imm test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_a_imm, 0xff,
+    inst.add_a_imm, 1,
+    inst.adc_a_imm, 0,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(6);
+  expect(proc.registers.a).toBe(1);
+});
+
+test('sub sbc imm test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.sub_imm, 1,
+    inst.sbc_a_imm, 0,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.a).toBe(0xfe);
+});
+

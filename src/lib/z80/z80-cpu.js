@@ -1,6 +1,6 @@
 import inst from './z80-inst';
 import { clamp16, makeWord,
-  getLo, getHi, splitHiLo,
+  getLo, getHi, splitHiLo, hex8,
   toBit, signed8, parity8,
   add8, sub8, add16, sub16, adc8, sbc8,
   and8, or8, xor8 } from '../bin-ops';
@@ -740,6 +740,12 @@ class Z80Cpu {
     this.add_08(value);
   }
 
+  add_a_imm() {
+    const value = this.readFromPcAdvance();
+    this.setT(7);
+    this.add_08(value);
+  }
+
   adc_08(value) {
     const f = this.getFlags();
     const { a, s, z, h, v, n, c } = adc8(this.registers.a, value, f.c);
@@ -776,6 +782,12 @@ class Z80Cpu {
   adc_a_ptr_hl() {
     const addr = this.hl;
     const value = this.bus.readOne(addr);
+    this.setT(7);
+    this.adc_08(value);
+  }
+
+  adc_a_imm() {
+    const value = this.readFromPcAdvance();
     this.setT(7);
     this.adc_08(value);
   }
@@ -820,6 +832,12 @@ class Z80Cpu {
     this.sub_08(value);
   }
 
+  sub_imm() {
+    const value = this.readFromPcAdvance();
+    this.setT(7);
+    this.sub_08(value);
+  }
+
   sbc_08(value) {
     const f = this.getFlags();
     const { a, s, z, h, v, n, c } = sbc8(this.registers.a, value, f.c);
@@ -856,6 +874,12 @@ class Z80Cpu {
   sbc_a_ptr_hl() {
     const addr = this.hl;
     const value = this.bus.readOne(addr);
+    this.setT(7);
+    this.sbc_08(value);
+  }
+
+  sbc_a_imm() {
+    const value = this.readFromPcAdvance();
     this.setT(7);
     this.sbc_08(value);
   }
@@ -1229,6 +1253,24 @@ class Z80Cpu {
     ref[inst.pop_hl] = this.make_pop_r16((value) => { this.hl = value; });
   }
 
+  make_rst_off(offset) {
+    return () => {
+      const sp = clamp16(this.registers.sp - 2);
+      this.writeWord(sp, this.registers.pc);
+      this.registers.sp = sp;
+      this.registers.pc = offset;
+    };
+  }
+
+  register_rst_off(ref) {
+    let offset = 0;
+    while (offset <= 0x38) {
+      const hex = hex8(offset);
+      ref[inst[`rst_${hex}`]] = this.make_rst_off(offset);
+      offset += 8;
+    }
+  }
+
   registerInstructions() {
     this.inst = {};
     const ref = this.inst;
@@ -1322,17 +1364,39 @@ class Z80Cpu {
     this.register_push_r16(ref);
     this.register_pop_r16(ref);
 
-    // ref[inst.pop_bc] = this.pop_bc;
     ref[inst.jp_imm] = this.jp_imm;
-    // ref[inst.push_bc] = this.push_bc;
-    // ref[inst.add_a_imm] = this.add_a_imm;
-    // ref[inst.rst_00] = this.rst_00;
+    ref[inst.add_a_imm] = this.add_a_imm;
+
+    this.register_rst_off(ref);
 
     ref[inst.ret] = this.ret;
     // ref[inst.pre_bit] = this.pre_bit;
     ref[inst.call_imm] = this.call_imm;
-    // ref[inst.adc_a_imm] = this.adc_a_imm;
-    // ref[inst.rst_08] = this.rst_08;
+    ref[inst.adc_a_imm] = this.adc_a_imm;
+
+    // ref[inst.out_ptr_imm_a] = this.out_ptr_imm_a;
+    ref[inst.sub_imm] = this.sub_imm;
+
+    // ref[inst.exx] = this.exx;
+    // ref[inst.in_a_ptr_imm] = this.in_a_ptr_imm;
+    // ref[inst.pre_ix] = this.pre_ix;
+    ref[inst.sbc_a_imm] = this.sbc_a_imm;
+
+    // ref[inst.ex_ptr_sp_hl] = this.ex_ptr_sp_hl;
+    // ref[inst.and_imm] = this.and_imm;
+
+    // ref[inst.jp_ptr_hl] = this.jp_ptr_hl;
+    // ref[inst.ex_de_hl] = this.ex_de_hl;
+    // ref[inst.pre_80] = this.pre_80;
+    // ref[inst.xor_imm] = this.xor_imm;
+
+    // ref[inst.di] = this.di;
+    // ref[inst.or_imm] = this.or_imm;
+
+    // ref[inst.ld_sp_hl] = this.ld_sp_hl;
+    // ref[inst.ei] = this.ei;
+    // ref[inst.pre_iy] = this.pre_iy;
+    // ref[inst.cp_imm] = this.cp_imm;
 
     // gen.generate('ld bc imm');
     // (\b) (\b)

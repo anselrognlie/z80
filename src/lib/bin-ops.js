@@ -59,6 +59,11 @@ export function signed8(value) {
   return (0x080 & value) ? -(256 - value) : value;
 }
 
+export function hex8(value) {
+  const digits = value.toString(16);
+  return (value < 16) ? `0${digits}` : digits;
+}
+
 export function adc8(dst, op, cIn) {
   op += cIn;
   const result = dst + op;

@@ -278,7 +278,7 @@ gen.generate('jp x imm');
 gen.generate('in a ptr imm');
 gen.generate('call c imm');
 gen.generate('pre ix');
-gen.generate('sbc a x');
+gen.generate('sbc a imm');
 gen.generate('rst 18');
 
 // 0xe0
@@ -297,7 +297,7 @@ gen.generate('jp pe imm');
 gen.generate('ex de hl');
 gen.generate('call pe imm');
 gen.generate('pre 80');
-gen.generate('xor x');
+gen.generate('xor imm');
 gen.generate('rst 28');
 
 // 0xf0
@@ -316,7 +316,7 @@ gen.generate('jp m imm');
 gen.generate('ei');
 gen.generate('call m imm');
 gen.generate('pre iy');
-gen.generate('cp x');
+gen.generate('cp imm');
 gen.generate('rst 38');
 
 export default Z80Instructions;
