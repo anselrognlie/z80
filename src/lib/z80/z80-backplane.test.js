@@ -1465,3 +1465,21 @@ test('jp z nz imm test', () => {
   expect(proc.registers.b).toBe(10);
 });
 
+test('push pop test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_bc_imm, 0x10, 0x32,
+    inst.push_bc,
+    inst.pop_de,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(5);
+  expect(proc.de).toBe(0x3210);
+});
+

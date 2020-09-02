@@ -5,31 +5,24 @@ export function toBit(value) {
 }
 
 export function clamp16(value) {
-  const max16 = 0x0ffff;
-  const v = toBit(value > max16)
-  return [value & max16, v];
+  return value & 0x0ffff;
 }
 
 export function clamp8(value) {
-  const max8 = 0x0ff;
-  const v = toBit(value > max8);
-  return [value & max8, v];
+  return value & 0x0ff;
 }
 
 export function clamp4(value) {
-  const max4 = 0x0f;
-  const v = toBit(value > max4);
-  return [value & max4, v];
+  return value & 0x0f;
 }
 
 export function getLo(value) {
-  const mask = 0x0ff;
-  return value & mask;
+  return clamp8(value);
 }
 
 export function getHi(value) {
   const mask = ~0x0ff;
-  return (value & mask) >> 8;
+  return clamp8((value & mask) >> 8);
 }
 
 export function splitHiLo(value) {

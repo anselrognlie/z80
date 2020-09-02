@@ -48,12 +48,22 @@ class Z80Cpu {
     this.bus = bus;
   }
 
+  get af() {
+    return this.registers.f | (this.registers.a << 8);
+  }
+
+  set af(value) {
+    const clamped = clamp16(value);
+    this.registers.f = getLo(clamped);
+    this.registers.a = getHi(clamped);
+  }
+
   get bc() {
     return this.registers.c + (this.registers.b << 8);
   }
 
   set bc(value) {
-    const [clamped, ] = clamp16(value);
+    const clamped = clamp16(value);
     this.registers.c = getLo(clamped);
     this.registers.b = getHi(clamped);
   }
@@ -63,7 +73,7 @@ class Z80Cpu {
   }
 
   set de(value) {
-    const [clamped, ] = clamp16(value);
+    const clamped = clamp16(value);
     this.registers.e = getLo(clamped);
     this.registers.d = getHi(clamped);
   }
@@ -73,7 +83,7 @@ class Z80Cpu {
   }
 
   set hl(value) {
-    const [clamped, ] = clamp16(value);
+    const clamped = clamp16(value);
     this.registers.l = getLo(clamped);
     this.registers.h = getHi(clamped);
   }
@@ -144,7 +154,7 @@ class Z80Cpu {
 
   readWord(addr) {
     const values = this.bus.readMany(addr, 2);
-    return (((values[1] & 0x0ff) << 8) | (values[0] & 0x0ff)) & 0x0ff;
+    return (((values[1] & 0x0ff) << 8) | (values[0] & 0x0ff)) & 0x0ffff;
   }
 
   writeWord(addr, word) {
@@ -176,11 +186,11 @@ class Z80Cpu {
   }
 
   advancePC(count = 1) {
-    this.registers.pc = (this.registers.pc + count) & 0x0ffff;
+    this.registers.pc = clamp16(this.registers.pc + count);
   }
 
   reversePC(count = 1) {
-    this.registers.pc = (this.registers.pc - count) & 0x0ffff;
+    this.registers.pc = clamp16(this.registers.pc - count);
   }
 
   setFlags(flags) {
@@ -1186,6 +1196,39 @@ class Z80Cpu {
     ref[inst.jp_m_imm] = this.make_jp_cond_imm(() => this.flagIsSet(Z80FlagMasks.S));
   }
 
+  make_push_r16(getter) {
+    return () => {
+      this.setT(11);
+      const sp = (this.registers.sp - 2) & 0x0ffff;
+      this.writeWord(sp, getter());
+      this.registers.sp = sp;
+    };
+  }
+
+  register_push_r16(ref) {
+    ref[inst.push_af] = this.make_push_r16(() => this.af);
+    ref[inst.push_bc] = this.make_push_r16(() => this.bc);
+    ref[inst.push_de] = this.make_push_r16(() => this.de);
+    ref[inst.push_hl] = this.make_push_r16(() => this.hl);
+  }
+
+  make_pop_r16(setter) {
+    return () => {
+      this.setT(10);
+      const sp = this.registers.sp
+      const value = this.readWord(sp);
+      this.registers.sp = (sp + 2) & 0x0ffff;
+      setter(value);
+    };
+  }
+
+  register_pop_r16(ref) {
+    ref[inst.pop_af] = this.make_pop_r16((value) => { this.af = value; });
+    ref[inst.pop_bc] = this.make_pop_r16((value) => { this.bc = value; });
+    ref[inst.pop_de] = this.make_pop_r16((value) => { this.de = value; });
+    ref[inst.pop_hl] = this.make_pop_r16((value) => { this.hl = value; });
+  }
+
   registerInstructions() {
     this.inst = {};
     const ref = this.inst;
@@ -1276,16 +1319,16 @@ class Z80Cpu {
     this.register_ret_cond(ref);
     this.register_call_cond_imm(ref);
     this.register_jp_cond_imm(ref);
+    this.register_push_r16(ref);
+    this.register_pop_r16(ref);
 
     // ref[inst.pop_bc] = this.pop_bc;
-    // ref[inst.jp_nz_imm] = this.jp_nz_imm;
     ref[inst.jp_imm] = this.jp_imm;
     // ref[inst.push_bc] = this.push_bc;
     // ref[inst.add_a_imm] = this.add_a_imm;
     // ref[inst.rst_00] = this.rst_00;
 
     ref[inst.ret] = this.ret;
-    // ref[inst.jp_z_imm] = this.jp_z_imm;
     // ref[inst.pre_bit] = this.pre_bit;
     ref[inst.call_imm] = this.call_imm;
     // ref[inst.adc_a_imm] = this.adc_a_imm;

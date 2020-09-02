@@ -7,9 +7,8 @@ import {
 import './test-helper.js';
 
 test('clamp8', () => {
-  const [b, v] = clamp8(0x1ff);
+  const b = clamp8(0x1ff);
   expect(b).toBe(0x0ff);
-  expect(v).toBe(1);
 });
 
 test('parity8', () => {
