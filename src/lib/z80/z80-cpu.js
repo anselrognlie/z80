@@ -276,6 +276,11 @@ class Z80Cpu {
     this.registers.sp = makeWord(bytes);
   }
 
+  ld_sp_hl() {
+    this.setT(6);
+    this.registers.sp = this.hl;
+  }
+
   ld_hl_ptr_imm() {
     this.setT(20);
     const addr = this.readWordFromPcAdvance();
@@ -1475,7 +1480,7 @@ class Z80Cpu {
     ref[inst.di] = this.di;
     ref[inst.or_imm] = this.or_imm;
 
-    // ref[inst.ld_sp_hl] = this.ld_sp_hl;
+    ref[inst.ld_sp_hl] = this.ld_sp_hl;
     ref[inst.ei] = this.ei;
     // ref[inst.pre_iy] = this.pre_iy;
     ref[inst.cp_imm] = this.cp_imm;

@@ -1706,3 +1706,20 @@ test('ei test', () => {
   expect(proc.registers.iff1).toBe(1);
   expect(proc.registers.iff2).toBe(1);
 });
+
+test('ld sp hl test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x23, 0x01,
+    inst.ld_sp_hl,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.sp).toBe(0x0123);
+});
