@@ -1264,6 +1264,11 @@ class Z80Cpu {
     this.registers.pc = newPc;
   }
 
+  jp_ptr_hl() {
+    this.setT(4);
+    this.registers.pc = this.hl;
+  }
+
   jp_imm_internal(pc) {
     this.registers.pc = pc;
   }
@@ -1472,7 +1477,7 @@ class Z80Cpu {
     ref[inst.ex_ptr_sp_hl] = this.ex_ptr_sp_hl;
     ref[inst.and_imm] = this.and_imm;
 
-    // ref[inst.jp_ptr_hl] = this.jp_ptr_hl;
+    ref[inst.jp_ptr_hl] = this.jp_ptr_hl;
     ref[inst.ex_de_hl] = this.ex_de_hl;
     // ref[inst.pre_80] = this.pre_80;
     ref[inst.xor_imm] = this.xor_imm;

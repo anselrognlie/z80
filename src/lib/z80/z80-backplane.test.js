@@ -1723,3 +1723,21 @@ test('ld sp hl test', () => {
   expect(proc.registers.pc).toBe(4);
   expect(proc.registers.sp).toBe(0x0123);
 });
+
+test('jmp ptr hl test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x06, 0x00,
+    inst.jp_ptr_hl,
+    inst.ld_a_imm, 0x0a,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(6);
+  expect(proc.registers.a).toBe(0);
+});
