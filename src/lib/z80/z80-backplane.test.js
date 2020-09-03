@@ -1,5 +1,5 @@
-import memory from './z80-memory';
-import cpu, { Z80FlagMasks as masks, Z80Error } from './z80-cpu';
+import memory, { Z80MemoryError } from './z80-memory';
+import cpu, { Z80FlagMasks as masks } from './z80-cpu';
 import backplane from './z80-backplane';
 import inst from './z80-inst';
 import '../test-helper'
@@ -17,18 +17,15 @@ const build_cpu = () => {
 }
 
 test('undefined opcode', () => {
-  const [mainboard, proc, mem ] = build_cpu();
+  const [ , , mem ] = build_cpu();
 
-  mem.load(0, [
-    inst.INVALID,
-    inst.halt,
-  ]);
 
   expect(() => {
-    while (! proc.halted) {
-      mainboard.clock();
-    }
-  }).toThrow(Z80Error);
+    mem.load(0, [
+      inst.INVALID,
+      inst.halt,
+    ]);
+  }).toThrow(Z80MemoryError);
 });
 
 test('simple backplane test', () => {
@@ -1610,4 +1607,67 @@ test('cp imm test', () => {
 
   expect(proc.registers.pc).toBe(7);
   expect(proc.registers.a).toBe(0x0a);
+});
+
+test('ex de hl test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_de_imm, 0x010, 0x032,
+    inst.ld_hl_imm, 0x023, 0x001,
+    inst.ex_de_hl,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(7);
+  expect(proc.de).toBe(0x0123);
+  expect(proc.hl).toBe(0x3210);
+});
+
+test('exx test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_bc_imm, 0x0cc, 0x0bb,
+    inst.ld_de_imm, 0x010, 0x032,
+    inst.ld_hl_imm, 0x023, 0x001,
+    inst.exx,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(10);
+  expect(proc.bc$).toBe(0x0bbcc);
+  expect(proc.de$).toBe(0x3210);
+  expect(proc.hl$).toBe(0x0123);
+  expect(proc.bc).toBe(0);
+  expect(proc.de).toBe(0);
+  expect(proc.hl).toBe(0);
+});
+
+test('ex ptr sp hl test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x023, 0x001,
+    inst.push_hl,
+    inst.ld_hl_imm, 0x067, 0x045,
+    inst.ex_ptr_sp_hl,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(8);
+  expect(proc.hl).toBe(0x0123);
+  expect(mem.readWord(0x0fffe)).toBe(0x4567);
 });

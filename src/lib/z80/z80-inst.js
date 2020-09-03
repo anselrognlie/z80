@@ -274,7 +274,7 @@ gen.generate('rst 10');
 
 gen.generate('ret c');
 gen.generate('exx');
-gen.generate('jp x imm');
+gen.generate('jp c imm');
 gen.generate('in a ptr imm');
 gen.generate('call c imm');
 gen.generate('pre ix');

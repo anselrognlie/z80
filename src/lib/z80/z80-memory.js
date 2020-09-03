@@ -1,5 +1,7 @@
 import AddressError from './address-error';
 
+class Z80MemoryError extends Error {}
+
 class Z80Memory {
   constructor(size) {
     this.bytes = new Array(size);
@@ -7,6 +9,13 @@ class Z80Memory {
   }
 
   load(addr, values) {
+    for (let [i, v] of values.entries()) {
+      if (typeof v !== "number") {
+        const v_addr = (addr + i).toString(16);
+        throw new Z80MemoryError(`encountered invalid value at addr [${v_addr}]`);
+      }
+    }
+
     this.writeMany(addr, values);
   }
 
