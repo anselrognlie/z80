@@ -4,6 +4,29 @@ import backplane from './z80-backplane';
 import inst from './z80-inst';
 import '../test-helper'
 
+class IoTestProvider {
+  constructor() {
+    this.data = 0;
+    this.addr = 0;
+  }
+
+  // consumer api
+
+  get size() {
+    return 1;
+  }
+
+  writeOne(addr, value) {
+    this.addr = addr;
+    this.data = value;
+  }
+
+  readOne(addr) {
+    this.addr = addr;
+    return this.data;
+  }
+}
+
 const build_cpu = () => {
   const mainboard = new backplane();
   const proc = new cpu();
@@ -1741,3 +1764,52 @@ test('jmp ptr hl test', () => {
   expect(proc.registers.pc).toBe(6);
   expect(proc.registers.a).toBe(0);
 });
+
+test('out ptr imm a test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+  const io10 = new IoTestProvider();
+  const io11 = new IoTestProvider();
+  mainboard.mapPort(0x10, io10);
+  mainboard.mapPort(0x11, io11);
+
+  mem.load(0, [
+    inst.ld_a_imm, 0x0a,
+    inst.out_ptr_imm_a, 0x10,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.a).toBe(10);
+  expect(io10.addr).toBe(0);
+  expect(io10.data).toBe(0x0a);
+  expect(io11.addr).toBe(0);
+  expect(io11.data).toBe(0);
+});
+
+
+test('in a ptr imm test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+  const io10 = new IoTestProvider();
+  const io11 = new IoTestProvider();
+  io11.data = 0x0b;
+  mainboard.mapPort(0x10, io10);
+  mainboard.mapPort(0x11, io11);
+
+  mem.load(0, [
+    inst.ld_a_imm, 0x0a,
+    inst.in_a_ptr_imm, 0x11,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.a).toBe(11);
+});
+

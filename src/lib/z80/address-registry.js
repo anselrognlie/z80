@@ -1,4 +1,3 @@
-import AddressError from './address-error';
 import AddressMap from './address-map';
 
 class AddressRegistry {
@@ -35,7 +34,7 @@ class AddressRegistry {
   writeOne(addr, value) {
     const map = this.findMap(addr);
     if (! map) {
-      throw new AddressError();
+      return;
     }
 
     const reloc = addr - map.start;
@@ -45,7 +44,7 @@ class AddressRegistry {
   writeMany(addr, values) {
     const map = this.findMap(addr);
     if (! map) {
-      throw new AddressError();
+      return;
     }
 
     const reloc = addr - map.start;
@@ -55,7 +54,7 @@ class AddressRegistry {
   readOne(addr) {
     const map = this.findMap(addr);
     if (! map) {
-      throw new AddressError();
+      return 0;
     }
 
     const reloc = addr - map.start;
@@ -65,7 +64,9 @@ class AddressRegistry {
   readMany(addr, length) {
     const map = this.findMap(addr);
     if (! map) {
-      throw new AddressError();
+      const values = new Array(length);
+      values.fill(0);
+      return values;
     }
 
     const reloc = addr - map.start;
