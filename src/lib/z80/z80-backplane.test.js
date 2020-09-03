@@ -1542,3 +1542,72 @@ test('sub sbc imm test', () => {
   expect(proc.registers.a).toBe(0xfe);
 });
 
+test('and imm test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_a_imm, 0x0aa,
+    inst.and_imm, 0x0a,
+    inst.halt,
+]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.a).toBe(0x0a);
+});
+
+test('or imm test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_a_imm, 0x0aa,
+    inst.or_imm, 0x0a,
+    inst.halt,
+]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.a).toBe(0xaa);
+});
+
+test('xor imm test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_a_imm, 0x0aa,
+    inst.xor_imm, 0x0a,
+    inst.halt,
+]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.a).toBe(0xa0);
+});
+
+test('cp imm test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_a_imm, 0x0a,
+    inst.cp_imm, 0x0a,
+    inst.jr_z_imm, 0x01,
+    inst.inc_a,
+    inst.halt,
+]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(7);
+  expect(proc.registers.a).toBe(0x0a);
+});
