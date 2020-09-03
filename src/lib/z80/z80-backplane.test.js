@@ -1671,3 +1671,38 @@ test('ex ptr sp hl test', () => {
   expect(proc.hl).toBe(0x0123);
   expect(mem.readWord(0x0fffe)).toBe(0x4567);
 });
+
+test('di test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.di,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(1);
+  expect(proc.registers.iff1).toBe(0);
+  expect(proc.registers.iff2).toBe(0);
+});
+
+test('ei test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.di,
+    inst.ei,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(2);
+  expect(proc.registers.iff1).toBe(1);
+  expect(proc.registers.iff2).toBe(1);
+});

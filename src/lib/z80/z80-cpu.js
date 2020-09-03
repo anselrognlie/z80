@@ -1341,6 +1341,18 @@ class Z80Cpu {
     }
   }
 
+  di() {
+    this.setT(4);
+    this.registers.iff1 = 0;
+    this.registers.iff2 = 0;
+  }
+
+  ei() {
+    this.setT(4);
+    this.registers.iff1 = 1;
+    this.registers.iff2 = 1;
+  }
+
   registerInstructions() {
     this.inst = {};
     const ref = this.inst;
@@ -1460,11 +1472,11 @@ class Z80Cpu {
     // ref[inst.pre_80] = this.pre_80;
     ref[inst.xor_imm] = this.xor_imm;
 
-    // ref[inst.di] = this.di;
+    ref[inst.di] = this.di;
     ref[inst.or_imm] = this.or_imm;
 
     // ref[inst.ld_sp_hl] = this.ld_sp_hl;
-    // ref[inst.ei] = this.ei;
+    ref[inst.ei] = this.ei;
     // ref[inst.pre_iy] = this.pre_iy;
     ref[inst.cp_imm] = this.cp_imm;
 
