@@ -1,4 +1,6 @@
-import inst from './z80-inst';
+import {
+  Z80Instructions as inst,
+  Z80Extended as ext } from './z80-inst';
 import { clamp8, clamp16, makeWord,
   getLo, getHi, splitHiLo, hex8,
   toBit, signed8, parity8,
@@ -1385,7 +1387,26 @@ class Z80Cpu {
     this.registers.a = this.readPort(port);
   }
 
+  pre_80() {
+    const inst = this.readFromPc();
+
+    const fn = this.ext[inst];
+    if (! fn) {
+      // treat the prefix as a nop
+      this.nop();
+    } else {
+      // consume the inst byte and invoke
+      this.advancePC();
+      fn.call(this);
+    }
+  }
+
   registerInstructions() {
+    this.registerBasic();
+    this.registerExtended();
+  }
+
+  registerBasic() {
     this.inst = {};
     const ref = this.inst;
     ref[inst.nop] = this.nop;
@@ -1501,7 +1522,7 @@ class Z80Cpu {
 
     ref[inst.jp_ptr_hl] = this.jp_ptr_hl;
     ref[inst.ex_de_hl] = this.ex_de_hl;
-    // ref[inst.pre_80] = this.pre_80;
+    ref[inst.pre_80] = this.pre_80;
     ref[inst.xor_imm] = this.xor_imm;
 
     ref[inst.di] = this.di;
@@ -1517,6 +1538,108 @@ class Z80Cpu {
     // $1_$2
     // g.*'([^']*)'.*
     // ref[inst.$1] = this.$1;
+  }
+
+  make_in_r8_ptr_c(reg) {
+    return () => {
+      this.setT(12);
+      const port = this.registers.c;
+      this.registers[reg] = this.readPort(port);
+    };
+  }
+
+  register_in_r8_ptr_c(ref) {
+    const regs = ['a', 'f', 'b', 'c', 'd', 'e', 'h', 'l'];
+    for (let reg of regs) {
+      const inst = `in_${reg}_ptr_c`;
+      ref[ext[inst]] = this.make_in_r8_ptr_c(reg);
+    }
+  }
+
+  make_out_ptr_c_r8(reg) {
+    return () => {
+      this.setT(12);
+      const port = this.registers.c;
+      this.writePort(port, this.registers[reg]);
+    };
+  }
+
+  register_out_ptr_c_r8(ref) {
+    const regs = ['a', 'f', 'b', 'c', 'd', 'e', 'h', 'l'];
+    for (let reg of regs) {
+      const inst = `out_ptr_c_${reg}`;
+      ref[ext[inst]] = this.make_out_ptr_c_r8(reg);
+    }
+  }
+
+  registerExtended() {
+    this.ext = {};
+    const ref = this.ext;
+
+    this.register_in_r8_ptr_c(ref);
+    this.register_out_ptr_c_r8(ref);
+
+    // 0x40
+    // ref[inst.sbc_hl_bc] = this.sbc_hl_bc;
+    // ref[inst.ld_ptr_imm_bc] = this.ld_ptr_imm_bc;
+    // ref[inst.neg] = this.neg;
+    // ref[inst.retn] = this.retn;
+    // ref[inst.im_0] = this.im_0;
+    // ref[inst.ld_i_a] = this.ld_i_a;
+
+    // ref[inst.adc_hl_bc] = this.adc_hl_bc;
+    // ref[inst.ld_bc_ptr_imm] = this.ld_bc_ptr_imm;
+    // ref[inst.reti] = this.reti;
+    // ref[inst.ld_r_a] = this.ld_r_a;
+
+    // 0x50
+    // ref[inst.sbc_hl_de] = this.sbc_hl_de;
+    // ref[inst.ld_ptr_imm_de] = this.ld_ptr_imm_de;
+    // ref[inst.im_1] = this.im_1;
+    // ref[inst.ld_a_i] = this.ld_a_i;
+
+    // ref[inst.adc_hl_de] = this.adc_hl_de;
+    // ref[inst.ld_de_ptr_imm] = this.ld_de_ptr_imm;
+    // ref[inst.im_2] = this.im_2;
+    // ref[inst.ld_a_r] = this.ld_a_r;
+
+    // 0x60
+    // ref[inst.sbc_hl_hl] = this.sbc_hl_hl;
+    // ref[inst.ld_ptr_imm_hl] = this.ld_ptr_imm_hl;
+    // ref[inst.rrd] = this.rrd;
+
+    // ref[inst.adc_hl_hl] = this.adc_hl_hl;
+    // ref[inst.ld_hl_ptr_imm] = this.ld_hl_ptr_imm;
+    // ref[inst.rld] = this.rld;
+
+    // 0x70
+    // ref[inst.sbc_hl_sp] = this.sbc_hl_sp;
+    // ref[inst.ld_ptr_imm_sp] = this.ld_ptr_imm_sp;
+
+    // ref[inst.adc_hl_sp] = this.adc_hl_sp;
+    // ref[inst.ld_sp_ptr_imm] = this.ld_sp_ptr_imm;
+
+    // 0xa0
+    // ref[inst.ldi] = this.ldi;
+    // ref[inst.cpi] = this.cpi;
+    // ref[inst.ini] = this.ini;
+    // ref[inst.outi] = this.outi;
+
+    // ref[inst.ldd] = this.ldd;
+    // ref[inst.cpd] = this.cpd;
+    // ref[inst.ind] = this.ind;
+    // ref[inst.outd] = this.outd;
+
+    // 0xb0
+    // ref[inst.ldir] = this.ldir;
+    // ref[inst.cpir] = this.cpir;
+    // ref[inst.inir] = this.inir;
+    // ref[inst.otir] = this.otir;
+
+    // ref[inst.lddr] = this.lddr;
+    // ref[inst.cpdr] = this.cpdr;
+    // ref[inst.indr] = this.indr;
+    // ref[inst.otdr] = this.otdr;
   }
 }
 

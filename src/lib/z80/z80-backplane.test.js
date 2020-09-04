@@ -1,7 +1,7 @@
 import memory, { Z80MemoryError } from './z80-memory';
 import cpu, { Z80FlagMasks as masks } from './z80-cpu';
 import backplane from './z80-backplane';
-import inst from './z80-inst';
+import { Z80Instructions as inst, Z80Extended as ext } from './z80-inst';
 import '../test-helper'
 
 class IoTestProvider {
@@ -1790,7 +1790,6 @@ test('out ptr imm a test', () => {
   expect(io11.data).toBe(0);
 });
 
-
 test('in a ptr imm test', () => {
   const [mainboard, proc, mem ] = build_cpu();
   const io10 = new IoTestProvider();
@@ -1811,5 +1810,119 @@ test('in a ptr imm test', () => {
 
   expect(proc.registers.pc).toBe(4);
   expect(proc.registers.a).toBe(11);
+});
+
+test('in r8 ptr c test', () => {
+  // note: f is an undocumented opcode
+  const regs = ['a', 'f', 'b', 'c', 'd', 'e', 'h', 'l'];
+
+  regs.forEach(r => {
+    const [mainboard, proc, mem ] = build_cpu();
+    const io10 = new IoTestProvider();
+    const io11 = new IoTestProvider();
+    io11.data = 0x0b;
+    mainboard.mapPort(0x10, io10);
+    mainboard.mapPort(0x11, io11);
+
+    const inInst = `in_${r}_ptr_c`;
+
+    mem.load(0, [
+      inst.ld_c_imm, 0x11,
+      inst.pre_80, ext[inInst],
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(4);
+    expect(proc.registers[r]).toBe(11);
+  });
+});
+
+test('out ptr c r8 test', () => {
+  const regs = ['a', 'b', 'd', 'e', 'h', 'l'];
+
+  regs.forEach(r => {
+    const [mainboard, proc, mem ] = build_cpu();
+    const io10 = new IoTestProvider();
+    const io11 = new IoTestProvider();
+    mainboard.mapPort(0x10, io10);
+    mainboard.mapPort(0x11, io11);
+
+    const ldInst = `ld_${r}_imm`;
+    const outInst = `out_ptr_c_${r}`;
+
+    mem.load(0, [
+      inst[ldInst], 0x0a,
+      inst.ld_c_imm, 0x10,
+      inst.pre_80, ext[outInst],
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(6);
+    expect(proc.registers[r]).toBe(10);
+    expect(io10.addr).toBe(0);
+    expect(io10.data).toBe(0x0a);
+    expect(io11.addr).toBe(0);
+    expect(io11.data).toBe(0);
+  });
+});
+
+test('out ptr c c test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+  const io10 = new IoTestProvider();
+  const io11 = new IoTestProvider();
+  mainboard.mapPort(0x10, io10);
+  mainboard.mapPort(0x11, io11);
+
+  mem.load(0, [
+    inst.ld_c_imm, 0x10,
+    inst.pre_80, ext.out_ptr_c_c,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.c).toBe(16);
+  expect(io10.addr).toBe(0);
+  expect(io10.data).toBe(16);
+  expect(io11.addr).toBe(0);
+  expect(io11.data).toBe(0);
+});
+
+test('out ptr c f test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+  const io10 = new IoTestProvider();
+  const io11 = new IoTestProvider();
+  mainboard.mapPort(0x10, io10);
+  mainboard.mapPort(0x11, io11);
+
+  proc.registers.f = 0x0a;
+
+  mem.load(0, [
+    inst.ld_c_imm, 0x10,
+    inst.pre_80, ext.out_ptr_c_f,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.f).toBe(10);
+  expect(io10.addr).toBe(0);
+  expect(io10.data).toBe(10);
+  expect(io11.addr).toBe(0);
+  expect(io11.data).toBe(0);
 });
 

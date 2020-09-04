@@ -9,11 +9,20 @@ class InstructionGenerator {
     // this.host[mnemonic] = { mnemonic, opcode: this.opcode++ };
     this.host[mnemonic] = this.opcode++;
   }
+
+  setOpcode(opcode) {
+    this.opcode = opcode;
+  }
+
+  skipOpcode(count = 1) {
+    this.opcode += count;
+  }
 }
 
-class Z80Instructions {}
+export class Z80Instructions {}
+export class Z80Extended {}
 
-const gen = new InstructionGenerator(Z80Instructions);
+let gen = new InstructionGenerator(Z80Instructions);
 
 // 0x00
 gen.generate('nop');
@@ -319,4 +328,108 @@ gen.generate('pre iy');
 gen.generate('cp imm');
 gen.generate('rst 38');
 
-export default Z80Instructions;
+gen = new InstructionGenerator(Z80Extended);
+gen.setOpcode(0x040);
+
+// 0x40
+gen.generate('in b ptr c');
+gen.generate('out ptr c b');
+gen.generate('sbc hl bc');
+gen.generate('ld ptr imm bc');
+gen.generate('neg');
+gen.generate('retn');
+gen.generate('im 0');
+gen.generate('ld i a');
+
+gen.generate('in c ptr c');
+gen.generate('out ptr c c');
+gen.generate('adc hl bc');
+gen.generate('ld bc ptr imm');
+gen.skipOpcode();
+gen.generate('reti');
+gen.skipOpcode();
+gen.generate('ld r a');
+
+// 0x50
+gen.generate('in d ptr c');
+gen.generate('out ptr c d');
+gen.generate('sbc hl de');
+gen.generate('ld ptr imm de');
+gen.skipOpcode();
+gen.skipOpcode();
+gen.generate('im 1');
+gen.generate('ld a i');
+
+gen.generate('in e ptr c');
+gen.generate('out ptr c e');
+gen.generate('adc hl de');
+gen.generate('ld de ptr imm');
+gen.skipOpcode();
+gen.skipOpcode();
+gen.generate('im 2');
+gen.generate('ld a r');
+
+// 0x60
+gen.generate('in h ptr c');
+gen.generate('out ptr c h');
+gen.generate('sbc hl hl');
+gen.generate('ld ptr imm hl');
+gen.skipOpcode();
+gen.skipOpcode();
+gen.skipOpcode();
+gen.generate('rrd');
+
+gen.generate('in l ptr c');
+gen.generate('out ptr c l');
+gen.generate('adc hl hl');
+gen.generate('ld hl ptr imm');
+gen.skipOpcode();
+gen.skipOpcode();
+gen.skipOpcode();
+gen.generate('rld');
+
+// 0x70
+gen.generate('in f ptr c');
+gen.generate('out ptr c f');
+gen.generate('sbc hl sp');
+gen.generate('ld ptr imm sp');
+gen.skipOpcode();
+gen.skipOpcode();
+gen.skipOpcode();
+gen.skipOpcode();
+
+gen.generate('in a ptr c');
+gen.generate('out ptr c a');
+gen.generate('adc hl sp');
+gen.generate('ld sp ptr imm');
+gen.skipOpcode();
+gen.skipOpcode();
+gen.skipOpcode();
+gen.skipOpcode();
+
+
+// 0xa0
+gen.setOpcode(0x0a0);
+gen.generate('ldi');
+gen.generate('cpi');
+gen.generate('ini');
+gen.generate('outi');
+
+gen.setOpcode(0x0a8);
+gen.generate('ldd');
+gen.generate('cpd');
+gen.generate('ind');
+gen.generate('outd');
+
+// 0xb0
+gen.setOpcode(0x0b0);
+gen.generate('ldir');
+gen.generate('cpir');
+gen.generate('inir');
+gen.generate('otir');
+
+gen.setOpcode(0x0b8);
+gen.generate('lddr');
+gen.generate('cpdr');
+gen.generate('indr');
+gen.generate('otdr');
