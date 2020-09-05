@@ -27,6 +27,35 @@ class IoTestProvider {
   }
 }
 
+class IoBytesTestProvider {
+  constructor() {
+    this.data = [];
+    this.addr = 0;
+    this.offset = 0;
+  }
+
+  load(data) {
+    this.data = [...data];
+    this.offset = 0;
+  }
+
+  // consumer api
+
+  get size() {
+    return 1;
+  }
+
+  writeByte(port, _high, value) {
+    this.addr = port;
+    this.data.push(value);
+  }
+
+  readByte(port, _high) {
+    this.addr = port;
+    return this.data[this.offset++];
+  }
+}
+
 const build_cpu = () => {
   const mainboard = new backplane();
   const proc = new cpu();
@@ -2345,3 +2374,62 @@ test('cpdr test', () => {
   expect(f.z).toBe(1);
   expect(f.p_v).toBe(1);
 });
+
+test('inir test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  const io = new IoBytesTestProvider();
+  mainboard.mapPort(0x10, io);
+  io.load([
+    0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+  ]);
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x00, 0x10,
+    inst.ld_b_imm, 0x0a,
+    inst.ld_c_imm, 0x10,
+    inst.pre_80, ext.inir,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(9);
+  expect(proc.hl).toBe(0x100a);
+  expect(proc.registers.b).toBe(0);
+  expect(mem.readMany(0x1000, 10)).toEqual([
+    0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+  ]);
+});
+
+test('otir test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  const io = new IoBytesTestProvider();
+  mainboard.mapPort(0x10, io);
+  mem.load(0x1000, [
+    0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+  ]);
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x00, 0x10,
+    inst.ld_b_imm, 0x0a,
+    inst.ld_c_imm, 0x10,
+    inst.pre_80, ext.otir,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(9);
+  expect(proc.hl).toBe(0x100a);
+  expect(proc.registers.b).toBe(0);
+  expect(io.data).toEqual([
+    0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+  ]);
+});
+

@@ -29,6 +29,9 @@ Z80FlagMasks.C = 1 << Z80Flags.C;
 
 class Z80Error extends Error {}
 
+const incVal = (value) => value + 1;
+const decVal = (value) => value - 1;
+
 class Z80Cpu {
   constructor() {
     this.bus = null;
@@ -1776,19 +1779,19 @@ class Z80Cpu {
   }
 
   ldi() {
-    this.ld_id_r((value) => value + 1);
+    this.ld_id_r(incVal);
   }
 
   ldir() {
-    this.ld_id_r((value) => (value + 1), true);
+    this.ld_id_r(incVal, true);
   }
 
   ldd() {
-    this.ld_id_r((value) => (value - 1));
+    this.ld_id_r(decVal);
   }
 
   lddr() {
-    this.ld_id_r((value) => (value - 1), true);
+    this.ld_id_r(decVal, true);
   }
 
 
@@ -1819,19 +1822,99 @@ class Z80Cpu {
   }
 
   cpi() {
-    this.cp_id_r((value) => value + 1);
+    this.cp_id_r(incVal);
   }
 
   cpir() {
-    this.cp_id_r((value) => (value + 1), true);
+    this.cp_id_r(incVal, true);
   }
 
   cpd() {
-    this.cp_id_r((value) => (value - 1));
+    this.cp_id_r(decVal);
   }
 
   cpdr() {
-    this.cp_id_r((value) => (value - 1), true);
+    this.cp_id_r(decVal, true);
+  }
+
+  in_id_r(memOp, repeat = false) {
+    this.setT(16);
+    const port = this.registers.c;
+    const high = this.registers.b;
+    const byte = this.readPort(port, high);
+    const count = clamp8(high - 1);
+    const addr = this.hl;
+    this.writeByte(addr, byte);
+    this.hl = clamp16(addr + 1);
+    this.registers.b = count;
+
+    const f = {
+      ...this.getFlags(),
+      z: toBit(count === 0),
+      n: 1,
+    };
+    this.setFlags(f);
+
+    if (repeat && count !== 0) {
+      this.setT(21);
+      this.reversePC(2);
+    }
+  }
+
+  ini() {
+    this.in_id_r(incVal);
+  }
+
+  inir() {
+    this.in_id_r(incVal, true);
+  }
+
+  ind() {
+    this.in_id_r(decVal);
+  }
+
+  indr() {
+    this.in_id_r(decVal, true);
+  }
+
+  out_id_r(memOp, repeat = false) {
+    this.setT(16);
+    const addr = this.hl;
+    const byte = this.readByte(addr);
+    const port = this.registers.c;
+    const high = this.registers.b;
+    this.writePort(port, high, byte);
+    const count = clamp8(high - 1);
+    this.hl = clamp16(addr + 1);
+    this.registers.b = count;
+
+    const f = {
+      ...this.getFlags(),
+      z: toBit(count === 0),
+      n: 1,
+    };
+    this.setFlags(f);
+
+    if (repeat && count !== 0) {
+      this.setT(21);
+      this.reversePC(2);
+    }
+  }
+
+  outi() {
+    this.out_id_r(incVal);
+  }
+
+  otir() {
+    this.out_id_r(incVal, true);
+  }
+
+  outd() {
+    this.out_id_r(decVal);
+  }
+
+  otdr() {
+    this.out_id_r(decVal, true);
   }
 
   registerExtended() {
@@ -1869,24 +1952,24 @@ class Z80Cpu {
     // 0xa0
     ref[ext.ldi] = this.ldi;
     ref[ext.cpi] = this.cpi;
-    // ref[ext.ini] = this.ini;
-    // ref[ext.outi] = this.outi;
+    ref[ext.ini] = this.ini;
+    ref[ext.outi] = this.outi;
 
     ref[ext.ldd] = this.ldd;
     ref[ext.cpd] = this.cpd;
-    // ref[ext.ind] = this.ind;
-    // ref[ext.outd] = this.outd;
+    ref[ext.ind] = this.ind;
+    ref[ext.outd] = this.outd;
 
     // 0xb0
     ref[ext.ldir] = this.ldir;
     ref[ext.cpir] = this.cpir;
-    // ref[ext.inir] = this.inir;
-    // ref[ext.otir] = this.otir;
+    ref[ext.inir] = this.inir;
+    ref[ext.otir] = this.otir;
 
     ref[ext.lddr] = this.lddr;
     ref[ext.cpdr] = this.cpdr;
-    // ref[ext.indr] = this.indr;
-    // ref[ext.otdr] = this.otdr;
+    ref[ext.indr] = this.indr;
+    ref[ext.otdr] = this.otdr;
   }
 }
 
