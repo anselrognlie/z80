@@ -1918,14 +1918,17 @@ class Z80Cpu {
   }
 
   im_0() {
+    this.setT(8);
     this.intMode = Z80Cpu.INT_MODE_0;
   }
 
   im_1() {
+    this.setT(8);
     this.intMode = Z80Cpu.INT_MODE_1;
   }
 
   im_2() {
+    this.setT(8);
     this.intMode = Z80Cpu.INT_MODE_2;
   }
 
