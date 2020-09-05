@@ -2036,3 +2036,75 @@ test('neg test', () => {
   expect(proc.registers.a).toBe(0xff);
 });
 
+test('ld i a test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_a_imm, 0x0cc,
+    inst.pre_80, ext.ld_i_a,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.i).toBe(0xcc);
+});
+
+test('ld r a test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_a_imm, 0x0cc,
+    inst.pre_80, ext.ld_r_a,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.r).toBe(0xcc);
+});
+
+test('ld a i test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_a_imm, 0x0cc,
+    inst.pre_80, ext.ld_i_a,
+    inst.ld_a_imm, 0,
+    inst.pre_80, ext.ld_a_i,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(8);
+  expect(proc.registers.a).toBe(0xcc);
+});
+
+test('ld a r test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_a_imm, 0x0cc,
+    inst.pre_80, ext.ld_r_a,
+    inst.ld_a_imm, 0,
+    inst.pre_80, ext.ld_a_r,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(8);
+  expect(proc.registers.a).toBe(0xcc);
+});
+

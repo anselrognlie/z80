@@ -1674,6 +1674,44 @@ class Z80Cpu {
     this.setFlags(result);
   }
 
+  ld_i_a() {
+    this.setT(9)
+    this.registers.i = this.registers.a;
+  }
+
+  ld_a_i() {
+    this.setT(9)
+    const value = this.registers.i;
+    this.registers.a = value;
+    const f = {
+      s: toBit(value & 0x080),
+      z: toBit(value === 0),
+      h: 0,
+      p_v: toBit(this.registers.iff2),
+      n: 0,
+    }
+    this.setFlags(f);
+  }
+
+  ld_r_a() {
+    this.setT(9)
+    this.registers.r = this.registers.a;
+  }
+
+  ld_a_r() {
+    this.setT(9)
+    const value = this.registers.r;
+    this.registers.a = value;
+    const f = {
+      s: toBit(value & 0x080),
+      z: toBit(value === 0),
+      h: 0,
+      p_v: toBit(this.registers.iff2),
+      n: 0,
+    }
+    this.setFlags(f);
+  }
+
   registerExtended() {
     this.ext = {};
     const ref = this.ext;
@@ -1689,17 +1727,17 @@ class Z80Cpu {
     ref[ext.neg] = this.neg;
     // ref[ext.retn] = this.retn;
     // ref[ext.im_0] = this.im_0;
-    // ref[ext.ld_i_a] = this.ld_i_a;
+    ref[ext.ld_i_a] = this.ld_i_a;
 
     // ref[ext.reti] = this.reti;
-    // ref[ext.ld_r_a] = this.ld_r_a;
+    ref[ext.ld_r_a] = this.ld_r_a;
 
     // 0x50
     // ref[ext.im_1] = this.im_1;
-    // ref[ext.ld_a_i] = this.ld_a_i;
+    ref[ext.ld_a_i] = this.ld_a_i;
 
     // ref[ext.im_2] = this.im_2;
-    // ref[ext.ld_a_r] = this.ld_a_r;
+    ref[ext.ld_a_r] = this.ld_a_r;
 
     // 0x60
     // ref[ext.rrd] = this.rrd;
