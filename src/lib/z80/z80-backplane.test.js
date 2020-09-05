@@ -2019,3 +2019,20 @@ test('adc hl r16 test', () => {
   });
 });
 
+test('neg test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_a_imm, 0x01,
+    inst.pre_80, ext.neg,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(4);
+  expect(proc.registers.a).toBe(0xff);
+});
+

@@ -1666,6 +1666,14 @@ class Z80Cpu {
     }
   }
 
+  neg() {
+    this.setT(8);
+    const result = sub8(0, this.registers.a)
+    this.registers.a = result.a;
+    result.p_v = result.v;
+    this.setFlags(result);
+  }
+
   registerExtended() {
     this.ext = {};
     const ref = this.ext;
@@ -1678,47 +1686,47 @@ class Z80Cpu {
     this.register_adc_hl_r16(ref);
 
     // 0x40
-    // ref[inst.neg] = this.neg;
-    // ref[inst.retn] = this.retn;
-    // ref[inst.im_0] = this.im_0;
-    // ref[inst.ld_i_a] = this.ld_i_a;
+    ref[ext.neg] = this.neg;
+    // ref[ext.retn] = this.retn;
+    // ref[ext.im_0] = this.im_0;
+    // ref[ext.ld_i_a] = this.ld_i_a;
 
-    // ref[inst.reti] = this.reti;
-    // ref[inst.ld_r_a] = this.ld_r_a;
+    // ref[ext.reti] = this.reti;
+    // ref[ext.ld_r_a] = this.ld_r_a;
 
     // 0x50
-    // ref[inst.im_1] = this.im_1;
-    // ref[inst.ld_a_i] = this.ld_a_i;
+    // ref[ext.im_1] = this.im_1;
+    // ref[ext.ld_a_i] = this.ld_a_i;
 
-    // ref[inst.im_2] = this.im_2;
-    // ref[inst.ld_a_r] = this.ld_a_r;
+    // ref[ext.im_2] = this.im_2;
+    // ref[ext.ld_a_r] = this.ld_a_r;
 
     // 0x60
-    // ref[inst.rrd] = this.rrd;
+    // ref[ext.rrd] = this.rrd;
 
-    // ref[inst.rld] = this.rld;
+    // ref[ext.rld] = this.rld;
 
     // 0xa0
-    // ref[inst.ldi] = this.ldi;
-    // ref[inst.cpi] = this.cpi;
-    // ref[inst.ini] = this.ini;
-    // ref[inst.outi] = this.outi;
+    // ref[ext.ldi] = this.ldi;
+    // ref[ext.cpi] = this.cpi;
+    // ref[ext.ini] = this.ini;
+    // ref[ext.outi] = this.outi;
 
-    // ref[inst.ldd] = this.ldd;
-    // ref[inst.cpd] = this.cpd;
-    // ref[inst.ind] = this.ind;
-    // ref[inst.outd] = this.outd;
+    // ref[ext.ldd] = this.ldd;
+    // ref[ext.cpd] = this.cpd;
+    // ref[ext.ind] = this.ind;
+    // ref[ext.outd] = this.outd;
 
     // 0xb0
-    // ref[inst.ldir] = this.ldir;
-    // ref[inst.cpir] = this.cpir;
-    // ref[inst.inir] = this.inir;
-    // ref[inst.otir] = this.otir;
+    // ref[ext.ldir] = this.ldir;
+    // ref[ext.cpir] = this.cpir;
+    // ref[ext.inir] = this.inir;
+    // ref[ext.otir] = this.otir;
 
-    // ref[inst.lddr] = this.lddr;
-    // ref[inst.cpdr] = this.cpdr;
-    // ref[inst.indr] = this.indr;
-    // ref[inst.otdr] = this.otdr;
+    // ref[ext.lddr] = this.lddr;
+    // ref[ext.cpdr] = this.cpdr;
+    // ref[ext.indr] = this.indr;
+    // ref[ext.otdr] = this.otdr;
   }
 }
 
