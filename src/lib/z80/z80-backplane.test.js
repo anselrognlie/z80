@@ -2147,3 +2147,104 @@ test('rrd test', () => {
   expect(proc.registers.a).toBe(0x41);
   expect(mem.readOne(0x3210)).toBe(0x32);
 });
+
+test('ldi test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x00, 0x10,
+    inst.ld_de_imm, 0x00, 0x20,
+    inst.ld_ptr_hl_imm, 0x0aa,
+    inst.pre_80, ext.ldi,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(10);
+  expect(proc.hl).toBe(0x1001);
+  expect(proc.de).toBe(0x2001);
+  expect(proc.bc).toBe(0xffff);
+  expect(mem.readOne(0x2000)).toBe(0x0aa);
+});
+
+test('ldd test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x00, 0x10,
+    inst.ld_de_imm, 0x00, 0x20,
+    inst.ld_ptr_hl_imm, 0x0aa,
+    inst.pre_80, ext.ldd,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(10);
+  expect(proc.hl).toBe(0x0fff);
+  expect(proc.de).toBe(0x1fff);
+  expect(proc.bc).toBe(0xffff);
+  expect(mem.readOne(0x2000)).toBe(0x0aa);
+});
+
+test('ldir test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0x1000, [
+    0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+  ]);
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x00, 0x10,
+    inst.ld_de_imm, 0x00, 0x20,
+    inst.ld_bc_imm, 0x0a, 0x00,
+    inst.pre_80, ext.ldir,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(11);
+  expect(proc.hl).toBe(0x100a);
+  expect(proc.de).toBe(0x200a);
+  expect(proc.bc).toBe(0x0000);
+  expect(mem.readMany(0x2000, 10)).toEqual([
+    0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+  ]);
+});
+
+
+test('lddr test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0x1000, [
+    0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+  ]);
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x09, 0x10,
+    inst.ld_de_imm, 0x09, 0x20,
+    inst.ld_bc_imm, 0x0a, 0x00,
+    inst.pre_80, ext.lddr,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(11);
+  expect(proc.hl).toBe(0x0fff);
+  expect(proc.de).toBe(0x1fff);
+  expect(proc.bc).toBe(0x0000);
+  expect(mem.readMany(0x2000, 10)).toEqual([
+    0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+  ]);
+});

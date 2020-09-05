@@ -1367,6 +1367,7 @@ class Z80Cpu {
 
   make_rst_off(offset) {
     return () => {
+      this.setT(11);
       const sp = clamp16(this.registers.sp - 2);
       this.writeWord(sp, this.registers.pc);
       this.registers.sp = sp;
@@ -1679,18 +1680,23 @@ class Z80Cpu {
     this.registers.i = this.registers.a;
   }
 
-  ld_a_i() {
+  ld_a_ri(reg) {
     this.setT(9)
-    const value = this.registers.i;
+    const value = this.registers[reg];
     this.registers.a = value;
     const f = {
+      ...this.getFlags(),
       s: toBit(value & 0x080),
       z: toBit(value === 0),
       h: 0,
       p_v: toBit(this.registers.iff2),
       n: 0,
-    }
+    };
     this.setFlags(f);
+  }
+
+  ld_a_i() {
+    this.ld_a_ri('i');
   }
 
   ld_r_a() {
@@ -1699,17 +1705,7 @@ class Z80Cpu {
   }
 
   ld_a_r() {
-    this.setT(9)
-    const value = this.registers.r;
-    this.registers.a = value;
-    const f = {
-      s: toBit(value & 0x080),
-      z: toBit(value === 0),
-      h: 0,
-      p_v: toBit(this.registers.iff2),
-      n: 0,
-    };
-    this.setFlags(f);
+    this.ld_a_ri('r');
   }
 
   rotate12(rotateFn) {
@@ -1729,6 +1725,7 @@ class Z80Cpu {
     this.writeByte(addr, rotV);
 
     const f = {
+      ...this.getFlags(),
       s: toBit(rotA & 0x080),
       z: toBit(rotA === 0),
       h: 0,
@@ -1750,6 +1747,47 @@ class Z80Cpu {
       a: (ah << 4) | vl,
       v: (al << 4) | vh
     }));
+  }
+
+  ld_id_r(memOp, repeat = false) {
+    this.setT(16);
+    const src = this.hl;
+    const dst = this.de;
+    const count = clamp16(this.bc - 1);
+    const byte = this.readByte(src);
+    this.writeByte(dst, byte);
+    this.hl = clamp16(memOp(src));
+    this.de = clamp16(memOp(dst));
+    this.bc = count;
+
+    const f = {
+      ...this.getFlags(),
+      h: 0,
+      p_v: toBit(count),
+      n: 0,
+    };
+    this.setFlags(f);
+
+    if (repeat && count !== 0) {
+      this.setT(21);
+      this.reversePC(2);
+    }
+  }
+
+  ldi() {
+    this.ld_id_r((value) => value + 1);
+  }
+
+  ldir() {
+    this.ld_id_r((value) => (value + 1), true);
+  }
+
+  ldd() {
+    this.ld_id_r((value) => (value - 1));
+  }
+
+  lddr() {
+    this.ld_id_r((value) => (value - 1), true);
   }
 
   registerExtended() {
@@ -1785,23 +1823,23 @@ class Z80Cpu {
     ref[ext.rld] = this.rld;
 
     // 0xa0
-    // ref[ext.ldi] = this.ldi;
+    ref[ext.ldi] = this.ldi;
     // ref[ext.cpi] = this.cpi;
     // ref[ext.ini] = this.ini;
     // ref[ext.outi] = this.outi;
 
-    // ref[ext.ldd] = this.ldd;
+    ref[ext.ldd] = this.ldd;
     // ref[ext.cpd] = this.cpd;
     // ref[ext.ind] = this.ind;
     // ref[ext.outd] = this.outd;
 
     // 0xb0
-    // ref[ext.ldir] = this.ldir;
+    ref[ext.ldir] = this.ldir;
     // ref[ext.cpir] = this.cpir;
     // ref[ext.inir] = this.inir;
     // ref[ext.otir] = this.otir;
 
-    // ref[ext.lddr] = this.lddr;
+    ref[ext.lddr] = this.lddr;
     // ref[ext.cpdr] = this.cpdr;
     // ref[ext.indr] = this.indr;
     // ref[ext.otdr] = this.otdr;
