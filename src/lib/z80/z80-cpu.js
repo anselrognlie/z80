@@ -1572,52 +1572,78 @@ class Z80Cpu {
     }
   }
 
+  make_ld_ptr_imm_r16(getter) {
+    return () => {
+      this.setT(20);
+      const value = getter();
+      const addr = this.readWordFromPcAdvance();
+      this.writeWord(addr, value);
+    };
+  }
+
+  register_ld_ptr_imm_r16(ref) {
+    ref[ext.ld_ptr_imm_bc] = this.make_ld_ptr_imm_r16(() => this.bc);
+    ref[ext.ld_ptr_imm_de] = this.make_ld_ptr_imm_r16(() => this.de);
+    ref[ext.ld_ptr_imm_hl] = this.make_ld_ptr_imm_r16(() => this.hl);
+    ref[ext.ld_ptr_imm_sp] = this.make_ld_ptr_imm_r16(() => this.registers.sp);
+  }
+
+  make_ld_r16_ptr_imm(setter) {
+    return () => {
+      this.setT(20);
+      const addr = this.readWordFromPcAdvance();
+      const value = this.readWord(addr);
+      setter(value);
+    };
+  }
+
+  register_ld_r16_ptr_imm(ref) {
+    ref[ext.ld_bc_ptr_imm] = this.make_ld_r16_ptr_imm((value) => { this.bc = value; });
+    ref[ext.ld_de_ptr_imm] = this.make_ld_r16_ptr_imm((value) => { this.de = value; });
+    ref[ext.ld_hl_ptr_imm] = this.make_ld_r16_ptr_imm((value) => { this.hl = value; });
+    ref[ext.ld_sp_ptr_imm] = this.make_ld_r16_ptr_imm((value) => { this.registers.sp = value; });
+  }
+
   registerExtended() {
     this.ext = {};
     const ref = this.ext;
 
     this.register_in_r8_ptr_c(ref);
     this.register_out_ptr_c_r8(ref);
+    this.register_ld_ptr_imm_r16(ref);
+    this.register_ld_r16_ptr_imm(ref);
 
     // 0x40
     // ref[inst.sbc_hl_bc] = this.sbc_hl_bc;
-    // ref[inst.ld_ptr_imm_bc] = this.ld_ptr_imm_bc;
     // ref[inst.neg] = this.neg;
     // ref[inst.retn] = this.retn;
     // ref[inst.im_0] = this.im_0;
     // ref[inst.ld_i_a] = this.ld_i_a;
 
     // ref[inst.adc_hl_bc] = this.adc_hl_bc;
-    // ref[inst.ld_bc_ptr_imm] = this.ld_bc_ptr_imm;
     // ref[inst.reti] = this.reti;
     // ref[inst.ld_r_a] = this.ld_r_a;
 
     // 0x50
     // ref[inst.sbc_hl_de] = this.sbc_hl_de;
-    // ref[inst.ld_ptr_imm_de] = this.ld_ptr_imm_de;
     // ref[inst.im_1] = this.im_1;
     // ref[inst.ld_a_i] = this.ld_a_i;
 
     // ref[inst.adc_hl_de] = this.adc_hl_de;
-    // ref[inst.ld_de_ptr_imm] = this.ld_de_ptr_imm;
     // ref[inst.im_2] = this.im_2;
     // ref[inst.ld_a_r] = this.ld_a_r;
 
     // 0x60
     // ref[inst.sbc_hl_hl] = this.sbc_hl_hl;
-    // ref[inst.ld_ptr_imm_hl] = this.ld_ptr_imm_hl;
     // ref[inst.rrd] = this.rrd;
 
     // ref[inst.adc_hl_hl] = this.adc_hl_hl;
-    // ref[inst.ld_hl_ptr_imm] = this.ld_hl_ptr_imm;
     // ref[inst.rld] = this.rld;
 
     // 0x70
     // ref[inst.sbc_hl_sp] = this.sbc_hl_sp;
-    // ref[inst.ld_ptr_imm_sp] = this.ld_ptr_imm_sp;
 
     // ref[inst.adc_hl_sp] = this.adc_hl_sp;
-    // ref[inst.ld_sp_ptr_imm] = this.ld_sp_ptr_imm;
 
     // 0xa0
     // ref[inst.ldi] = this.ldi;

@@ -1926,3 +1926,84 @@ test('out ptr c f test', () => {
   expect(io11.data).toBe(0);
 });
 
+test('ld ptr imm r16 test', () => {
+  const regs = ['bc', 'de', 'hl'];
+  regs.forEach(r => {
+    const [mainboard, proc, mem ] = build_cpu();
+    const initInst = `ld_${r}_imm`;
+    const ldInst = `ld_ptr_imm_${r}`;
+
+    mem.load(0, [
+      inst[initInst], 0x10, 0x32,
+      inst.pre_80, ext[ldInst], 0x00, 0x10,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(7);
+    expect(mem.readWord(0x1000)).toBe(0x3210);
+  });
+});
+
+test('ld ptr imm sp test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_sp_imm, 0x10, 0x32,
+    inst.pre_80, ext.ld_ptr_imm_sp, 0x00, 0x10,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(7);
+  expect(mem.readWord(0x1000)).toBe(0x3210);
+});
+
+test('ld r16 ptr imm test', () => {
+  const regs = ['bc', 'de', 'hl'];
+  regs.forEach(r => {
+    const [mainboard, proc, mem ] = build_cpu();
+    const ldInst = `ld_${r}_ptr_imm`;
+
+    mem.load(0, [
+      inst.ld_hl_imm, 0x10, 0x32,
+      inst.ld_ptr_imm_hl, 0x00, 0x10,
+      inst.ld_hl_imm, 0, 0,
+      inst.pre_80, ext[ldInst], 0x00, 0x10,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(13);
+    expect(proc[r]).toBe(0x3210);
+  });
+});
+
+test('ld ptr imm sp test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x10, 0x32,
+    inst.ld_ptr_imm_hl, 0x00, 0x10,
+    inst.ld_hl_imm, 0, 0,
+    inst.pre_80, ext.ld_sp_ptr_imm, 0x00, 0x10,
+    inst.halt,
+]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(13);
+  expect(proc.registers.sp).toBe(0x3210);
+});
+
