@@ -1683,7 +1683,6 @@ class Z80Cpu {
     // ref[inst.im_0] = this.im_0;
     // ref[inst.ld_i_a] = this.ld_i_a;
 
-    // ref[inst.adc_hl_bc] = this.adc_hl_bc;
     // ref[inst.reti] = this.reti;
     // ref[inst.ld_r_a] = this.ld_r_a;
 
@@ -1691,19 +1690,13 @@ class Z80Cpu {
     // ref[inst.im_1] = this.im_1;
     // ref[inst.ld_a_i] = this.ld_a_i;
 
-    // ref[inst.adc_hl_de] = this.adc_hl_de;
     // ref[inst.im_2] = this.im_2;
     // ref[inst.ld_a_r] = this.ld_a_r;
 
     // 0x60
     // ref[inst.rrd] = this.rrd;
 
-    // ref[inst.adc_hl_hl] = this.adc_hl_hl;
     // ref[inst.rld] = this.rld;
-
-    // 0x70
-
-    // ref[inst.adc_hl_sp] = this.adc_hl_sp;
 
     // 0xa0
     // ref[inst.ldi] = this.ldi;
