@@ -1708,8 +1708,48 @@ class Z80Cpu {
       h: 0,
       p_v: toBit(this.registers.iff2),
       n: 0,
-    }
+    };
     this.setFlags(f);
+  }
+
+  rotate12(rotateFn) {
+    this.setT(18);
+    const a = this.registers.a;
+    const addr = this.hl;
+    const value = this.readByte(addr);
+
+    const ah = (a & 0x0f0) >> 4;
+    const al = a & 0x0f;
+    const vh = (value & 0x0f0) >> 4;
+    const vl = value & 0x0f;
+
+    const { a: rotA, v: rotV } = rotateFn(ah, al, vh, vl);
+
+    this.registers.a = rotA;
+    this.writeByte(addr, rotV);
+
+    const f = {
+      s: toBit(rotA & 0x080),
+      z: toBit(rotA === 0),
+      h: 0,
+      p_v: parity8(rotA),
+      n: 0,
+    };
+    this.setFlags(f);
+  }
+
+  rld() {
+    this.rotate12((ah, al, vh, vl) => ({
+      a: (ah << 4) | vh,
+      v: (vl << 4) | al
+    }));
+  }
+
+  rrd() {
+    this.rotate12((ah, al, vh, vl) => ({
+      a: (ah << 4) | vl,
+      v: (al << 4) | vh
+    }));
   }
 
   registerExtended() {
@@ -1740,9 +1780,9 @@ class Z80Cpu {
     ref[ext.ld_a_r] = this.ld_a_r;
 
     // 0x60
-    // ref[ext.rrd] = this.rrd;
+    ref[ext.rrd] = this.rrd;
 
-    // ref[ext.rld] = this.rld;
+    ref[ext.rld] = this.rld;
 
     // 0xa0
     // ref[ext.ldi] = this.ldi;

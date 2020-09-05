@@ -2108,3 +2108,42 @@ test('ld a r test', () => {
   expect(proc.registers.a).toBe(0xcc);
 });
 
+test('rld test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x10, 0x32,
+    inst.ld_ptr_hl_imm, 0x021,
+    inst.ld_a_imm, 0x43,
+    inst.pre_80, ext.rld,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(9);
+  expect(proc.registers.a).toBe(0x42);
+  expect(mem.readOne(0x3210)).toBe(0x13);
+});
+
+test('rrd test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x10, 0x32,
+    inst.ld_ptr_hl_imm, 0x021,
+    inst.ld_a_imm, 0x43,
+    inst.pre_80, ext.rrd,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(9);
+  expect(proc.registers.a).toBe(0x41);
+  expect(mem.readOne(0x3210)).toBe(0x32);
+});
