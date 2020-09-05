@@ -5,7 +5,7 @@ import { clamp8, clamp16, makeWord,
   getLo, getHi, splitHiLo, hex8,
   toBit, signed8, parity8,
   add8, sub8, add16, sub16, adc8, sbc8,
-  and8, or8, xor8 } from '../bin-ops';
+  and8, or8, xor8, sbc16, adc16 } from '../bin-ops';
 
 export class Z80Flags {}
 
@@ -110,8 +110,28 @@ class Z80Cpu {
     return this.registers.ixl + (this.registers.ixh << 8);
   }
 
+  set ix(value) {
+    const clamped = clamp16(value);
+    this.registers.ixl = getLo(clamped);
+    this.registers.ixh = getHi(clamped);
+  }
+
   get iy() {
     return this.registers.iyl + (this.registers.iyh << 8);
+  }
+
+  set iy(value) {
+    const clamped = clamp16(value);
+    this.registers.iyl = getLo(clamped);
+    this.registers.iyh = getHi(clamped);
+  }
+
+  get sp() {
+    return this.registers.sp;
+  }
+
+  set sp(value) {
+    return this.registers.sp = clamp16(value);
   }
 
   flagIsSet(mask) {
@@ -1572,36 +1592,78 @@ class Z80Cpu {
     }
   }
 
-  make_ld_ptr_imm_r16(getter) {
+  make_ld_ptr_imm_r16(reg) {
     return () => {
       this.setT(20);
-      const value = getter();
+      const value = this[reg];
       const addr = this.readWordFromPcAdvance();
       this.writeWord(addr, value);
     };
   }
 
   register_ld_ptr_imm_r16(ref) {
-    ref[ext.ld_ptr_imm_bc] = this.make_ld_ptr_imm_r16(() => this.bc);
-    ref[ext.ld_ptr_imm_de] = this.make_ld_ptr_imm_r16(() => this.de);
-    ref[ext.ld_ptr_imm_hl] = this.make_ld_ptr_imm_r16(() => this.hl);
-    ref[ext.ld_ptr_imm_sp] = this.make_ld_ptr_imm_r16(() => this.registers.sp);
+    const regs = ['bc', 'de', 'hl', 'sp'];
+    for (let r of regs) {
+      const inst = `ld_ptr_imm_${r}`;
+      ref[ext[inst]] = this.make_ld_ptr_imm_r16(r);
+    }
   }
 
-  make_ld_r16_ptr_imm(setter) {
+  make_ld_r16_ptr_imm(reg) {
     return () => {
       this.setT(20);
       const addr = this.readWordFromPcAdvance();
       const value = this.readWord(addr);
-      setter(value);
+      this[reg] = value;
     };
   }
 
   register_ld_r16_ptr_imm(ref) {
-    ref[ext.ld_bc_ptr_imm] = this.make_ld_r16_ptr_imm((value) => { this.bc = value; });
-    ref[ext.ld_de_ptr_imm] = this.make_ld_r16_ptr_imm((value) => { this.de = value; });
-    ref[ext.ld_hl_ptr_imm] = this.make_ld_r16_ptr_imm((value) => { this.hl = value; });
-    ref[ext.ld_sp_ptr_imm] = this.make_ld_r16_ptr_imm((value) => { this.registers.sp = value; });
+    const regs = ['bc', 'de', 'hl', 'sp'];
+    for (let r of regs) {
+      const inst = `ld_${r}_ptr_imm`;
+      ref[ext[inst]] = this.make_ld_r16_ptr_imm(r);
+    }
+  }
+
+  make_sbc_hl_r16(reg) {
+    return () => {
+      this.setT(15);
+      const hl = this.hl;
+      const { c } = this.getFlags();
+      const result = sbc16(hl, this[reg], c);
+      result.p_v = result.v;
+      this.setFlags(result);
+      this.hl = result.a;
+    };
+  }
+
+  register_sbc_hl_r16(ref) {
+    const regs = ['bc', 'de', 'hl', 'sp'];
+    for (let r of regs) {
+      const inst = `sbc_hl_${r}`;
+      ref[ext[inst]] = this.make_sbc_hl_r16(r);
+    }
+  }
+
+  make_adc_hl_r16(reg) {
+    return () => {
+      this.setT(15);
+      const hl = this.hl;
+      const { c } = this.getFlags();
+      const result = adc16(hl, this[reg], c);
+      result.p_v = result.v;
+      this.setFlags(result);
+      this.hl = result.a;
+    };
+  }
+
+  register_adc_hl_r16(ref) {
+    const regs = ['bc', 'de', 'hl', 'sp'];
+    for (let r of regs) {
+      const inst = `adc_hl_${r}`;
+      ref[ext[inst]] = this.make_adc_hl_r16(r);
+    }
   }
 
   registerExtended() {
@@ -1612,9 +1674,10 @@ class Z80Cpu {
     this.register_out_ptr_c_r8(ref);
     this.register_ld_ptr_imm_r16(ref);
     this.register_ld_r16_ptr_imm(ref);
+    this.register_sbc_hl_r16(ref);
+    this.register_adc_hl_r16(ref);
 
     // 0x40
-    // ref[inst.sbc_hl_bc] = this.sbc_hl_bc;
     // ref[inst.neg] = this.neg;
     // ref[inst.retn] = this.retn;
     // ref[inst.im_0] = this.im_0;
@@ -1625,7 +1688,6 @@ class Z80Cpu {
     // ref[inst.ld_r_a] = this.ld_r_a;
 
     // 0x50
-    // ref[inst.sbc_hl_de] = this.sbc_hl_de;
     // ref[inst.im_1] = this.im_1;
     // ref[inst.ld_a_i] = this.ld_a_i;
 
@@ -1634,14 +1696,12 @@ class Z80Cpu {
     // ref[inst.ld_a_r] = this.ld_a_r;
 
     // 0x60
-    // ref[inst.sbc_hl_hl] = this.sbc_hl_hl;
     // ref[inst.rrd] = this.rrd;
 
     // ref[inst.adc_hl_hl] = this.adc_hl_hl;
     // ref[inst.rld] = this.rld;
 
     // 0x70
-    // ref[inst.sbc_hl_sp] = this.sbc_hl_sp;
 
     // ref[inst.adc_hl_sp] = this.adc_hl_sp;
 
