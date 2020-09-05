@@ -2433,3 +2433,23 @@ test('otir test', () => {
   ]);
 });
 
+test('im test', () => {
+  const modes = [[0, cpu.INT_MODE_0], [1, cpu.INT_MODE_1], [2, cpu.INT_MODE_2]];
+  for (let [mode, result] of modes) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const imInst = `im_${mode}`;
+
+    mem.load(0, [
+      inst.pre_80, ext[imInst],
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(2);
+    expect(proc.intMode).toBe(result);
+  }
+});
+

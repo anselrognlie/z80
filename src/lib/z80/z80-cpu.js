@@ -1917,6 +1917,18 @@ class Z80Cpu {
     this.out_id_r(decVal, true);
   }
 
+  im_0() {
+    this.intMode = Z80Cpu.INT_MODE_0;
+  }
+
+  im_1() {
+    this.intMode = Z80Cpu.INT_MODE_1;
+  }
+
+  im_2() {
+    this.intMode = Z80Cpu.INT_MODE_2;
+  }
+
   registerExtended() {
     this.ext = {};
     const ref = this.ext;
@@ -1931,17 +1943,17 @@ class Z80Cpu {
     // 0x40
     ref[ext.neg] = this.neg;
     // ref[ext.retn] = this.retn;
-    // ref[ext.im_0] = this.im_0;
+    ref[ext.im_0] = this.im_0;
     ref[ext.ld_i_a] = this.ld_i_a;
 
     // ref[ext.reti] = this.reti;
     ref[ext.ld_r_a] = this.ld_r_a;
 
     // 0x50
-    // ref[ext.im_1] = this.im_1;
+    ref[ext.im_1] = this.im_1;
     ref[ext.ld_a_i] = this.ld_a_i;
 
-    // ref[ext.im_2] = this.im_2;
+    ref[ext.im_2] = this.im_2;
     ref[ext.ld_a_r] = this.ld_a_r;
 
     // 0x60
