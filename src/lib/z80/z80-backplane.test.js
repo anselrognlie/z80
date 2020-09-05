@@ -2220,7 +2220,6 @@ test('ldir test', () => {
   ]);
 });
 
-
 test('lddr test', () => {
   const [mainboard, proc, mem ] = build_cpu();
 
@@ -2247,4 +2246,102 @@ test('lddr test', () => {
   expect(mem.readMany(0x2000, 10)).toEqual([
     0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
   ]);
+});
+
+test('cpi test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x00, 0x10,
+    inst.ld_ptr_hl_imm, 0xaa,
+    inst.ld_a_imm, 0xaa,
+    inst.pre_80, ext.cpi,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(9);
+  expect(proc.hl).toBe(0x1001);
+  expect(proc.bc).toBe(0xffff);
+  expect(proc.getFlags().z).toBe(1);
+});
+
+test('cpd test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x00, 0x10,
+    inst.ld_ptr_hl_imm, 0xaa,
+    inst.ld_a_imm, 0xaa,
+    inst.pre_80, ext.cpd,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(9);
+  expect(proc.hl).toBe(0x0fff);
+  expect(proc.bc).toBe(0xffff);
+  expect(proc.getFlags().z).toBe(1);
+});
+
+test('cpir test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0x1000, [
+    0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+  ]);
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x00, 0x10,
+    inst.ld_bc_imm, 0x0a, 0x00,
+    inst.ld_a_imm, 0x04,
+    inst.pre_80, ext.cpir,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  const f = proc.getFlags();
+
+  expect(proc.registers.pc).toBe(10);
+  expect(proc.hl).toBe(0x1004);
+  expect(proc.bc).toBe(0x0006);
+  expect(f.z).toBe(1);
+  expect(f.p_v).toBe(1);
+});
+
+test('cpdr test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0x1000, [
+    0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+  ]);
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x09, 0x10,
+    inst.ld_bc_imm, 0x0a, 0x00,
+    inst.ld_a_imm, 0x04,
+    inst.pre_80, ext.cpdr,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  const f = proc.getFlags();
+
+  expect(proc.registers.pc).toBe(10);
+  expect(proc.hl).toBe(0x1002);
+  expect(proc.bc).toBe(0x0003);
+  expect(f.z).toBe(1);
+  expect(f.p_v).toBe(1);
 });
