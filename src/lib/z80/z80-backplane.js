@@ -1,10 +1,11 @@
 import AddressRegistry from './address-registry';
+import PortRegistry from './port-registry';
 
 class Z80Backplane {
   constructor() {
     this.addresses = new AddressRegistry();
     this.devices = [];
-    this.ports = new AddressRegistry();
+    this.ports = new PortRegistry();
   }
 
   mapAddress(start, consumer) {
@@ -24,12 +25,12 @@ class Z80Backplane {
     this.devices.forEach(d => d.clock())
   }
 
-  writePort(port, value) {
-    this.ports.writeOne(port, value);
+  writePort(port, high, value) {
+    this.ports.writeByte(port, high, value);
   }
 
-  readPort(port) {
-    return this.ports.readOne(port);
+  readPort(port, high) {
+    return this.ports.readByte(port, high);
   }
 
   writeOne(addr, value) {

@@ -203,19 +203,19 @@ class Z80Cpu {
     return clamp8(this.bus.readOne(addr));
   }
 
-  readPort(port) {
-    port %= 0x100;
-    return clamp8(this.bus.readPort(port));
+  readPort(port, high) {
+    port &= 0xff;
+    return clamp8(this.bus.readPort(port, high));
   }
 
   writeByte(addr, byte) {
-    addr %= 0x10000;
+    addr &= 0xffff;
     this.bus.writeOne(addr, clamp8(byte));
   }
 
-  writePort(port, byte) {
-    port %= 0x100;
-    this.bus.writePort(port, clamp8(byte));
+  writePort(port, high, byte) {
+    port &= 0xff;
+    this.bus.writePort(port, high, clamp8(byte));
   }
 
   readFromPc() {
@@ -1399,13 +1399,14 @@ class Z80Cpu {
   out_ptr_imm_a() {
     this.setT(11);
     const port = this.readFromPcAdvance();
-    this.writePort(port, this.registers.a);
+    const a = this.registers.a;
+    this.writePort(port, a, a);
   }
 
   in_a_ptr_imm() {
     this.setT(11);
     const port = this.readFromPcAdvance();
-    this.registers.a = this.readPort(port);
+    this.registers.a = this.readPort(port, this.registers.a);
   }
 
   pre_80() {
@@ -1565,7 +1566,7 @@ class Z80Cpu {
     return () => {
       this.setT(12);
       const port = this.registers.c;
-      this.registers[reg] = this.readPort(port);
+      this.registers[reg] = this.readPort(port, this.registers.b);
     };
   }
 
@@ -1581,7 +1582,7 @@ class Z80Cpu {
     return () => {
       this.setT(12);
       const port = this.registers.c;
-      this.writePort(port, this.registers[reg]);
+      this.writePort(port, this.registers.b, this.registers[reg]);
     };
   }
 

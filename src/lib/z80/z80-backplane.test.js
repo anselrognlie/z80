@@ -16,13 +16,13 @@ class IoTestProvider {
     return 1;
   }
 
-  writeOne(addr, value) {
-    this.addr = addr;
+  writeByte(port, _high, value) {
+    this.addr = port;
     this.data = value;
   }
 
-  readOne(addr) {
-    this.addr = addr;
+  readByte(port, _high) {
+    this.addr = port;
     return this.data;
   }
 }
