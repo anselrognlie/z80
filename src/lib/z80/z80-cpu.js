@@ -45,6 +45,7 @@ class Z80Cpu {
     this.halted = false;
     this.tStates = 0;
     this.tStatesEnabled = true;
+    this.eiCountdown = 0;
 
     this.registerInstructions();
   }
@@ -161,7 +162,23 @@ class Z80Cpu {
     this.halted = false;
   }
 
+  checkEnableInterrupts() {
+    if (this.eiCountdown > 0) {
+      --this.eiCountdown;
+      if (this.eiCountdown === 0) {
+        // prepare to enable interrupts after this command
+        this.registers.iff1 = 1;
+        this.registers.iff2 = 1;
+      }
+    }
+  }
+
+  handleInterrupt() {
+    // no handling currently
+  }
+
   clock() {
+    // consume any t states remaining from the previous instruction
     if (this.tStatesEnabled) {
       if (this.tStates) {
         this.tStates--;
@@ -169,6 +186,15 @@ class Z80Cpu {
       }
     }
 
+    // we have completed the previous instruction
+
+    // check whether we need to handle an interrupt here
+    this.handleInterrupt();
+
+    // check whether we are ready to enable inturrupts
+    this.checkEnableInterrupts();
+
+    // continue with handling the current instruction
     const inst = this.readFromPcAdvance();
 
     const fn = this.inst[inst];
@@ -1395,8 +1421,7 @@ class Z80Cpu {
 
   ei() {
     this.setT(4);
-    this.registers.iff1 = 1;
-    this.registers.iff2 = 1;
+    this.eiCountdown = 1;
   }
 
   out_ptr_imm_a() {

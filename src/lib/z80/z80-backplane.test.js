@@ -2453,3 +2453,42 @@ test('im test', () => {
   }
 });
 
+test('ei off test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.di,
+    inst.ei,
+    inst.nop,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+    if (proc.registers.pc === 2 ) { break; }
+  }
+
+  expect(proc.registers.iff1).toBe(0);
+  expect(proc.registers.iff2).toBe(0);
+});
+
+
+test('ei on test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.di,
+    inst.ei,
+    inst.nop,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+    if (proc.registers.pc === 3 ) { break; }
+  }
+
+  expect(proc.registers.iff1).toBe(1);
+  expect(proc.registers.iff2).toBe(1);
+});
+
