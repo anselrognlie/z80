@@ -2031,6 +2031,7 @@ class Z80Cpu {
 
   make_rlc_r8(reg) {
     return () => {
+      this.setT(8);
       const value = this.registers[reg];
       const result = rlc8(value);
       this.registers[reg] = result.a;
@@ -2051,6 +2052,7 @@ class Z80Cpu {
   }
 
   rlc_ptr_hl() {
+    this.setT(15);
     const addr = this.hl;
     const value = this.readByte(addr);
     const result = rlc8(value);
@@ -2065,6 +2067,7 @@ class Z80Cpu {
 
   make_rrc_r8(reg) {
     return () => {
+      this.setT(8);
       const value = this.registers[reg];
       const result = rrc8(value);
       this.registers[reg] = result.a;
@@ -2085,6 +2088,7 @@ class Z80Cpu {
   }
 
   rrc_ptr_hl() {
+    this.setT(15);
     const addr = this.hl;
     const value = this.readByte(addr);
     const result = rrc8(value);
