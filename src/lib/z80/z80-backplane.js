@@ -7,6 +7,7 @@ class Z80Backplane {
     this.devices = [];
     this.intHandlers = [];
     this.ports = new PortRegistry();
+    this.nmiSource = null;
   }
 
   mapAddress(start, consumer) {
@@ -29,8 +30,22 @@ class Z80Backplane {
     this.devices.forEach(d => d.clock())
   }
 
-  raiseNmi() {
+  raiseNmi(source) {
+    if (this.nmiSource) {
+      return false;
+    }
 
+    this.nmiSource = source;
+    this.intHandlers.forEach(h => h.raiseNmi());
+  }
+
+  completeNmi() {
+    const source = this.nmiSource;
+    this.nmiSource = null;
+
+    if (source) {
+      source.completeNmi();
+    }
   }
 
   writePort(port, high, value) {

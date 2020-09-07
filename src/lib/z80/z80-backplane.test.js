@@ -59,6 +59,16 @@ class IoBytesTestProvider {
   }
 }
 
+class NmiSource {
+  constructor() {
+    this.count = 0;
+  }
+
+  completeNmi() {
+    ++this.count;
+  }
+}
+
 const build_cpu = () => {
   const mainboard = new backplane();
   const proc = new cpu();
@@ -2954,3 +2964,36 @@ test('set ptr hl test', () => {
     expect(mem.readOne(0x1000)).toBe(result);
   }
 });
+
+test('nmi test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+  const source = new NmiSource();
+
+  mem.load(0x66, [
+    inst.inc_a,
+    inst.pre_80, ext.retn,
+  ]);
+
+  mem.load(0, [
+    inst.ld_c_imm, 0x0a,
+    inst.halt,
+    inst.cp_c,
+    inst.jr_nz_imm, 0xfc,
+    inst.ld_b_imm, 0x0b,
+    inst.halt,
+  ]);
+
+  const initLoops = 10;
+  let loops = initLoops;
+  while (proc.registers.b !== 0x0b) {
+    mainboard.clock();
+    if (! --loops) {
+      mainboard.raiseNmi(source);
+      loops = initLoops;
+    }
+  }
+
+  expect(proc.registers.pc).toBe(8);
+  expect(proc.registers.a).toBe(0x0a);
+  expect(source.count).toBe(10);
+})

@@ -50,6 +50,7 @@ class Z80Cpu {
     this.tStates = 0;
     this.tStatesEnabled = true;
     this.eiCountdown = 0;
+    this.respondsToInterrupts = true;
 
     this.registerInstructions();
   }
@@ -177,8 +178,50 @@ class Z80Cpu {
     }
   }
 
+  raiseNmi() {
+    if (this.inNmi) { return; }
+
+    this.hasPendingNmi = true;
+  }
+
+  handleNmi() {
+    const reg = this.registers;
+    reg.iff2 = reg.iff1;
+    reg.iff1 = 0;
+    const addr = clamp16(reg.sp - 2);
+    this.writeWord(addr, reg.pc);
+    reg.sp = addr;
+    reg.pc = 0x0066;
+    this.halted = false;
+    this.hasPendingNmi = false;
+    this.inNmi = true;
+  }
+
+  completeNmi() {
+    this.bus.completeNmi();
+  }
+
+  retn() {
+    this.setT(14);
+    const reg = this.registers;
+    reg.iff1 = reg.iff2;
+    const addr = reg.sp;
+    reg.pc = this.readWord(addr);
+    reg.sp = clamp16(addr + 2);
+    this.inNmi = false;
+    this.completeNmi();
+  }
+
+  handleHalt() {
+    if (this.halted) {
+      this.reversePC();
+    }
+  }
+
   handleInterrupt() {
-    // no handling currently
+    if (this.hasPendingNmi) {
+      this.handleNmi();
+    }
   }
 
   clock() {
@@ -197,6 +240,8 @@ class Z80Cpu {
 
     // check whether we are ready to enable inturrupts
     this.checkEnableInterrupts();
+
+    this.handleHalt();
 
     // continue with handling the current instruction
     const inst = this.readFromPcAdvance();
@@ -306,7 +351,6 @@ class Z80Cpu {
 
   halt() {
     this.setT(4);
-    this.reversePC();
     this.halted = true;
   }
 
@@ -1989,7 +2033,7 @@ class Z80Cpu {
 
     // 0x40
     ref[ext.neg] = this.neg;
-    // ref[ext.retn] = this.retn;
+    ref[ext.retn] = this.retn;
     ref[ext.im_0] = this.im_0;
     ref[ext.ld_i_a] = this.ld_i_a;
 
