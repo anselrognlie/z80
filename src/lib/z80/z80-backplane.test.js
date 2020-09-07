@@ -1,7 +1,10 @@
 import memory, { Z80MemoryError } from './z80-memory';
 import cpu, { Z80FlagMasks as masks } from './z80-cpu';
 import backplane from './z80-backplane';
-import { Z80Instructions as inst, Z80Extended as ext } from './z80-inst';
+import {
+  Z80Instructions as inst,
+  Z80Extended as ext,
+  Z80Bit as bit } from './z80-inst';
 import '../test-helper'
 
 class IoTestProvider {
@@ -2492,3 +2495,44 @@ test('ei on test', () => {
   expect(proc.registers.iff2).toBe(1);
 });
 
+test('rlc r8 test', () => {
+  const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
+  for (let r of regs) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const ldInst = `ld_${r}_imm`;
+    const rlcInst = `rlc_${r}`;
+
+    mem.load(0, [
+      inst[ldInst], 0xaa,
+      inst.pre_bit, bit[rlcInst],
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(4);
+    expect(proc.registers[r]).toBe(0x55);
+    expect(proc.getFlags().c).toBe(1);
+  }
+});
+
+test('rlc ptr hl test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x00, 0x10,
+    inst.ld_ptr_hl_imm, 0xaa,
+    inst.pre_bit, bit.rlc_ptr_hl,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(7);
+  expect(mem.readOne(0x1000)).toBe(0x55);
+  expect(proc.getFlags().c).toBe(1);
+});

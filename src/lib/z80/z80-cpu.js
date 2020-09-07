@@ -1,11 +1,13 @@
 import {
   Z80Instructions as inst,
-  Z80Extended as ext } from './z80-inst';
+  Z80Extended as ext,
+  Z80Bit as bit } from './z80-inst';
 import { clamp8, clamp16, makeWord,
   getLo, getHi, splitHiLo, hex8,
   toBit, signed8, parity8,
   add8, sub8, add16, sub16, adc8, sbc8,
-  and8, or8, xor8, sbc16, adc16 } from '../bin-ops';
+  and8, or8, xor8, sbc16, adc16,
+  rlc8 } from '../bin-ops';
 
 export class Z80Flags {}
 
@@ -1451,9 +1453,24 @@ class Z80Cpu {
     }
   }
 
+  pre_bit() {
+    const inst = this.readFromPc();
+
+    const fn = this.bit[inst];
+    if (! fn) {
+      // treat the prefix as a nop
+      this.nop();
+    } else {
+      // consume the inst byte and invoke
+      this.advancePC();
+      fn.call(this);
+    }
+  }
+
   registerInstructions() {
     this.registerBasic();
     this.registerExtended();
+    this.registerBit();
   }
 
   registerBasic() {
@@ -1555,7 +1572,7 @@ class Z80Cpu {
     this.register_rst_off(ref);
 
     ref[inst.ret] = this.ret;
-    // ref[inst.pre_bit] = this.pre_bit;
+    ref[inst.pre_bit] = this.pre_bit;
     ref[inst.call_imm] = this.call_imm;
     ref[inst.adc_a_imm] = this.adc_a_imm;
 
@@ -2010,6 +2027,48 @@ class Z80Cpu {
     ref[ext.cpdr] = this.cpdr;
     ref[ext.indr] = this.indr;
     ref[ext.otdr] = this.otdr;
+  }
+
+  make_rlc_r8(reg) {
+    return () => {
+      const value = this.registers[reg];
+      const result = rlc8(value);
+      this.registers[reg] = result.a;
+
+      result.p_v = result.p;
+      this.setFlags({
+        ...this.getFlags(),
+        ...result
+      });
+    };
+  }
+
+  register_rlc_r8(ref) {
+    const regs = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
+    for (let reg of regs) {
+      ref[bit[`rlc_${reg}`]] = this.make_rlc_r8(reg);
+    }
+  }
+
+  rlc_ptr_hl() {
+    const addr = this.hl;
+    const value = this.readByte(addr);
+    const result = rlc8(value);
+    this.writeByte(addr, result.a);
+
+    result.p_v = result.p;
+    this.setFlags({
+      ...this.getFlags(),
+      ...result
+    });
+  }
+
+  registerBit() {
+    this.bit = {};
+    const ref = this.bit;
+
+    this.register_rlc_r8(ref);
+    ref[bit.rlc_ptr_hl] = this.rlc_ptr_hl;
   }
 }
 
