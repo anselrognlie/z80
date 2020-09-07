@@ -5,7 +5,7 @@ const regs = [
   'e',
   'h',
   'l',
-  'ptr_hl',
+  'ptr hl',
   'a',
 ];
 

@@ -442,7 +442,7 @@ gen.generate('rlc d');
 gen.generate('rlc e');
 gen.generate('rlc h');
 gen.generate('rlc l');
-gen.generate('rlc ptr_hl');
+gen.generate('rlc ptr hl');
 gen.generate('rlc a');
 
 gen.generate('rrc b');
@@ -451,7 +451,7 @@ gen.generate('rrc d');
 gen.generate('rrc e');
 gen.generate('rrc h');
 gen.generate('rrc l');
-gen.generate('rrc ptr_hl');
+gen.generate('rrc ptr hl');
 gen.generate('rrc a');
 
 gen.generate('rl b');
@@ -460,7 +460,7 @@ gen.generate('rl d');
 gen.generate('rl e');
 gen.generate('rl h');
 gen.generate('rl l');
-gen.generate('rl ptr_hl');
+gen.generate('rl ptr hl');
 gen.generate('rl a');
 
 gen.generate('rr b');
@@ -469,7 +469,7 @@ gen.generate('rr d');
 gen.generate('rr e');
 gen.generate('rr h');
 gen.generate('rr l');
-gen.generate('rr ptr_hl');
+gen.generate('rr ptr hl');
 gen.generate('rr a');
 
 gen.generate('sla b');
@@ -478,7 +478,7 @@ gen.generate('sla d');
 gen.generate('sla e');
 gen.generate('sla h');
 gen.generate('sla l');
-gen.generate('sla ptr_hl');
+gen.generate('sla ptr hl');
 gen.generate('sla a');
 
 gen.generate('sra b');
@@ -487,7 +487,7 @@ gen.generate('sra d');
 gen.generate('sra e');
 gen.generate('sra h');
 gen.generate('sra l');
-gen.generate('sra ptr_hl');
+gen.generate('sra ptr hl');
 gen.generate('sra a');
 
 gen.generate('sll b');
@@ -496,7 +496,7 @@ gen.generate('sll d');
 gen.generate('sll e');
 gen.generate('sll h');
 gen.generate('sll l');
-gen.generate('sll ptr_hl');
+gen.generate('sll ptr hl');
 gen.generate('sll a');
 
 gen.generate('srl b');
@@ -505,7 +505,7 @@ gen.generate('srl d');
 gen.generate('srl e');
 gen.generate('srl h');
 gen.generate('srl l');
-gen.generate('srl ptr_hl');
+gen.generate('srl ptr hl');
 gen.generate('srl a');
 
 gen.generate('bit 0 b');
@@ -514,7 +514,7 @@ gen.generate('bit 0 d');
 gen.generate('bit 0 e');
 gen.generate('bit 0 h');
 gen.generate('bit 0 l');
-gen.generate('bit 0 ptr_hl');
+gen.generate('bit 0 ptr hl');
 gen.generate('bit 0 a');
 
 gen.generate('bit 1 b');
@@ -523,7 +523,7 @@ gen.generate('bit 1 d');
 gen.generate('bit 1 e');
 gen.generate('bit 1 h');
 gen.generate('bit 1 l');
-gen.generate('bit 1 ptr_hl');
+gen.generate('bit 1 ptr hl');
 gen.generate('bit 1 a');
 
 gen.generate('bit 2 b');
@@ -532,7 +532,7 @@ gen.generate('bit 2 d');
 gen.generate('bit 2 e');
 gen.generate('bit 2 h');
 gen.generate('bit 2 l');
-gen.generate('bit 2 ptr_hl');
+gen.generate('bit 2 ptr hl');
 gen.generate('bit 2 a');
 
 gen.generate('bit 3 b');
@@ -541,7 +541,7 @@ gen.generate('bit 3 d');
 gen.generate('bit 3 e');
 gen.generate('bit 3 h');
 gen.generate('bit 3 l');
-gen.generate('bit 3 ptr_hl');
+gen.generate('bit 3 ptr hl');
 gen.generate('bit 3 a');
 
 gen.generate('bit 4 b');
@@ -550,7 +550,7 @@ gen.generate('bit 4 d');
 gen.generate('bit 4 e');
 gen.generate('bit 4 h');
 gen.generate('bit 4 l');
-gen.generate('bit 4 ptr_hl');
+gen.generate('bit 4 ptr hl');
 gen.generate('bit 4 a');
 
 gen.generate('bit 5 b');
@@ -559,7 +559,7 @@ gen.generate('bit 5 d');
 gen.generate('bit 5 e');
 gen.generate('bit 5 h');
 gen.generate('bit 5 l');
-gen.generate('bit 5 ptr_hl');
+gen.generate('bit 5 ptr hl');
 gen.generate('bit 5 a');
 
 gen.generate('bit 6 b');
@@ -568,7 +568,7 @@ gen.generate('bit 6 d');
 gen.generate('bit 6 e');
 gen.generate('bit 6 h');
 gen.generate('bit 6 l');
-gen.generate('bit 6 ptr_hl');
+gen.generate('bit 6 ptr hl');
 gen.generate('bit 6 a');
 
 gen.generate('bit 7 b');
@@ -577,7 +577,7 @@ gen.generate('bit 7 d');
 gen.generate('bit 7 e');
 gen.generate('bit 7 h');
 gen.generate('bit 7 l');
-gen.generate('bit 7 ptr_hl');
+gen.generate('bit 7 ptr hl');
 gen.generate('bit 7 a');
 
 gen.generate('res 0 b');
@@ -586,7 +586,7 @@ gen.generate('res 0 d');
 gen.generate('res 0 e');
 gen.generate('res 0 h');
 gen.generate('res 0 l');
-gen.generate('res 0 ptr_hl');
+gen.generate('res 0 ptr hl');
 gen.generate('res 0 a');
 
 gen.generate('res 1 b');
@@ -595,7 +595,7 @@ gen.generate('res 1 d');
 gen.generate('res 1 e');
 gen.generate('res 1 h');
 gen.generate('res 1 l');
-gen.generate('res 1 ptr_hl');
+gen.generate('res 1 ptr hl');
 gen.generate('res 1 a');
 
 gen.generate('res 2 b');
@@ -604,7 +604,7 @@ gen.generate('res 2 d');
 gen.generate('res 2 e');
 gen.generate('res 2 h');
 gen.generate('res 2 l');
-gen.generate('res 2 ptr_hl');
+gen.generate('res 2 ptr hl');
 gen.generate('res 2 a');
 
 gen.generate('res 3 b');
@@ -613,7 +613,7 @@ gen.generate('res 3 d');
 gen.generate('res 3 e');
 gen.generate('res 3 h');
 gen.generate('res 3 l');
-gen.generate('res 3 ptr_hl');
+gen.generate('res 3 ptr hl');
 gen.generate('res 3 a');
 
 gen.generate('res 4 b');
@@ -622,7 +622,7 @@ gen.generate('res 4 d');
 gen.generate('res 4 e');
 gen.generate('res 4 h');
 gen.generate('res 4 l');
-gen.generate('res 4 ptr_hl');
+gen.generate('res 4 ptr hl');
 gen.generate('res 4 a');
 
 gen.generate('res 5 b');
@@ -631,7 +631,7 @@ gen.generate('res 5 d');
 gen.generate('res 5 e');
 gen.generate('res 5 h');
 gen.generate('res 5 l');
-gen.generate('res 5 ptr_hl');
+gen.generate('res 5 ptr hl');
 gen.generate('res 5 a');
 
 gen.generate('res 6 b');
@@ -640,7 +640,7 @@ gen.generate('res 6 d');
 gen.generate('res 6 e');
 gen.generate('res 6 h');
 gen.generate('res 6 l');
-gen.generate('res 6 ptr_hl');
+gen.generate('res 6 ptr hl');
 gen.generate('res 6 a');
 
 gen.generate('res 7 b');
@@ -649,7 +649,7 @@ gen.generate('res 7 d');
 gen.generate('res 7 e');
 gen.generate('res 7 h');
 gen.generate('res 7 l');
-gen.generate('res 7 ptr_hl');
+gen.generate('res 7 ptr hl');
 gen.generate('res 7 a');
 
 gen.generate('set 0 b');
@@ -658,7 +658,7 @@ gen.generate('set 0 d');
 gen.generate('set 0 e');
 gen.generate('set 0 h');
 gen.generate('set 0 l');
-gen.generate('set 0 ptr_hl');
+gen.generate('set 0 ptr hl');
 gen.generate('set 0 a');
 
 gen.generate('set 1 b');
@@ -667,7 +667,7 @@ gen.generate('set 1 d');
 gen.generate('set 1 e');
 gen.generate('set 1 h');
 gen.generate('set 1 l');
-gen.generate('set 1 ptr_hl');
+gen.generate('set 1 ptr hl');
 gen.generate('set 1 a');
 
 gen.generate('set 2 b');
@@ -676,7 +676,7 @@ gen.generate('set 2 d');
 gen.generate('set 2 e');
 gen.generate('set 2 h');
 gen.generate('set 2 l');
-gen.generate('set 2 ptr_hl');
+gen.generate('set 2 ptr hl');
 gen.generate('set 2 a');
 
 gen.generate('set 3 b');
@@ -685,7 +685,7 @@ gen.generate('set 3 d');
 gen.generate('set 3 e');
 gen.generate('set 3 h');
 gen.generate('set 3 l');
-gen.generate('set 3 ptr_hl');
+gen.generate('set 3 ptr hl');
 gen.generate('set 3 a');
 
 gen.generate('set 4 b');
@@ -694,7 +694,7 @@ gen.generate('set 4 d');
 gen.generate('set 4 e');
 gen.generate('set 4 h');
 gen.generate('set 4 l');
-gen.generate('set 4 ptr_hl');
+gen.generate('set 4 ptr hl');
 gen.generate('set 4 a');
 
 gen.generate('set 5 b');
@@ -703,7 +703,7 @@ gen.generate('set 5 d');
 gen.generate('set 5 e');
 gen.generate('set 5 h');
 gen.generate('set 5 l');
-gen.generate('set 5 ptr_hl');
+gen.generate('set 5 ptr hl');
 gen.generate('set 5 a');
 
 gen.generate('set 6 b');
@@ -712,7 +712,7 @@ gen.generate('set 6 d');
 gen.generate('set 6 e');
 gen.generate('set 6 h');
 gen.generate('set 6 l');
-gen.generate('set 6 ptr_hl');
+gen.generate('set 6 ptr hl');
 gen.generate('set 6 a');
 
 gen.generate('set 7 b');
@@ -721,6 +721,6 @@ gen.generate('set 7 d');
 gen.generate('set 7 e');
 gen.generate('set 7 h');
 gen.generate('set 7 l');
-gen.generate('set 7 ptr_hl');
+gen.generate('set 7 ptr hl');
 gen.generate('set 7 a');
 
