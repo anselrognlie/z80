@@ -5,6 +5,7 @@ class Z80Backplane {
   constructor() {
     this.addresses = new AddressRegistry();
     this.devices = [];
+    this.intHandlers = [];
     this.ports = new PortRegistry();
   }
 
@@ -18,11 +19,18 @@ class Z80Backplane {
 
   registerDevice(device) {
     this.devices.push(device);
+    if (device.respondsToInterrupts) {
+      this.intHandlers.push(device);
+    }
     device.registerBus(this);
   }
 
   clock() {
     this.devices.forEach(d => d.clock())
+  }
+
+  raiseNmi() {
+
   }
 
   writePort(port, high, value) {
