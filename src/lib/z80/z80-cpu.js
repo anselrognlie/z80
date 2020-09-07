@@ -34,6 +34,7 @@ class Z80Error extends Error {}
 
 const incVal = (value) => value + 1;
 const decVal = (value) => value - 1;
+const makeMask = (pos) => ((1 << pos) & 0xff);
 
 class Z80Cpu {
   constructor() {
@@ -2292,6 +2293,127 @@ class Z80Cpu {
     });
   }
 
+  bit_08(value, bit) {
+    const f = this.getFlags();
+    const result = clamp8(value & makeMask(bit));
+
+    this.setFlags({
+      ...f,
+      z: (result === 0),
+      h: 1,
+      n: 0,
+    });
+  }
+
+  make_bit_r8(reg, bit) {
+    return () => {
+      this.setT(8);
+      const value = this.registers[reg];
+      this.bit_08(value, bit);
+    };
+  }
+
+  register_bit_r8(ref) {
+    const regs = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
+    for (let reg of regs) {
+      for (let b = 0; b < 8; ++b) {
+        ref[bit[`bit_${b}_${reg}`]] = this.make_bit_r8(reg, b);
+      }
+    }
+  }
+
+  make_bit_ptr_hl(bit) {
+    return () => {
+      this.setT(12);
+      const addr = this.hl;
+      const value = this.readByte(addr);
+      this.bit_08(value, bit);
+    };
+  }
+
+  register_bit_ptr_hl(ref) {
+    for (let b = 0; b < 8; ++b) {
+      ref[bit[`bit_${b}_ptr_hl`]] = this.make_bit_ptr_hl(b);
+    }
+  }
+
+  res_08(value, bit) {
+    return clamp8(value & ~makeMask(bit));
+  }
+
+  make_res_r8(reg, bit) {
+    return () => {
+      this.setT(8);
+      const value = this.registers[reg];
+      const result = this.res_08(value, bit);
+      this.registers[reg] = result;
+    };
+  }
+
+  register_res_r8(ref) {
+    const regs = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
+    for (let reg of regs) {
+      for (let b = 0; b < 8; ++b) {
+        ref[bit[`res_${b}_${reg}`]] = this.make_res_r8(reg, b);
+      }
+    }
+  }
+
+  make_res_ptr_hl(bit) {
+    return () => {
+      this.setT(12);
+      const addr = this.hl;
+      const value = this.readByte(addr);
+      const result = this.res_08(value, bit);
+      this.writeByte(addr, result);
+    };
+  }
+
+  register_res_ptr_hl(ref) {
+    for (let b = 0; b < 8; ++b) {
+      ref[bit[`res_${b}_ptr_hl`]] = this.make_res_ptr_hl(b);
+    }
+  }
+
+
+  set_08(value, bit) {
+    return clamp8(value | makeMask(bit));
+  }
+
+  make_set_r8(reg, bit) {
+    return () => {
+      this.setT(8);
+      const value = this.registers[reg];
+      const result = this.set_08(value, bit);
+      this.registers[reg] = result;
+    };
+  }
+
+  register_set_r8(ref) {
+    const regs = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
+    for (let reg of regs) {
+      for (let b = 0; b < 8; ++b) {
+        ref[bit[`set_${b}_${reg}`]] = this.make_set_r8(reg, b);
+      }
+    }
+  }
+
+  make_set_ptr_hl(bit) {
+    return () => {
+      this.setT(12);
+      const addr = this.hl;
+      const value = this.readByte(addr);
+      const result = this.set_08(value, bit);
+      this.writeByte(addr, result);
+    };
+  }
+
+  register_set_ptr_hl(ref) {
+    for (let b = 0; b < 8; ++b) {
+      ref[bit[`set_${b}_ptr_hl`]] = this.make_set_ptr_hl(b);
+    }
+  }
+
   registerBit() {
     this.bit = {};
     const ref = this.bit;
@@ -2312,6 +2434,15 @@ class Z80Cpu {
     ref[bit.sra_ptr_hl] = this.sra_ptr_hl;
     this.register_srl_r8(ref);
     ref[bit.srl_ptr_hl] = this.srl_ptr_hl;
+
+    this.register_bit_r8(ref);
+    this.register_bit_ptr_hl(ref);
+
+    this.register_res_r8(ref);
+    this.register_res_ptr_hl(ref);
+
+    this.register_set_r8(ref);
+    this.register_set_ptr_hl(ref);
   }
 }
 
