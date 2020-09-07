@@ -16,7 +16,7 @@ const ops = [
   'rr',
   'sla',
   'sra',
-  'sll',
+  'sll', // undocumented
   'srl',
 ]
 
