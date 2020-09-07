@@ -7,7 +7,7 @@ import { clamp8, clamp16, makeWord,
   toBit, signed8, parity8,
   add8, sub8, add16, sub16, adc8, sbc8,
   and8, or8, xor8, sbc16, adc16,
-  rlc8 } from '../bin-ops';
+  rlc8, rrc8 } from '../bin-ops';
 
 export class Z80Flags {}
 
@@ -2063,12 +2063,48 @@ class Z80Cpu {
     });
   }
 
+  make_rrc_r8(reg) {
+    return () => {
+      const value = this.registers[reg];
+      const result = rrc8(value);
+      this.registers[reg] = result.a;
+
+      result.p_v = result.p;
+      this.setFlags({
+        ...this.getFlags(),
+        ...result
+      });
+    };
+  }
+
+  register_rrc_r8(ref) {
+    const regs = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
+    for (let reg of regs) {
+      ref[bit[`rrc_${reg}`]] = this.make_rrc_r8(reg);
+    }
+  }
+
+  rrc_ptr_hl() {
+    const addr = this.hl;
+    const value = this.readByte(addr);
+    const result = rrc8(value);
+    this.writeByte(addr, result.a);
+
+    result.p_v = result.p;
+    this.setFlags({
+      ...this.getFlags(),
+      ...result
+    });
+  }
+
   registerBit() {
     this.bit = {};
     const ref = this.bit;
 
     this.register_rlc_r8(ref);
     ref[bit.rlc_ptr_hl] = this.rlc_ptr_hl;
+    this.register_rrc_r8(ref);
+    ref[bit.rrc_ptr_hl] = this.rrc_ptr_hl;
   }
 }
 

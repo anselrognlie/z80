@@ -199,3 +199,16 @@ export function rlc8(dst) {
 
   return { a, s, z, h, p, n, c };
 }
+
+export function rrc8(dst) {
+  const c = toBit(dst & 0x01);
+  dst >>= 1;
+  const a = (dst & 0x0ff) | (c << 7);
+  const s = toBit(a & 0x080);
+  const z = toBit(a === 0);
+  const n = 0;
+  const h = 0;
+  const p = parity8(a);
+
+  return { a, s, z, h, p, n, c };
+}
