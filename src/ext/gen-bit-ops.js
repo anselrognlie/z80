@@ -27,7 +27,7 @@ const outGen = (op) => {
 const genBitOp = (op) => {
   for (let bit of [0, 1, 2, 3, 4, 5, 6, 7]) {
     for (let reg of regs) {
-      outGen(`${op}_${bit}_${reg}`);
+      outGen(`${op} ${bit} ${reg}`);
     }
     console.log();
   }
@@ -35,7 +35,7 @@ const genBitOp = (op) => {
 
 for (let op of ops) {
   for (let reg of regs) {
-    outGen(`${op}_${reg}`);
+    outGen(`${op} ${reg}`);
   }
 
   console.log();
