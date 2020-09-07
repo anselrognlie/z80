@@ -7,7 +7,8 @@ import { clamp8, clamp16, makeWord,
   toBit, signed8, parity8,
   add8, sub8, add16, sub16, adc8, sbc8,
   and8, or8, xor8, sbc16, adc16,
-  rlc8, rrc8, rl8, rr8 } from '../bin-ops';
+  rlc8, rrc8, rl8, rr8,
+  sla8, sra8, srl8 } from '../bin-ops';
 
 export class Z80Flags {}
 
@@ -2177,6 +2178,120 @@ class Z80Cpu {
     });
   }
 
+  make_sla_r8(reg) {
+    return () => {
+      this.setT(8);
+      const f = this.getFlags();
+      const value = this.registers[reg];
+      const result = sla8(value);
+      this.registers[reg] = result.a;
+
+      result.p_v = result.p;
+      this.setFlags({
+        ...f,
+        ...result
+      });
+    };
+  }
+
+  register_sla_r8(ref) {
+    const regs = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
+    for (let reg of regs) {
+      ref[bit[`sla_${reg}`]] = this.make_sla_r8(reg);
+    }
+  }
+
+  sla_ptr_hl() {
+    this.setT(15);
+    const f = this.getFlags();
+    const addr = this.hl;
+    const value = this.readByte(addr);
+    const result = sla8(value);
+    this.writeByte(addr, result.a);
+
+    result.p_v = result.p;
+    this.setFlags({
+      ...f,
+      ...result
+    });
+  }
+
+  make_sra_r8(reg) {
+    return () => {
+      this.setT(8);
+      const f = this.getFlags();
+      const value = this.registers[reg];
+      const result = sra8(value);
+      this.registers[reg] = result.a;
+
+      result.p_v = result.p;
+      this.setFlags({
+        ...f,
+        ...result
+      });
+    };
+  }
+
+  register_sra_r8(ref) {
+    const regs = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
+    for (let reg of regs) {
+      ref[bit[`sra_${reg}`]] = this.make_sra_r8(reg);
+    }
+  }
+
+  sra_ptr_hl() {
+    this.setT(15);
+    const f = this.getFlags();
+    const addr = this.hl;
+    const value = this.readByte(addr);
+    const result = sra8(value);
+    this.writeByte(addr, result.a);
+
+    result.p_v = result.p;
+    this.setFlags({
+      ...f,
+      ...result
+    });
+  }
+
+  make_srl_r8(reg) {
+    return () => {
+      this.setT(8);
+      const f = this.getFlags();
+      const value = this.registers[reg];
+      const result = srl8(value);
+      this.registers[reg] = result.a;
+
+      result.p_v = result.p;
+      this.setFlags({
+        ...f,
+        ...result
+      });
+    };
+  }
+
+  register_srl_r8(ref) {
+    const regs = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
+    for (let reg of regs) {
+      ref[bit[`srl_${reg}`]] = this.make_srl_r8(reg);
+    }
+  }
+
+  srl_ptr_hl() {
+    this.setT(15);
+    const f = this.getFlags();
+    const addr = this.hl;
+    const value = this.readByte(addr);
+    const result = srl8(value);
+    this.writeByte(addr, result.a);
+
+    result.p_v = result.p;
+    this.setFlags({
+      ...f,
+      ...result
+    });
+  }
+
   registerBit() {
     this.bit = {};
     const ref = this.bit;
@@ -2190,6 +2305,13 @@ class Z80Cpu {
     ref[bit.rl_ptr_hl] = this.rl_ptr_hl;
     this.register_rr_r8(ref);
     ref[bit.rr_ptr_hl] = this.rr_ptr_hl;
+
+    this.register_sla_r8(ref);
+    ref[bit.sla_ptr_hl] = this.sla_ptr_hl;
+    this.register_sra_r8(ref);
+    ref[bit.sra_ptr_hl] = this.sra_ptr_hl;
+    this.register_srl_r8(ref);
+    ref[bit.srl_ptr_hl] = this.srl_ptr_hl;
   }
 }
 

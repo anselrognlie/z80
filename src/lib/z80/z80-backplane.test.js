@@ -2662,3 +2662,129 @@ test('rr ptr hl test', () => {
   expect(mem.readOne(0x1000)).toBe(0x2a);
   expect(proc.getFlags().c).toBe(1);
 });
+
+test('sla r8 test', () => {
+  const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
+  for (let r of regs) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const ldInst = `ld_${r}_imm`;
+    const slaInst = `sla_${r}`;
+
+    mem.load(0, [
+      inst[ldInst], 0xaa,
+      inst.pre_bit, bit[slaInst],
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(4);
+    expect(proc.registers[r]).toBe(0x54);
+    expect(proc.getFlags().c).toBe(1);
+  }
+});
+
+test('sla ptr hl test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x00, 0x10,
+    inst.ld_ptr_hl_imm, 0xaa,
+    inst.pre_bit, bit.sla_ptr_hl,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(7);
+  expect(mem.readOne(0x1000)).toBe(0x54);
+  expect(proc.getFlags().c).toBe(1);
+});
+
+test('sra r8 test', () => {
+  const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
+  for (let r of regs) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const ldInst = `ld_${r}_imm`;
+    const sraInst = `sra_${r}`;
+
+    mem.load(0, [
+      inst[ldInst], 0xa5,
+      inst.pre_bit, bit[sraInst],
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(4);
+    expect(proc.registers[r]).toBe(0xd2);
+    expect(proc.getFlags().c).toBe(1);
+  }
+});
+
+test('sra ptr hl test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x00, 0x10,
+    inst.ld_ptr_hl_imm, 0xa5,
+    inst.pre_bit, bit.sra_ptr_hl,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(7);
+  expect(mem.readOne(0x1000)).toBe(0xd2);
+  expect(proc.getFlags().c).toBe(1);
+});
+
+test('srl r8 test', () => {
+  const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
+  for (let r of regs) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const ldInst = `ld_${r}_imm`;
+    const srlInst = `srl_${r}`;
+
+    mem.load(0, [
+      inst[ldInst], 0xa5,
+      inst.pre_bit, bit[srlInst],
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(4);
+    expect(proc.registers[r]).toBe(0x52);
+    expect(proc.getFlags().c).toBe(1);
+  }
+});
+
+test('srl ptr hl test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x00, 0x10,
+    inst.ld_ptr_hl_imm, 0xa5,
+    inst.pre_bit, bit.srl_ptr_hl,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(7);
+  expect(mem.readOne(0x1000)).toBe(0x52);
+  expect(proc.getFlags().c).toBe(1);
+});

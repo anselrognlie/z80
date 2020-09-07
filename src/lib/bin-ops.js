@@ -238,3 +238,44 @@ export function rr8(dst, cIn) {
 
   return { a, s, z, h, p, n, c };
 }
+
+export function sla8(dst) {
+  dst <<= 1;
+  const c = toBit(dst & 0x100);
+  const a = (dst & 0x0fe);
+  const s = toBit(a & 0x080);
+  const z = toBit(a === 0);
+  const n = 0;
+  const h = 0;
+  const p = parity8(a);
+
+  return { a, s, z, h, p, n, c };
+}
+
+export function sra8(dst) {
+  const c = toBit(dst & 0x01);
+  const sb = dst & 0x080;
+  dst >>= 1;
+  const a = (dst & 0x07f) | sb;
+  const s = toBit(a & 0x080);
+  const z = toBit(a === 0);
+  const n = 0;
+  const h = 0;
+  const p = parity8(a);
+
+  return { a, s, z, h, p, n, c };
+}
+
+export function srl8(dst) {
+  const c = toBit(dst & 0x01);
+  dst >>= 1;
+  const a = (dst & 0x07f);
+  const s = toBit(a & 0x080);
+  const z = toBit(a === 0);
+  const n = 0;
+  const h = 0;
+  const p = parity8(a);
+
+  return { a, s, z, h, p, n, c };
+}
+
