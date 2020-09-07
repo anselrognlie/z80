@@ -2104,13 +2104,14 @@ class Z80Cpu {
   make_rl_r8(reg) {
     return () => {
       this.setT(8);
+      const f = this.getFlags();
       const value = this.registers[reg];
-      const result = rl8(value);
+      const result = rl8(value, f.c);
       this.registers[reg] = result.a;
 
       result.p_v = result.p;
       this.setFlags({
-        ...this.getFlags(),
+        ...f,
         ...result
       });
     };
@@ -2125,14 +2126,15 @@ class Z80Cpu {
 
   rl_ptr_hl() {
     this.setT(15);
+    const f = this.getFlags();
     const addr = this.hl;
     const value = this.readByte(addr);
-    const result = rl8(value);
+    const result = rl8(value, f.c);
     this.writeByte(addr, result.a);
 
     result.p_v = result.p;
     this.setFlags({
-      ...this.getFlags(),
+      ...f,
       ...result
     });
   }
@@ -2140,13 +2142,14 @@ class Z80Cpu {
   make_rr_r8(reg) {
     return () => {
       this.setT(8);
+      const f = this.getFlags();
       const value = this.registers[reg];
-      const result = rr8(value);
+      const result = rr8(value, f.c);
       this.registers[reg] = result.a;
 
       result.p_v = result.p;
       this.setFlags({
-        ...this.getFlags(),
+        ...f,
         ...result
       });
     };
@@ -2161,14 +2164,15 @@ class Z80Cpu {
 
   rr_ptr_hl() {
     this.setT(15);
+    const f = this.getFlags();
     const addr = this.hl;
     const value = this.readByte(addr);
-    const result = rr8(value);
+    const result = rr8(value, f.c);
     this.writeByte(addr, result.a);
 
     result.p_v = result.p;
     this.setFlags({
-      ...this.getFlags(),
+      ...f,
       ...result
     });
   }
