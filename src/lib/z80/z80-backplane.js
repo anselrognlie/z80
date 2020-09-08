@@ -8,6 +8,7 @@ class Z80Backplane {
     this.intHandlers = [];
     this.ports = new PortRegistry();
     this.nmiSource = null;
+    this.interruptSource = null;
   }
 
   mapAddress(start, consumer) {
@@ -45,6 +46,24 @@ class Z80Backplane {
 
     if (source) {
       source.completeNmi();
+    }
+  }
+
+  raiseInterrupt(source, data) {
+    if (this.interruptSource) {
+      return false;
+    }
+
+    this.interruptSource = source;
+    this.intHandlers.forEach(h => h.raiseInterrupt(data));
+  }
+
+  completeInterrupt() {
+    const source = this.interruptSource;
+    this.interruptSource = null;
+
+    if (source) {
+      source.completeInterrupt();
     }
   }
 

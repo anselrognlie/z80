@@ -69,6 +69,16 @@ class NmiSource {
   }
 }
 
+class InterruptSource {
+  constructor() {
+    this.count = 0;
+  }
+
+  completeInterrupt() {
+    ++this.count;
+  }
+}
+
 const build_cpu = () => {
   const mainboard = new backplane();
   const proc = new cpu();
@@ -2994,6 +3004,85 @@ test('nmi test', () => {
   }
 
   expect(proc.registers.pc).toBe(8);
+  expect(proc.registers.a).toBe(0x0a);
+  expect(source.count).toBe(10);
+})
+
+test('raise im1 test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+  const source = new InterruptSource();
+
+  mem.load(0x38, [
+    inst.di,
+    inst.inc_a,
+    inst.ei,
+    inst.pre_80, ext.reti,
+  ]);
+
+  mem.load(0, [
+    inst.pre_80, ext.im_1,
+    inst.ei,
+    inst.ld_c_imm, 0x0a,
+    inst.halt,
+    inst.cp_c,
+    inst.jr_nz_imm, 0xfc,
+    inst.ld_b_imm, 0x0b,
+    inst.halt,
+  ]);
+
+  const initLoops = 10;
+  let loops = initLoops;
+  while (proc.registers.b !== 0x0b) {
+    mainboard.clock();
+    if (! --loops) {
+      mainboard.raiseInterrupt(source);
+      loops = initLoops;
+    }
+  }
+
+  expect(proc.registers.pc).toBe(11);
+  expect(proc.registers.a).toBe(0x0a);
+  expect(source.count).toBe(10);
+})
+
+test('raise im2 test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+  const source = new InterruptSource();
+
+  mem.load(0x1000, [ 0x00, 0x0f ]);
+
+  mem.load(0x0f00, [
+    inst.di,
+    inst.inc_a,
+    inst.ei,
+    inst.pre_80, ext.reti,
+  ]);
+
+  mem.load(0, [
+    inst.pre_80, ext.im_2,
+    inst.ld_a_imm, 0x10,
+    inst.pre_80, ext.ld_i_a,
+    inst.xor_a,
+    inst.ei,
+    inst.ld_c_imm, 0x0a,
+    inst.halt,
+    inst.cp_c,
+    inst.jr_nz_imm, 0xfc,
+    inst.ld_b_imm, 0x0b,
+    inst.halt,
+  ]);
+
+  const initLoops = 10;
+  let loops = initLoops;
+  while (proc.registers.b !== 0x0b) {
+    mainboard.clock();
+    if (! --loops) {
+      mainboard.raiseInterrupt(source, 0x00);
+      loops = initLoops;
+    }
+  }
+
+  expect(proc.registers.pc).toBe(16);
   expect(proc.registers.a).toBe(0x0a);
   expect(source.count).toBe(10);
 })

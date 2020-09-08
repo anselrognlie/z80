@@ -46,11 +46,21 @@ class Z80Cpu {
       ixh: 0, ixl: 0, iyh: 0, iyl: 0,
     };
     this.intMode = Z80Cpu.INT_MODE_0;
+    this.interruptHandler = this.handleInterruptMode0;
+    this.interruptData = null;
     this.halted = false;
     this.tStates = 0;
     this.tStatesEnabled = true;
     this.eiCountdown = 0;
     this.respondsToInterrupts = true;
+
+    this.overriddenPcData = null;
+    this.overriddenPcOffset = 0;
+
+    this.inNmi = false;
+    this.hasPendingNmi = false;
+    this.hasPendingInterrupt = false;
+    this.pendingInterruptData = null;
 
     this.registerInstructions();
   }
@@ -164,6 +174,11 @@ class Z80Cpu {
     const reg = this.registers;
     this.registers = { ...reg, iff1: 0, iff2: 0, pc: 0, i: 0, r: 0 };
     this.intMode = Z80Cpu.INT_MODE_0;
+    this.interruptHandler = this.handleInterruptMode0;
+    this.inNmi = false;
+    this.hasPendingNmi = false;
+    this.hasPendingInterrupt = false;
+    this.pendingInterruptData = null;
     this.halted = false;
   }
 
@@ -186,7 +201,6 @@ class Z80Cpu {
 
   handleNmi() {
     const reg = this.registers;
-    reg.iff2 = reg.iff1;
     reg.iff1 = 0;
     const addr = clamp16(reg.sp - 2);
     this.writeWord(addr, reg.pc);
@@ -212,16 +226,87 @@ class Z80Cpu {
     this.completeNmi();
   }
 
+  raiseInterrupt(data) {
+    if (this.registers.iff1 === 0) { return; }
+
+    this.hasPendingInterrupt = true;
+    this.pendingInterruptData = data;
+  }
+
+  handleInterruptMode0() {}
+
+  handleInterruptMode1() {
+    const reg = this.registers;
+    const addr = clamp16(reg.sp - 2);
+    this.writeWord(addr, reg.pc);
+    reg.sp = addr;
+    reg.pc = 0x0038;
+  }
+
+  interruptDataAsByte() {
+    if (Array.isArray(this.pendingInterruptData)) {
+      return this.pendingInterruptData[0];
+    }
+
+    return this.pendingInterruptData;
+  }
+
+  handleInterruptMode2() {
+    const reg = this.registers;
+    const byte = this.interruptDataAsByte();
+    const addr = clamp16((reg.i << 8) | byte);
+    const newLoc = this.readWord(addr);
+    const newSp = clamp16(reg.sp - 2);
+    this.writeWord(newSp, reg.pc);
+    reg.sp = newSp;
+    reg.pc = newLoc;
+  }
+
+  handleInterrupt() {
+    this.interruptHandler();
+    this.halted = false;
+    this.hasPendingInterrupt = false;
+    this.pendingInterruptData = null;
+  }
+
+  completeInterrupt() {
+    this.bus.completeInterrupt();
+  }
+
+  reti() {
+    this.setT(14);
+    const reg = this.registers;
+    const addr = reg.sp;
+    reg.pc = this.readWord(addr);
+    reg.sp = clamp16(addr + 2);
+    this.completeInterrupt();
+  }
+
   handleHalt() {
     if (this.halted) {
       this.reversePC();
     }
   }
 
-  handleInterrupt() {
+  handleInterrupts() {
     if (this.hasPendingNmi) {
       this.handleNmi();
+    } else if (this.hasPendingInterrupt) {
+      this.handleInterrupt();
     }
+  }
+
+  decodeInstruction() {
+    // continue with handling the current instruction
+    const inst = this.readFromPcAdvance();
+
+    const fn = this.inst[inst];
+    if (! fn) {
+      const instStr = inst.toString(16);
+      throw new Z80Error(`inst [${instStr}] has no registered callback`);
+    }
+
+    fn.call(this);
   }
 
   clock() {
@@ -236,23 +321,14 @@ class Z80Cpu {
     // we have completed the previous instruction
 
     // check whether we need to handle an interrupt here
-    this.handleInterrupt();
+    this.handleInterrupts();
 
     // check whether we are ready to enable inturrupts
     this.checkEnableInterrupts();
 
     this.handleHalt();
 
-    // continue with handling the current instruction
-    const inst = this.readFromPcAdvance();
-
-    const fn = this.inst[inst];
-    if (! fn) {
-      const instStr = inst.toString(16);
-      throw new Z80Error(`inst [${instStr}] has no registered callback`);
-    }
-
-    fn.call(this);
+    this.decodeInstruction();
 
     if (this.tStatesEnabled) {
       if (! this.tStates) {
@@ -2008,16 +2084,19 @@ class Z80Cpu {
   im_0() {
     this.setT(8);
     this.intMode = Z80Cpu.INT_MODE_0;
+    this.interruptHandler = this.handleInterruptMode0;
   }
 
   im_1() {
     this.setT(8);
     this.intMode = Z80Cpu.INT_MODE_1;
+    this.interruptHandler = this.handleInterruptMode1;
   }
 
   im_2() {
     this.setT(8);
     this.intMode = Z80Cpu.INT_MODE_2;
+    this.interruptHandler = this.handleInterruptMode2;
   }
 
   registerExtended() {
@@ -2037,7 +2116,7 @@ class Z80Cpu {
     ref[ext.im_0] = this.im_0;
     ref[ext.ld_i_a] = this.ld_i_a;
 
-    // ref[ext.reti] = this.reti;
+    ref[ext.reti] = this.reti;
     ref[ext.ld_r_a] = this.ld_r_a;
 
     // 0x50
