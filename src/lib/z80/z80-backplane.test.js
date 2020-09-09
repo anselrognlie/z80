@@ -3086,3 +3086,110 @@ test('raise im2 test', () => {
   expect(proc.registers.a).toBe(0x0a);
   expect(source.count).toBe(10);
 })
+
+test('raise im0 single byte test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+  const source = new InterruptSource();
+
+  mem.load(0x30, [
+    inst.di,
+    inst.inc_a,
+    inst.ei,
+    inst.pre_80, ext.reti,
+  ]);
+
+  mem.load(0, [
+    inst.ei,
+    inst.ld_c_imm, 0x0a,
+    inst.halt,
+    inst.cp_c,
+    inst.jr_nz_imm, 0xfc,
+    inst.ld_b_imm, 0x0b,
+    inst.halt,
+  ]);
+
+  const initLoops = 10;
+  let loops = initLoops;
+  while (proc.registers.b !== 0x0b) {
+    mainboard.clock();
+    if (! --loops) {
+      mainboard.raiseInterrupt(source, inst.rst_30);
+      loops = initLoops;
+    }
+  }
+
+  expect(proc.registers.pc).toBe(9);
+  expect(proc.registers.a).toBe(0x0a);
+  expect(source.count).toBe(10);
+})
+
+test('raise im0 multi-byte call test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+  const source = new InterruptSource();
+
+  mem.load(0x0f00, [
+    inst.di,
+    inst.inc_a,
+    inst.ei,
+    // inst.jp_imm, 0x03, 0x00,
+    inst.pre_80, ext.reti,
+  ]);
+
+  mem.load(0, [
+    inst.ei,
+    inst.ld_c_imm, 0x0a,
+    inst.halt,
+    inst.cp_c,
+    inst.jr_nz_imm, 0xfc,
+    inst.ld_b_imm, 0x0b,
+    inst.halt,
+  ]);
+
+  const initLoops = 10;
+  let loops = initLoops;
+  while (proc.registers.b !== 0x0b) {
+    mainboard.clock();
+    if (! --loops) {
+      mainboard.raiseInterrupt(source, [ inst.call_imm, 0x00, 0x0f ]);
+      loops = initLoops;
+    }
+  }
+
+  expect(proc.registers.pc).toBe(9);
+  expect(proc.registers.a).toBe(0x0a);
+  expect(source.count).toBe(10);
+})
+
+test('raise im0 multi-byte jp test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0x0f00, [
+    inst.di,
+    inst.inc_a,
+    inst.ei,
+    inst.jp_imm, 0x04, 0x00,
+  ]);
+
+  mem.load(0, [
+    inst.ei,
+    inst.ld_c_imm, 0x0a,
+    inst.halt,
+    inst.cp_c,
+    inst.jr_nz_imm, 0xfc,
+    inst.ld_b_imm, 0x0b,
+    inst.halt,
+  ]);
+
+  const initLoops = 10;
+  let loops = initLoops;
+  while (proc.registers.b !== 0x0b) {
+    mainboard.clock();
+    if (! --loops) {
+      mainboard.raiseInterrupt(null, [ inst.jp_imm, 0x00, 0x0f ]);
+      loops = initLoops;
+    }
+  }
+
+  expect(proc.registers.pc).toBe(9);
+  expect(proc.registers.a).toBe(0x0a);
+})

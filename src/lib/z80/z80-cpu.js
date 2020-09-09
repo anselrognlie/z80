@@ -233,7 +233,23 @@ class Z80Cpu {
     this.pendingInterruptData = data;
   }
 
-  handleInterruptMode0() {}
+  overridePC(data) {
+    if (! Array.isArray(data)) {
+      data = [ data ];
+    }
+
+    this.overriddenPcData = data;
+    this.overriddenPcOffset = 0;
+  }
+
+  restorePcOverride() {
+    this.overriddenPcData = null;
+    this.overriddenPcOffset = 0;
+  }
+
+  handleInterruptMode0() {
+    this.overridePC(this.pendingInterruptData);
+  }
 
   handleInterruptMode1() {
     const reg = this.registers;
@@ -330,6 +346,8 @@ class Z80Cpu {
 
     this.decodeInstruction();
 
+    this.restorePcOverride();
+
     if (this.tStatesEnabled) {
       if (! this.tStates) {
         const instStr = inst.toString(16);
@@ -373,6 +391,10 @@ class Z80Cpu {
   }
 
   readFromPc() {
+    if (this.overriddenPcData) {
+      return this.overriddenPcData[this.overriddenPcOffset];
+    }
+
     return this.readByte(this.registers.pc);
   }
 
@@ -395,10 +417,20 @@ class Z80Cpu {
   }
 
   advancePC(count = 1) {
+    if (this.overriddenPcData) {
+      this.overriddenPcOffset += count;
+      return;
+    }
+
     this.registers.pc = clamp16(this.registers.pc + count);
   }
 
   reversePC(count = 1) {
+    if (this.overriddenPcData) {
+      this.overriddenPcOffset -= count;
+      return;
+    }
+
     this.registers.pc = clamp16(this.registers.pc - count);
   }
 
