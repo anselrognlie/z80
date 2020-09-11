@@ -2664,14 +2664,103 @@ class Z80Cpu {
     this[this.indexRegister] = word;
   }
 
+  ld_ptr_imm_ind() {
+    this.setT(20);
+    const addr = this.readWordFromPcAdvance();
+    this.writeWord(addr, this[this.indexRegister]);
+  }
+
+  inc_ind() {
+    const ind = this.indexRegister;
+    this[ind] = this.inc_16(this[ind]);
+    this.setT(10);
+  }
+
+  dec_ind() {
+    const ind = this.indexRegister;
+    this[ind] = this.dec_16(this[ind]);
+    this.setT(10);
+  }
+
   registerIndex() {
     this.index = {};
     const ref = this.index;
 
     ref[index.ld_ind_imm] = this.ld_ind_imm;
     this.generate_add_ind_16(ref);
+    ref[index.ld_ptr_imm_ind] = this.ld_ptr_imm_ind;
+    ref[index.inc_ind] = this.inc_ind;
+    ref[index.dec_ind] = this.dec_ind;
   }
 }
+
+// remaining index inst to implement
+
+// Z80Index.ld_ind_ptr_imm = Z80Instructions.ld_hl_ptr_imm
+// Z80Index.inc_ptr_ind = Z80Instructions.inc_ptr_hl
+// Z80Index.dec_ptr_ind = Z80Instructions.dec_ptr_hl
+// Z80Index.ld_ptr_ind_imm = Z80Instructions.ld_ptr_hl_imm
+// Z80Index.ld_b_ptr_ind = Z80Instructions.ld_b_ptr_hl
+// Z80Index.ld_c_ptr_ind = Z80Instructions.ld_c_ptr_hl
+// Z80Index.ld_d_ptr_ind = Z80Instructions.ld_d_ptr_hl
+// Z80Index.ld_e_ptr_ind = Z80Instructions.ld_e_ptr_hl
+// Z80Index.ld_h_ptr_ind = Z80Instructions.ld_h_ptr_hl
+// Z80Index.ld_l_ptr_ind = Z80Instructions.ld_l_ptr_hl
+// Z80Index.ld_ptr_ind_b = Z80Instructions.ld_ptr_hl_b
+// Z80Index.ld_ptr_ind_c = Z80Instructions.ld_ptr_hl_c
+// Z80Index.ld_ptr_ind_d = Z80Instructions.ld_ptr_hl_d
+// Z80Index.ld_ptr_ind_e = Z80Instructions.ld_ptr_hl_e
+// Z80Index.ld_ptr_ind_h = Z80Instructions.ld_ptr_hl_h
+// Z80Index.ld_ptr_ind_l = Z80Instructions.ld_ptr_hl_l
+// Z80Index.ld_ptr_ind_a = Z80Instructions.ld_ptr_hl_a
+// Z80Index.ld_a_ptr_ind = Z80Instructions.ld_a_ptr_hl
+// Z80Index.add_a_ptr_ind = Z80Instructions.add_a_ptr_hl
+// Z80Index.adc_a_ptr_ind = Z80Instructions.adc_a_ptr_hl
+// Z80Index.sub_ptr_ind = Z80Instructions.sub_ptr_hl
+// Z80Index.sbc_a_ptr_ind = Z80Instructions.sbc_a_ptr_hl
+// Z80Index.and_ptr_ind = Z80Instructions.and_ptr_hl
+// Z80Index.xor_ptr_ind = Z80Instructions.xor_ptr_hl
+// Z80Index.or_ptr_ind = Z80Instructions.or_ptr_hl
+// Z80Index.cp_ptr_ind = Z80Instructions.cp_ptr_hl
+// Z80Index.pop_ind = Z80Instructions.pop_hl
+// Z80Index.ex_ptr_sp_ind = Z80Instructions.ex_ptr_sp_hl
+// Z80Index.push_ind = Z80Instructions.push_hl
+// Z80Index.jp_ptr_ind = Z80Instructions.jp_ptr_hl
+// Z80Index.ex_de_ind = Z80Instructions.ex_de_hl
+// Z80Index.ld_sp_ind = Z80Instructions.ld_sp_hl
+
+// Z80IndexBit.rlc_ptr_ind = Z80Bit.rlc_ptr_hl
+// Z80IndexBit.rrc_ptr_ind = Z80Bit.rrc_ptr_hl
+// Z80IndexBit.rl_ptr_ind = Z80Bit.rl_ptr_hl
+// Z80IndexBit.rr_ptr_ind = Z80Bit.rr_ptr_hl
+// Z80IndexBit.sla_ptr_ind = Z80Bit.sla_ptr_hl
+// Z80IndexBit.sra_ptr_ind = Z80Bit.sra_ptr_hl
+// Z80IndexBit.sll_ptr_ind = Z80Bit.sll_ptr_hl
+// Z80IndexBit.srl_ptr_ind = Z80Bit.srl_ptr_hl
+// Z80IndexBit.bit_0_ptr_ind = Z80Bit.bit_0_ptr_hl
+// Z80IndexBit.bit_1_ptr_ind = Z80Bit.bit_1_ptr_hl
+// Z80IndexBit.bit_2_ptr_ind = Z80Bit.bit_2_ptr_hl
+// Z80IndexBit.bit_3_ptr_ind = Z80Bit.bit_3_ptr_hl
+// Z80IndexBit.bit_4_ptr_ind = Z80Bit.bit_4_ptr_hl
+// Z80IndexBit.bit_5_ptr_ind = Z80Bit.bit_5_ptr_hl
+// Z80IndexBit.bit_6_ptr_ind = Z80Bit.bit_6_ptr_hl
+// Z80IndexBit.bit_7_ptr_ind = Z80Bit.bit_7_ptr_hl
+// Z80IndexBit.res_0_ptr_ind = Z80Bit.res_0_ptr_hl
+// Z80IndexBit.res_1_ptr_ind = Z80Bit.res_1_ptr_hl
+// Z80IndexBit.res_2_ptr_ind = Z80Bit.res_2_ptr_hl
+// Z80IndexBit.res_3_ptr_ind = Z80Bit.res_3_ptr_hl
+// Z80IndexBit.res_4_ptr_ind = Z80Bit.res_4_ptr_hl
+// Z80IndexBit.res_5_ptr_ind = Z80Bit.res_5_ptr_hl
+// Z80IndexBit.res_6_ptr_ind = Z80Bit.res_6_ptr_hl
+// Z80IndexBit.res_7_ptr_ind = Z80Bit.res_7_ptr_hl
+// Z80IndexBit.set_0_ptr_ind = Z80Bit.set_0_ptr_hl
+// Z80IndexBit.set_1_ptr_ind = Z80Bit.set_1_ptr_hl
+// Z80IndexBit.set_2_ptr_ind = Z80Bit.set_2_ptr_hl
+// Z80IndexBit.set_3_ptr_ind = Z80Bit.set_3_ptr_hl
+// Z80IndexBit.set_4_ptr_ind = Z80Bit.set_4_ptr_hl
+// Z80IndexBit.set_5_ptr_ind = Z80Bit.set_5_ptr_hl
+// Z80IndexBit.set_6_ptr_ind = Z80Bit.set_6_ptr_hl
+// Z80IndexBit.set_7_ptr_ind = Z80Bit.set_7_ptr_hl
 
 Z80Cpu.INT_MODE_0 = 0;
 Z80Cpu.INT_MODE_1 = 1;
