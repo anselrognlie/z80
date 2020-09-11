@@ -1,7 +1,9 @@
 import {
   Z80Instructions as inst,
   Z80Extended as ext,
-  Z80Bit as bit } from './z80-inst';
+  Z80Bit as bit,
+  Z80Index as index,
+  Z80IndexBit as index_bit } from './z80-inst';
 import { clamp8, clamp16, makeWord,
   getLo, getHi, splitHiLo, hex8,
   toBit, signed8, parity8,
@@ -1621,10 +1623,41 @@ class Z80Cpu {
     }
   }
 
+  pre_ix() {
+    const inst = this.readFromPc();
+
+    const fn = this.index[inst];
+    if (! fn) {
+      // treat the prefix as a nop
+      this.nop();
+    } else {
+      // consume the inst byte and invoke
+      this.advancePC();
+      this.indexRegister = 'ix';
+      fn.call(this);
+    }
+  }
+
+  pre_iy() {
+    const inst = this.readFromPc();
+
+    const fn = this.index[inst];
+    if (! fn) {
+      // treat the prefix as a nop
+      this.nop();
+    } else {
+      // consume the inst byte and invoke
+      this.advancePC();
+      this.indexRegister = 'iy';
+      fn.call(this);
+    }
+  }
+
   registerInstructions() {
     this.registerBasic();
     this.registerExtended();
     this.registerBit();
+    this.registerIndex();
   }
 
   registerBasic() {
@@ -1735,7 +1768,7 @@ class Z80Cpu {
 
     ref[inst.exx] = this.exx;
     ref[inst.in_a_ptr_imm] = this.in_a_ptr_imm;
-    // ref[inst.pre_ix] = this.pre_ix;
+    ref[inst.pre_ix] = this.pre_ix;
     ref[inst.sbc_a_imm] = this.sbc_a_imm;
 
     ref[inst.ex_ptr_sp_hl] = this.ex_ptr_sp_hl;
@@ -1751,7 +1784,7 @@ class Z80Cpu {
 
     ref[inst.ld_sp_hl] = this.ld_sp_hl;
     ref[inst.ei] = this.ei;
-    // ref[inst.pre_iy] = this.pre_iy;
+    ref[inst.pre_iy] = this.pre_iy;
     ref[inst.cp_imm] = this.cp_imm;
 
     // gen.generate('ld bc imm');
@@ -2598,6 +2631,44 @@ class Z80Cpu {
 
     this.register_set_r8(ref);
     this.register_set_ptr_hl(ref);
+  }
+
+  add_ind_16(value) {
+    this.setT(15);
+    const { a, h, n, c } = add16(this[this.indexRegister], value);
+    this[this.indexRegister] = a;
+
+    const f = this.getFlags();
+    f.n = n;
+    f.c = c;
+    f.h = h;
+    this.setFlags(f);
+  }
+
+  generate_add_ind_16(ref) {
+    const regs = ['bc', 'de', 'ind', 'sp'];
+    for (let reg of regs) {
+      ref[index[`add_ind_${reg}`]] = () => {
+        if (reg === 'ind') {
+          reg = this.indexRegister;
+        }
+
+        this.add_ind_16(this[reg]);
+      };
+    }
+  }
+
+  ld_ind_imm() {
+    const word = this.readWordFromPcAdvance();
+    this[this.indexRegister] = word;
+  }
+
+  registerIndex() {
+    this.index = {};
+    const ref = this.index;
+
+    ref[index.ld_ind_imm] = this.ld_ind_imm;
+    this.generate_add_ind_16(ref);
   }
 }
 

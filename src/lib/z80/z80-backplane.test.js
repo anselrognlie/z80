@@ -4,7 +4,10 @@ import backplane from './z80-backplane';
 import {
   Z80Instructions as inst,
   Z80Extended as ext,
-  Z80Bit as bit } from './z80-inst';
+  Z80Bit as bit,
+  Z80Index as index,
+  Z80IndexBit as index_bit,
+ } from './z80-inst';
 import '../test-helper'
 
 class IoTestProvider {
@@ -3193,3 +3196,52 @@ test('raise im0 multi-byte jp test', () => {
   expect(proc.registers.pc).toBe(9);
   expect(proc.registers.a).toBe(0x0a);
 })
+
+test('add ind 16 test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const regs = ['bc', 'de', 'sp'];
+    for (let reg of regs) {
+      const [mainboard, proc, mem ] = build_cpu();
+      const ld16Inst = `ld_${reg}_imm`;
+      const ldIndInst = `ld_ind_imm`;
+      const addIndInst = `add_ind_${reg}`;
+      const preInst = `pre_${ind}`;
+
+      mem.load(0, [
+        inst[ld16Inst], 0x10, 0x32,
+        inst[preInst], index[ldIndInst], 0x10, 0x32,
+        inst[preInst], index[addIndInst],
+        inst.halt,
+      ]);
+
+      while (! proc.halted) {
+        mainboard.clock();
+      }
+
+      expect(proc.registers.pc).toBe(10);
+      expect(proc[ind]).toBe(0x6420);
+    }
+  }
+});
+
+test('add ind ind test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0, [
+      inst[preInst], index.ld_ind_imm, 0x10, 0x32,
+      inst[preInst], index.add_ind_ind,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(7);
+    expect(proc[ind]).toBe(0x6420);
+  }
+});
