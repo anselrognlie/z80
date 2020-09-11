@@ -2659,6 +2659,7 @@ class Z80Cpu {
   }
 
   ld_ind_imm() {
+    this.setT(14);
     const word = this.readWordFromPcAdvance();
     this[this.indexRegister] = word;
   }

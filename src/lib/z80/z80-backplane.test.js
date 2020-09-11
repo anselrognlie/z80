@@ -2996,13 +2996,10 @@ test('nmi test', () => {
     inst.halt,
   ]);
 
-  const initLoops = 10;
-  let loops = initLoops;
   while (proc.registers.b !== 0x0b) {
     mainboard.clock();
-    if (! --loops) {
+    if (proc.halted) {
       mainboard.raiseNmi(source);
-      loops = initLoops;
     }
   }
 
@@ -3033,13 +3030,10 @@ test('raise im1 test', () => {
     inst.halt,
   ]);
 
-  const initLoops = 10;
-  let loops = initLoops;
   while (proc.registers.b !== 0x0b) {
     mainboard.clock();
-    if (! --loops) {
+    if (proc.halted) {
       mainboard.raiseInterrupt(source);
-      loops = initLoops;
     }
   }
 
@@ -3075,13 +3069,10 @@ test('raise im2 test', () => {
     inst.halt,
   ]);
 
-  const initLoops = 10;
-  let loops = initLoops;
   while (proc.registers.b !== 0x0b) {
     mainboard.clock();
-    if (! --loops) {
+    if (proc.halted) {
       mainboard.raiseInterrupt(source, 0x00);
-      loops = initLoops;
     }
   }
 
@@ -3111,13 +3102,10 @@ test('raise im0 single byte test', () => {
     inst.halt,
   ]);
 
-  const initLoops = 10;
-  let loops = initLoops;
   while (proc.registers.b !== 0x0b) {
     mainboard.clock();
-    if (! --loops) {
+    if (proc.halted) {
       mainboard.raiseInterrupt(source, inst.rst_30);
-      loops = initLoops;
     }
   }
 
@@ -3148,13 +3136,10 @@ test('raise im0 multi-byte call test', () => {
     inst.halt,
   ]);
 
-  const initLoops = 10;
-  let loops = initLoops;
   while (proc.registers.b !== 0x0b) {
     mainboard.clock();
-    if (! --loops) {
+    if (proc.halted) {
       mainboard.raiseInterrupt(source, [ inst.call_imm, 0x00, 0x0f ]);
-      loops = initLoops;
     }
   }
 
@@ -3183,13 +3168,10 @@ test('raise im0 multi-byte jp test', () => {
     inst.halt,
   ]);
 
-  const initLoops = 10;
-  let loops = initLoops;
   while (proc.registers.b !== 0x0b) {
     mainboard.clock();
-    if (! --loops) {
+    if (proc.halted) {
       mainboard.raiseInterrupt(null, [ inst.jp_imm, 0x00, 0x0f ]);
-      loops = initLoops;
     }
   }
 
