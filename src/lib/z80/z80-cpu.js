@@ -2682,6 +2682,14 @@ class Z80Cpu {
     this.setT(10);
   }
 
+  ld_ind_ptr_imm() {
+    this.setT(20);
+    const ind = this.indexRegister;
+    const addr = this.readWordFromPcAdvance();
+    const word  = this.readWord(addr);
+    this[ind] = word;
+  }
+
   registerIndex() {
     this.index = {};
     const ref = this.index;
@@ -2691,6 +2699,7 @@ class Z80Cpu {
     ref[index.ld_ptr_imm_ind] = this.ld_ptr_imm_ind;
     ref[index.inc_ind] = this.inc_ind;
     ref[index.dec_ind] = this.dec_ind;
+    ref[index.ld_ind_ptr_imm] = this.ld_ind_ptr_imm;
   }
 }
 

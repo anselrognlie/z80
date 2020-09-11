@@ -3290,3 +3290,26 @@ test('dec ind test', () => {
     expect(proc[ind]).toBe(0x320f);
   }
 });
+
+test('ld ind ptr imm test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0, [
+      inst.ld_hl_imm, 0x10, 0x32,
+      inst.ld_ptr_imm_hl, 0x00, 0x10,
+      inst[preInst], index.ld_ind_ptr_imm, 0x00, 0x10,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(11);
+    expect(proc[ind]).toBe(0x3210);
+  }
+});
+
