@@ -22,6 +22,8 @@ class InstructionGenerator {
 export class Z80Instructions {}
 export class Z80Extended {}
 export class Z80Bit {}
+export class Z80Index {}
+export class Z80IndexBit {}
 
 let gen = new InstructionGenerator(Z80Instructions);
 
@@ -724,3 +726,76 @@ gen.generate('set 7 l');
 gen.generate('set 7 ptr hl');
 gen.generate('set 7 a');
 
+Z80Index.add_ind_bc = Z80Instructions.add_hl_bc
+Z80Index.add_ind_de = Z80Instructions.add_hl_de
+Z80Index.ld_ind_imm = Z80Instructions.ld_hl_imm
+Z80Index.ld_ptr_imm_ind = Z80Instructions.ld_ptr_imm_hl
+Z80Index.inc_ind = Z80Instructions.inc_hl
+Z80Index.add_hl_ind = Z80Instructions.add_hl_hl
+Z80Index.ld_ind_ptr_imm = Z80Instructions.ld_hl_ptr_imm
+Z80Index.dec_ind = Z80Instructions.dec_hl
+Z80Index.inc_ptr_ind = Z80Instructions.inc_ptr_hl
+Z80Index.dec_ptr_ind = Z80Instructions.dec_ptr_hl
+Z80Index.ld_ptr_ind_imm = Z80Instructions.ld_ptr_hl_imm
+Z80Index.add_ind_sp = Z80Instructions.add_hl_sp
+Z80Index.ld_b_ptr_ind = Z80Instructions.ld_b_ptr_hl
+Z80Index.ld_c_ptr_ind = Z80Instructions.ld_c_ptr_hl
+Z80Index.ld_d_ptr_ind = Z80Instructions.ld_d_ptr_hl
+Z80Index.ld_e_ptr_ind = Z80Instructions.ld_e_ptr_hl
+Z80Index.ld_h_ptr_ind = Z80Instructions.ld_h_ptr_hl
+Z80Index.ld_l_ptr_ind = Z80Instructions.ld_l_ptr_hl
+Z80Index.ld_ptr_ind_b = Z80Instructions.ld_ptr_hl_b
+Z80Index.ld_ptr_ind_c = Z80Instructions.ld_ptr_hl_c
+Z80Index.ld_ptr_ind_d = Z80Instructions.ld_ptr_hl_d
+Z80Index.ld_ptr_ind_e = Z80Instructions.ld_ptr_hl_e
+Z80Index.ld_ptr_ind_h = Z80Instructions.ld_ptr_hl_h
+Z80Index.ld_ptr_ind_l = Z80Instructions.ld_ptr_hl_l
+Z80Index.ld_ptr_ind_a = Z80Instructions.ld_ptr_hl_a
+Z80Index.ld_a_ptr_ind = Z80Instructions.ld_a_ptr_hl
+Z80Index.add_a_ptr_ind = Z80Instructions.add_a_ptr_hl
+Z80Index.adc_a_ptr_ind = Z80Instructions.adc_a_ptr_hl
+Z80Index.sub_ptr_ind = Z80Instructions.sub_ptr_hl
+Z80Index.sbc_a_ptr_ind = Z80Instructions.sbc_a_ptr_hl
+Z80Index.and_ptr_ind = Z80Instructions.and_ptr_hl
+Z80Index.xor_ptr_ind = Z80Instructions.xor_ptr_hl
+Z80Index.or_ptr_ind = Z80Instructions.or_ptr_hl
+Z80Index.cp_ptr_ind = Z80Instructions.cp_ptr_hl
+Z80Index.pop_ind = Z80Instructions.pop_hl
+Z80Index.ex_ptr_sp_ind = Z80Instructions.ex_ptr_sp_hl
+Z80Index.push_ind = Z80Instructions.push_hl
+Z80Index.jp_ptr_ind = Z80Instructions.jp_ptr_hl
+Z80Index.ex_de_ind = Z80Instructions.ex_de_hl
+Z80Index.ld_sp_ind = Z80Instructions.ld_sp_hl
+
+Z80IndexBit.rlc_ptr_ind = Z80Bit.rlc_ptr_hl
+Z80IndexBit.rrc_ptr_ind = Z80Bit.rrc_ptr_hl
+Z80IndexBit.rl_ptr_ind = Z80Bit.rl_ptr_hl
+Z80IndexBit.rr_ptr_ind = Z80Bit.rr_ptr_hl
+Z80IndexBit.sla_ptr_ind = Z80Bit.sla_ptr_hl
+Z80IndexBit.sra_ptr_ind = Z80Bit.sra_ptr_hl
+Z80IndexBit.sll_ptr_ind = Z80Bit.sll_ptr_hl
+Z80IndexBit.srl_ptr_ind = Z80Bit.srl_ptr_hl
+Z80IndexBit.bit_0_ptr_ind = Z80Bit.bit_0_ptr_hl
+Z80IndexBit.bit_1_ptr_ind = Z80Bit.bit_1_ptr_hl
+Z80IndexBit.bit_2_ptr_ind = Z80Bit.bit_2_ptr_hl
+Z80IndexBit.bit_3_ptr_ind = Z80Bit.bit_3_ptr_hl
+Z80IndexBit.bit_4_ptr_ind = Z80Bit.bit_4_ptr_hl
+Z80IndexBit.bit_5_ptr_ind = Z80Bit.bit_5_ptr_hl
+Z80IndexBit.bit_6_ptr_ind = Z80Bit.bit_6_ptr_hl
+Z80IndexBit.bit_7_ptr_ind = Z80Bit.bit_7_ptr_hl
+Z80IndexBit.res_0_ptr_ind = Z80Bit.res_0_ptr_hl
+Z80IndexBit.res_1_ptr_ind = Z80Bit.res_1_ptr_hl
+Z80IndexBit.res_2_ptr_ind = Z80Bit.res_2_ptr_hl
+Z80IndexBit.res_3_ptr_ind = Z80Bit.res_3_ptr_hl
+Z80IndexBit.res_4_ptr_ind = Z80Bit.res_4_ptr_hl
+Z80IndexBit.res_5_ptr_ind = Z80Bit.res_5_ptr_hl
+Z80IndexBit.res_6_ptr_ind = Z80Bit.res_6_ptr_hl
+Z80IndexBit.res_7_ptr_ind = Z80Bit.res_7_ptr_hl
+Z80IndexBit.set_0_ptr_ind = Z80Bit.set_0_ptr_hl
+Z80IndexBit.set_1_ptr_ind = Z80Bit.set_1_ptr_hl
+Z80IndexBit.set_2_ptr_ind = Z80Bit.set_2_ptr_hl
+Z80IndexBit.set_3_ptr_ind = Z80Bit.set_3_ptr_hl
+Z80IndexBit.set_4_ptr_ind = Z80Bit.set_4_ptr_hl
+Z80IndexBit.set_5_ptr_ind = Z80Bit.set_5_ptr_hl
+Z80IndexBit.set_6_ptr_ind = Z80Bit.set_6_ptr_hl
+Z80IndexBit.set_7_ptr_ind = Z80Bit.set_7_ptr_hl
