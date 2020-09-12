@@ -3573,7 +3573,7 @@ test('sub ptr ind test', () => {
   }
 });
 
-test('sbc a ptr hl test', () => {
+test('sbc a ptr ind test', () => {
   const inds = ['ix', 'iy'];
   for (let ind of inds) {
     const [mainboard, proc, mem ] = build_cpu();
@@ -3594,6 +3594,29 @@ test('sbc a ptr hl test', () => {
 
     expect(proc.registers.pc).toBe(17);
     expect(proc.registers.a).toBe(0x0fd);
+  }
+});
+
+test('push pop ind test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0, [
+      inst[preInst], index.ld_ind_imm, 0x20, 0x10,
+      inst[preInst], index.push_ind,
+      inst[preInst], index.ld_ind_imm, 0x00, 0x00,
+      inst[preInst], index.pop_ind,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(13);
+    expect(proc[ind]).toBe(0x1020);
   }
 });
 

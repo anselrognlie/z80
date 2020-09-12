@@ -366,8 +366,8 @@ class Z80Cpu {
 
   writeWord(addr, word) {
     word = clamp16(word);
-    const hi = (word & 0x0ff00) >> 8;
-    const lo = word & 0x0ff;
+    const hi = clamp8(word >> 8);
+    const lo = clamp8(word);
     this.writeByte(addr, lo);
     this.writeByte(addr + 1, hi);
   }
@@ -378,17 +378,17 @@ class Z80Cpu {
   }
 
   readPort(port, high) {
-    port &= 0xff;
+    port = clamp8(port);
     return clamp8(this.bus.readPort(port, high));
   }
 
   writeByte(addr, byte) {
-    addr &= 0xffff;
+    addr = clamp16(addr);
     this.bus.writeOne(addr, clamp8(byte));
   }
 
   writePort(port, high, byte) {
-    port &= 0xff;
+    port = clamp8(port);
     this.bus.writePort(port, high, clamp8(byte));
   }
 
@@ -1156,7 +1156,7 @@ class Z80Cpu {
 
   cpl() {
     this.setT(4);
-    const a = ~this.registers.a & 0x0ff;
+    const a = clamp8(~this.registers.a);
     this.registers.a = a;
 
     const f = this.getFlags();
@@ -1465,7 +1465,7 @@ class Z80Cpu {
   }
 
   call_imm_internal(pc) {
-    const sp = (this.registers.sp - 2) & 0x0ffff;
+    const sp = clamp16(this.registers.sp - 2);
     this.writeWord(sp, this.registers.pc);
     this.registers.sp = sp;
     this.registers.pc = pc;
@@ -1479,7 +1479,7 @@ class Z80Cpu {
   ret_internal() {
     const sp = this.registers.sp
     const newPc = this.readWord(sp);
-    this.registers.sp = (sp + 2) & 0x0ffff;
+    this.registers.sp = clamp16(sp + 2);
     this.registers.pc = newPc;
   }
 
@@ -1522,7 +1522,7 @@ class Z80Cpu {
   make_push_r16(getter) {
     return () => {
       this.setT(11);
-      const sp = (this.registers.sp - 2) & 0x0ffff;
+      const sp = clamp16(this.registers.sp - 2);
       this.writeWord(sp, getter());
       this.registers.sp = sp;
     };
@@ -1538,9 +1538,9 @@ class Z80Cpu {
   make_pop_r16(setter) {
     return () => {
       this.setT(10);
-      const sp = this.registers.sp
+      const sp = this.registers.sp;
       const value = this.readWord(sp);
-      this.registers.sp = (sp + 2) & 0x0ffff;
+      this.registers.sp = clamp16(sp + 2);
       setter(value);
     };
   }
@@ -2811,6 +2811,24 @@ class Z80Cpu {
     this.cp_08(value);
   }
 
+  pop_ind() {
+    this.setT(14);
+    const ind = this.indexRegister;
+    const sp = this.registers.sp;
+    const value = this.readWord(sp);
+    this.registers.sp = clamp16(sp + 2)
+    this[ind] = value;
+  }
+
+  push_ind() {
+    this.setT(15);
+    const ind = this.indexRegister;
+    const sp = clamp16(this.registers.sp - 2);
+    this.registers.sp = sp;
+    const value = this[ind];
+    this.writeWord(sp, value);
+  }
+
   registerIndex() {
     this.index = {};
     const ref = this.index;
@@ -2837,6 +2855,9 @@ class Z80Cpu {
     ref[index.xor_ptr_ind] = this.xor_ptr_ind;
     ref[index.or_ptr_ind] = this.or_ptr_ind;
     ref[index.cp_ptr_ind] = this.cp_ptr_ind;
+
+    ref[index.pop_ind] = this.pop_ind;
+    ref[index.push_ind] = this.push_ind;
   }
 }
 
