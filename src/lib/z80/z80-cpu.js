@@ -2721,12 +2721,103 @@ class Z80Cpu {
     this.writeByte(offset_addr, value);
   }
 
+  make_ld_r8_ptr_ind(reg) {
+    return () => {
+      this.setT(19);
+      const offset_addr = this.calc_offset_addr()
+      const value = this.readByte(offset_addr);
+      this.registers[reg] = value;
+    };
+  }
+
+  generate_ld_r8_ptr_ind(ref) {
+    const regs = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
+    for (let reg of regs) {
+      const inst = `ld_${reg}_ptr_ind`;
+      ref[index[inst]] = this.make_ld_r8_ptr_ind(reg);
+    }
+  }
+
+  make_ld_ptr_ind_r8(reg) {
+    return () => {
+      this.setT(19);
+      const offset_addr = this.calc_offset_addr()
+      const value = this.registers[reg];
+      this.writeByte(offset_addr, value);
+    };
+  }
+
+  generate_ld_ptr_ind_r8(ref) {
+    const regs = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
+    for (let reg of regs) {
+      const inst = `ld_ptr_ind_${reg}`;
+      ref[index[inst]] = this.make_ld_ptr_ind_r8(reg);
+    }
+  }
+
+  add_a_ptr_ind() {
+    const offset_addr = this.calc_offset_addr()
+    const value = this.readByte(offset_addr);
+    this.setT(19);
+    this.add_08(value);
+  }
+
+  adc_a_ptr_ind() {
+    const offset_addr = this.calc_offset_addr()
+    const value = this.readByte(offset_addr);
+    this.setT(19);
+    this.adc_08(value);
+  }
+
+  sub_ptr_ind() {
+    const offset_addr = this.calc_offset_addr()
+    const value = this.readByte(offset_addr);
+    this.setT(19);
+    this.sub_08(value);
+  }
+
+  sbc_a_ptr_ind() {
+    const offset_addr = this.calc_offset_addr()
+    const value = this.readByte(offset_addr);
+    this.setT(19);
+    this.sbc_08(value);
+  }
+
+  and_ptr_ind() {
+    const offset_addr = this.calc_offset_addr()
+    const value = this.readByte(offset_addr);
+    this.setT(19);
+    this.and_08(value);
+  }
+
+  xor_ptr_ind() {
+    const offset_addr = this.calc_offset_addr()
+    const value = this.readByte(offset_addr);
+    this.setT(19);
+    this.xor_08(value);
+  }
+
+  or_ptr_ind() {
+    const offset_addr = this.calc_offset_addr()
+    const value = this.readByte(offset_addr);
+    this.setT(19);
+    this.or_08(value);
+  }
+
+  cp_ptr_ind() {
+    const offset_addr = this.calc_offset_addr()
+    const value = this.readByte(offset_addr);
+    this.setT(19);
+    this.cp_08(value);
+  }
+
   registerIndex() {
     this.index = {};
     const ref = this.index;
 
     ref[index.ld_ind_imm] = this.ld_ind_imm;
     this.generate_add_ind_16(ref);
+
     ref[index.ld_ptr_imm_ind] = this.ld_ptr_imm_ind;
     ref[index.inc_ind] = this.inc_ind;
     ref[index.dec_ind] = this.dec_ind;
@@ -2734,33 +2825,23 @@ class Z80Cpu {
     ref[index.inc_ptr_ind] = this.inc_ptr_ind;
     ref[index.dec_ptr_ind] = this.dec_ptr_ind;
     ref[index.ld_ptr_ind_imm] = this.ld_ptr_ind_imm;
+
+    this.generate_ld_r8_ptr_ind(ref);
+    this.generate_ld_ptr_ind_r8(ref);
+
+    ref[index.add_a_ptr_ind] = this.add_a_ptr_ind;
+    ref[index.adc_a_ptr_ind] = this.adc_a_ptr_ind;
+    ref[index.sub_ptr_ind] = this.sub_ptr_ind;
+    ref[index.sbc_a_ptr_ind] = this.sbc_a_ptr_ind;
+    ref[index.and_ptr_ind] = this.and_ptr_ind;
+    ref[index.xor_ptr_ind] = this.xor_ptr_ind;
+    ref[index.or_ptr_ind] = this.or_ptr_ind;
+    ref[index.cp_ptr_ind] = this.cp_ptr_ind;
   }
 }
 
 // remaining index inst to implement
 
-// Z80Index.ld_b_ptr_ind = Z80Instructions.ld_b_ptr_hl
-// Z80Index.ld_c_ptr_ind = Z80Instructions.ld_c_ptr_hl
-// Z80Index.ld_d_ptr_ind = Z80Instructions.ld_d_ptr_hl
-// Z80Index.ld_e_ptr_ind = Z80Instructions.ld_e_ptr_hl
-// Z80Index.ld_h_ptr_ind = Z80Instructions.ld_h_ptr_hl
-// Z80Index.ld_l_ptr_ind = Z80Instructions.ld_l_ptr_hl
-// Z80Index.ld_a_ptr_ind = Z80Instructions.ld_a_ptr_hl
-// Z80Index.ld_ptr_ind_b = Z80Instructions.ld_ptr_hl_b
-// Z80Index.ld_ptr_ind_c = Z80Instructions.ld_ptr_hl_c
-// Z80Index.ld_ptr_ind_d = Z80Instructions.ld_ptr_hl_d
-// Z80Index.ld_ptr_ind_e = Z80Instructions.ld_ptr_hl_e
-// Z80Index.ld_ptr_ind_h = Z80Instructions.ld_ptr_hl_h
-// Z80Index.ld_ptr_ind_l = Z80Instructions.ld_ptr_hl_l
-// Z80Index.ld_ptr_ind_a = Z80Instructions.ld_ptr_hl_a
-// Z80Index.add_a_ptr_ind = Z80Instructions.add_a_ptr_hl
-// Z80Index.adc_a_ptr_ind = Z80Instructions.adc_a_ptr_hl
-// Z80Index.sub_ptr_ind = Z80Instructions.sub_ptr_hl
-// Z80Index.sbc_a_ptr_ind = Z80Instructions.sbc_a_ptr_hl
-// Z80Index.and_ptr_ind = Z80Instructions.and_ptr_hl
-// Z80Index.xor_ptr_ind = Z80Instructions.xor_ptr_hl
-// Z80Index.or_ptr_ind = Z80Instructions.or_ptr_hl
-// Z80Index.cp_ptr_ind = Z80Instructions.cp_ptr_hl
 // Z80Index.pop_ind = Z80Instructions.pop_hl
 // Z80Index.ex_ptr_sp_ind = Z80Instructions.ex_ptr_sp_hl
 // Z80Index.push_ind = Z80Instructions.push_hl
