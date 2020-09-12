@@ -3321,10 +3321,10 @@ test('inc ptr ind test', () => {
 
     mem.load(0, [
       inst.ld_a_imm, 0x0a,
-      inst.ld_hl_imm, 0xf0, 0x10,
+      inst.ld_hl_imm, 0x70, 0x10,
       inst.ld_ptr_hl_a,
       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-      inst[preInst], index.inc_ptr_ind, 0xf0,
+      inst[preInst], index.inc_ptr_ind, 0x70,
       inst.halt,
     ]);
 
@@ -3333,7 +3333,7 @@ test('inc ptr ind test', () => {
     }
 
     expect(proc.registers.pc).toBe(14);
-    expect(mem.readOne(0x10f0)).toBe(0x0b);
+    expect(mem.readOne(0x1070)).toBe(0x0b);
   }
 });
 
@@ -3345,10 +3345,10 @@ test('dec ptr ind test', () => {
 
     mem.load(0, [
       inst.ld_a_imm, 0x0a,
-      inst.ld_hl_imm, 0xf0, 0x10,
+      inst.ld_hl_imm, 0x70, 0x10,
       inst.ld_ptr_hl_a,
       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-      inst[preInst], index.dec_ptr_ind, 0xf0,
+      inst[preInst], index.dec_ptr_ind, 0x70,
       inst.halt,
     ]);
 
@@ -3357,7 +3357,7 @@ test('dec ptr ind test', () => {
     }
 
     expect(proc.registers.pc).toBe(14);
-    expect(mem.readOne(0x10f0)).toBe(0x09);
+    expect(mem.readOne(0x1070)).toBe(0x09);
   }
 });
 
@@ -3369,7 +3369,7 @@ test('ld ptr ind imm test', () => {
 
     mem.load(0, [
       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-      inst[preInst], index.ld_ptr_ind_imm, 0xf0, 0x0a,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0x0a,
       inst.halt,
     ]);
 
@@ -3378,7 +3378,7 @@ test('ld ptr ind imm test', () => {
     }
 
     expect(proc.registers.pc).toBe(9);
-    expect(mem.readOne(0x10f0)).toBe(0x0a);
+    expect(mem.readOne(0x1070)).toBe(0x0a);
   }
 });
 
@@ -3396,9 +3396,9 @@ test('ld to and from r8 and ptr ind test', () => {
       mem.load(0, [
         inst[ld8Inst], 0xc9,
         inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-        inst[preInst], index[ldPtrIndR8Inst], 0xf0,
+        inst[preInst], index[ldPtrIndR8Inst], 0x70,
         inst[ld8Inst], 0,
-        inst[preInst], index[ldR8PtrIndInst], 0xf0,
+        inst[preInst], index[ldR8PtrIndInst], 0x70,
         inst.halt,
       ]);
 
@@ -3408,7 +3408,7 @@ test('ld to and from r8 and ptr ind test', () => {
 
       expect(proc.registers.pc).toBe(15);
       expect(proc.registers[reg]).toBe(0xc9);
-      expect(mem.readOne(0x10f0)).toBe(0xc9);
+      expect(mem.readOne(0x1070)).toBe(0xc9);
     }
   }
 });
@@ -3422,8 +3422,8 @@ test('and ptr ind test', () => {
     mem.load(0, [
       inst.ld_a_imm, 0x0aa,
       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-      inst[preInst], index.ld_ptr_ind_imm, 0xf0, 0x0a,
-      inst[preInst], index.and_ptr_ind, 0xf0,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0x0a,
+      inst[preInst], index.and_ptr_ind, 0x70,
       inst.halt,
     ]);
 
@@ -3445,8 +3445,8 @@ test('xor ptr ind test', () => {
     mem.load(0, [
       inst.ld_a_imm, 0x0aa,
       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-      inst[preInst], index.ld_ptr_ind_imm, 0xf0, 0xff,
-      inst[preInst], index.xor_ptr_ind, 0xf0,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0xff,
+      inst[preInst], index.xor_ptr_ind, 0x70,
       inst.halt,
     ]);
 
@@ -3468,8 +3468,8 @@ test('or ptr ind test', () => {
     mem.load(0, [
       inst.ld_a_imm, 0x0aa,
       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-      inst[preInst], index.ld_ptr_ind_imm, 0xf0, 0x55,
-      inst[preInst], index.or_ptr_ind, 0xf0,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0x55,
+      inst[preInst], index.or_ptr_ind, 0x70,
       inst.halt,
     ]);
 
@@ -3491,8 +3491,8 @@ test('cp ptr ind test', () => {
     mem.load(0, [
       inst.ld_a_imm, 0x0aa,
       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-      inst[preInst], index.ld_ptr_ind_imm, 0xf0, 0xaa,
-      inst[preInst], index.cp_ptr_ind, 0xf0,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0xaa,
+      inst[preInst], index.cp_ptr_ind, 0x70,
       inst.halt,
     ]);
 
@@ -3513,8 +3513,8 @@ test('add a ptr ind test', () => {
 
     mem.load(0, [
       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-      inst[preInst], index.ld_ptr_ind_imm, 0xf0, 0x0a,
-      inst[preInst], index.add_a_ptr_ind, 0xf0,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0x0a,
+      inst[preInst], index.add_a_ptr_ind, 0x70,
       inst.halt,
     ]);
 
@@ -3535,10 +3535,10 @@ test('adc a ptr ind test', () => {
 
     mem.load(0, [
       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-      inst[preInst], index.ld_ptr_ind_imm, 0xf0, 0xff,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0xff,
       inst.ld_a_imm, 0xff,
-      inst[preInst], index.adc_a_ptr_ind, 0xf0,
-      inst[preInst], index.adc_a_ptr_ind, 0xf0,
+      inst[preInst], index.adc_a_ptr_ind, 0x70,
+      inst[preInst], index.adc_a_ptr_ind, 0x70,
       inst.halt,
     ]);
 
@@ -3559,8 +3559,8 @@ test('sub ptr ind test', () => {
 
     mem.load(0, [
       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-      inst[preInst], index.ld_ptr_ind_imm, 0xf0, 0x0a,
-      inst[preInst], index.sub_ptr_ind, 0xf0,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0x0a,
+      inst[preInst], index.sub_ptr_ind, 0x70,
       inst.halt,
     ]);
 
@@ -3581,10 +3581,10 @@ test('sbc a ptr ind test', () => {
 
     mem.load(0, [
       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-      inst[preInst], index.ld_ptr_ind_imm, 0xf0, 0x1,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0x1,
       inst.ld_a_imm, 0x00,
-      inst[preInst], index.sbc_a_ptr_ind, 0xf0,
-      inst[preInst], index.sbc_a_ptr_ind, 0xf0,
+      inst[preInst], index.sbc_a_ptr_ind, 0x70,
+      inst[preInst], index.sbc_a_ptr_ind, 0x70,
       inst.halt,
     ]);
 
@@ -3679,8 +3679,8 @@ test('rlc ptr ind test', () => {
 
     mem.load(0, [
       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-      inst[preInst], index.ld_ptr_ind_imm, 0xf0, 0xaa,
-      inst[preInst], inst.pre_bit, 0xf0, index_bit.rlc_ptr_ind,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0xaa,
+      inst[preInst], inst.pre_bit, 0x70, index_bit.rlc_ptr_ind,
       inst.halt,
     ]);
 
@@ -3689,7 +3689,7 @@ test('rlc ptr ind test', () => {
     }
 
     expect(proc.registers.pc).toBe(13);
-    expect(mem.readOne(0x10f0)).toBe(0x55);
+    expect(mem.readOne(0x1070)).toBe(0x55);
     expect(proc.getFlags().c).toBe(1);
   }
 });
@@ -3702,8 +3702,8 @@ test('rrc ptr ind test', () => {
 
     mem.load(0, [
       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-      inst[preInst], index.ld_ptr_ind_imm, 0xf0, 0x55,
-      inst[preInst], inst.pre_bit, 0xf0, index_bit.rrc_ptr_ind,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0x55,
+      inst[preInst], inst.pre_bit, 0x70, index_bit.rrc_ptr_ind,
       inst.halt,
     ]);
 
@@ -3712,7 +3712,7 @@ test('rrc ptr ind test', () => {
     }
 
     expect(proc.registers.pc).toBe(13);
-    expect(mem.readOne(0x10f0)).toBe(0xaa);
+    expect(mem.readOne(0x1070)).toBe(0xaa);
     expect(proc.getFlags().c).toBe(1);
   }
 });
@@ -3725,8 +3725,8 @@ test('rl ptr ind test', () => {
 
     mem.load(0, [
       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-      inst[preInst], index.ld_ptr_ind_imm, 0xf0, 0xaa,
-      inst[preInst], inst.pre_bit, 0xf0, index_bit.rl_ptr_ind,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0xaa,
+      inst[preInst], inst.pre_bit, 0x70, index_bit.rl_ptr_ind,
       inst.halt,
     ]);
 
@@ -3735,7 +3735,7 @@ test('rl ptr ind test', () => {
     }
 
     expect(proc.registers.pc).toBe(13);
-    expect(mem.readOne(0x10f0)).toBe(0x54);
+    expect(mem.readOne(0x1070)).toBe(0x54);
     expect(proc.getFlags().c).toBe(1);
   }
 });
@@ -3748,8 +3748,8 @@ test('rr ptr ind test', () => {
 
     mem.load(0, [
       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-      inst[preInst], index.ld_ptr_ind_imm, 0xf0, 0x55,
-      inst[preInst], inst.pre_bit, 0xf0, index_bit.rr_ptr_ind,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0x55,
+      inst[preInst], inst.pre_bit, 0x70, index_bit.rr_ptr_ind,
       inst.halt,
     ]);
 
@@ -3758,7 +3758,7 @@ test('rr ptr ind test', () => {
     }
 
     expect(proc.registers.pc).toBe(13);
-    expect(mem.readOne(0x10f0)).toBe(0x2a);
+    expect(mem.readOne(0x1070)).toBe(0x2a);
     expect(proc.getFlags().c).toBe(1);
   }
 });
@@ -3771,8 +3771,8 @@ test('sla ptr ind test', () => {
 
     mem.load(0, [
       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-      inst[preInst], index.ld_ptr_ind_imm, 0xf0, 0xaa,
-      inst[preInst], inst.pre_bit, 0xf0, index_bit.sla_ptr_ind,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0xaa,
+      inst[preInst], inst.pre_bit, 0x70, index_bit.sla_ptr_ind,
       inst.halt,
     ]);
 
@@ -3781,7 +3781,7 @@ test('sla ptr ind test', () => {
     }
 
     expect(proc.registers.pc).toBe(13);
-    expect(mem.readOne(0x10f0)).toBe(0x54);
+    expect(mem.readOne(0x1070)).toBe(0x54);
     expect(proc.getFlags().c).toBe(1);
   }
 });
@@ -3794,8 +3794,8 @@ test('sra ptr ind test', () => {
 
     mem.load(0, [
       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-      inst[preInst], index.ld_ptr_ind_imm, 0xf0, 0xa5,
-      inst[preInst], inst.pre_bit, 0xf0, index_bit.sra_ptr_ind,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0xa5,
+      inst[preInst], inst.pre_bit, 0x70, index_bit.sra_ptr_ind,
       inst.halt,
     ]);
 
@@ -3804,7 +3804,7 @@ test('sra ptr ind test', () => {
     }
 
     expect(proc.registers.pc).toBe(13);
-    expect(mem.readOne(0x10f0)).toBe(0xd2);
+    expect(mem.readOne(0x1070)).toBe(0xd2);
     expect(proc.getFlags().c).toBe(1);
   }
 });
@@ -3817,8 +3817,8 @@ test('srl ptr ind test', () => {
 
     mem.load(0, [
       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-      inst[preInst], index.ld_ptr_ind_imm, 0xf0, 0xa5,
-      inst[preInst], inst.pre_bit, 0xf0, index_bit.srl_ptr_ind,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0xa5,
+      inst[preInst], inst.pre_bit, 0x70, index_bit.srl_ptr_ind,
       inst.halt,
     ]);
 
@@ -3827,7 +3827,7 @@ test('srl ptr ind test', () => {
     }
 
     expect(proc.registers.pc).toBe(13);
-    expect(mem.readOne(0x10f0)).toBe(0x52);
+    expect(mem.readOne(0x1070)).toBe(0x52);
     expect(proc.getFlags().c).toBe(1);
   }
 });
@@ -3844,13 +3844,13 @@ test('bit ptr ind test', () => {
 
       mem.load(0, [
         inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-        inst[preInst], index.ld_ptr_ind_imm, 0xf0, value,  // load with known mask
-        inst[preInst], inst.pre_bit, 0xf0, index_bit[bitInst],
+        inst[preInst], index.ld_ptr_ind_imm, 0x70, value,  // load with known mask
+        inst[preInst], inst.pre_bit, 0x70, index_bit[bitInst],
         inst.jr_nz_imm, 4,  // skip next ld if bit is set
         inst.ld_a_imm, 3,
         inst.jr_imm, 17,  // skip to end with a failure code 3
-        inst[preInst], index.ld_ptr_ind_imm, 0xf0, 0,  // load with 0
-        inst[preInst], inst.pre_bit, 0xf0, index_bit[bitInst],
+        inst[preInst], index.ld_ptr_ind_imm, 0x70, 0,  // load with 0
+        inst[preInst], inst.pre_bit, 0x70, index_bit[bitInst],
         inst.jr_z_imm, 4,  // skip next ld if bit not set
         inst.ld_a_imm, 7,
         inst.jr_imm, 2,  // skip to end with a failure code 7
@@ -3881,8 +3881,8 @@ test('res ptr ind test', () => {
 
       mem.load(0, [
         inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-        inst[preInst], index.ld_ptr_ind_imm, 0xf0, 0xff,
-        inst[preInst], inst.pre_bit, 0xf0, index_bit[resInst],
+        inst[preInst], index.ld_ptr_ind_imm, 0x70, 0xff,
+        inst[preInst], inst.pre_bit, 0x70, index_bit[resInst],
         inst.halt,
       ]);
 
@@ -3891,7 +3891,7 @@ test('res ptr ind test', () => {
       }
 
       expect(proc.registers.pc).toBe(13);
-      expect(mem.readOne(0x10f0)).toBe(result);
+      expect(mem.readOne(0x1070)).toBe(result);
     }
   }
 });
@@ -3908,8 +3908,8 @@ test('set ptr ind test', () => {
 
       mem.load(0, [
         inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-        inst[preInst], index.ld_ptr_ind_imm, 0xf0, 0x00,
-        inst[preInst], inst.pre_bit, 0xf0, index_bit[setInst],
+        inst[preInst], index.ld_ptr_ind_imm, 0x70, 0x00,
+        inst[preInst], inst.pre_bit, 0x70, index_bit[setInst],
         inst.halt,
       ]);
 
@@ -3918,7 +3918,7 @@ test('set ptr ind test', () => {
       }
 
       expect(proc.registers.pc).toBe(13);
-      expect(mem.readOne(0x10f0)).toBe(result);
+      expect(mem.readOne(0x1070)).toBe(result);
     }
   }
 });

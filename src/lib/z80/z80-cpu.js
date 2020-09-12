@@ -240,14 +240,16 @@ class Z80Cpu {
 
   calculateOffsetAddress() {
     const ind = this.indexRegister;
-    const offset = this.readFromPcAdvance();
+    const offset_raw = this.readFromPcAdvance();
+    const offset = offset_raw < 0x80 ? offset_raw : -(0x100 - offset_raw);
     const addr = this[ind];
     return clamp16(addr + offset);
   }
 
   calculateBitOffsetAddress() {
     const ind = this.indexRegister;
-    const offset = this.byteOffset;
+    const offset_raw = this.byteOffset;
+    const offset = offset_raw < 0x80 ? offset_raw : -(0x100 - offset_raw);
     const addr = this[ind];
     return clamp16(addr + offset);
   }
