@@ -2690,6 +2690,28 @@ class Z80Cpu {
     this[ind] = word;
   }
 
+  inc_ptr_ind() {
+    const ind = this.indexRegister;
+    const offset = this.readFromPcAdvance();
+    const addr = this[ind];
+    const offset_addr = clamp16(addr + offset);
+    const value = this.readByte(offset_addr);
+    const after = this.inc_08(value);
+    this.writeByte(offset_addr, after);
+    this.setT(23);
+  }
+
+  dec_ptr_ind() {
+    const ind = this.indexRegister;
+    const offset = this.readFromPcAdvance();
+    const addr = this[ind];
+    const offset_addr = clamp16(addr + offset);
+    const value = this.readByte(offset_addr);
+    const after = this.dec_08(value);
+    this.writeByte(offset_addr, after);
+    this.setT(23);
+  }
+
   registerIndex() {
     this.index = {};
     const ref = this.index;
@@ -2700,14 +2722,13 @@ class Z80Cpu {
     ref[index.inc_ind] = this.inc_ind;
     ref[index.dec_ind] = this.dec_ind;
     ref[index.ld_ind_ptr_imm] = this.ld_ind_ptr_imm;
+    ref[index.inc_ptr_ind] = this.inc_ptr_ind;
+    ref[index.dec_ptr_ind] = this.dec_ptr_ind;
   }
 }
 
 // remaining index inst to implement
 
-// Z80Index.ld_ind_ptr_imm = Z80Instructions.ld_hl_ptr_imm
-// Z80Index.inc_ptr_ind = Z80Instructions.inc_ptr_hl
-// Z80Index.dec_ptr_ind = Z80Instructions.dec_ptr_hl
 // Z80Index.ld_ptr_ind_imm = Z80Instructions.ld_ptr_hl_imm
 // Z80Index.ld_b_ptr_ind = Z80Instructions.ld_b_ptr_hl
 // Z80Index.ld_c_ptr_ind = Z80Instructions.ld_c_ptr_hl
