@@ -2574,7 +2574,7 @@ class Z80Cpu {
 
   make_res_ptr_hl(bit) {
     return () => {
-      this.setT(12);
+      this.setT(15);
       const addr = this.hl;
       const value = this.readByte(addr);
       const result = this.res_08(value, bit);
@@ -2613,7 +2613,7 @@ class Z80Cpu {
 
   make_set_ptr_hl(bit) {
     return () => {
-      this.setT(12);
+      this.setT(15);
       const addr = this.hl;
       const value = this.readByte(addr);
       const result = this.set_08(value, bit);
@@ -2670,7 +2670,7 @@ class Z80Cpu {
     this.setFlags(f);
   }
 
-  generate_add_ind_16(ref) {
+  register_add_ind_16(ref) {
     const regs = ['bc', 'de', 'ind', 'sp'];
     for (let reg of regs) {
       ref[index[`add_ind_${reg}`]] = () => {
@@ -2748,7 +2748,7 @@ class Z80Cpu {
     };
   }
 
-  generate_ld_r8_ptr_ind(ref) {
+  register_ld_r8_ptr_ind(ref) {
     const regs = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
     for (let reg of regs) {
       const inst = `ld_${reg}_ptr_ind`;
@@ -2765,7 +2765,7 @@ class Z80Cpu {
     };
   }
 
-  generate_ld_ptr_ind_r8(ref) {
+  register_ld_ptr_ind_r8(ref) {
     const regs = [ 'a', 'b', 'c', 'd', 'e', 'h', 'l' ];
     for (let reg of regs) {
       const inst = `ld_ptr_ind_${reg}`;
@@ -2890,7 +2890,7 @@ class Z80Cpu {
     const ref = this.index;
 
     ref[index.ld_ind_imm] = this.ld_ind_imm;
-    this.generate_add_ind_16(ref);
+    this.register_add_ind_16(ref);
 
     ref[index.ld_ptr_imm_ind] = this.ld_ptr_imm_ind;
     ref[index.inc_ind] = this.inc_ind;
@@ -2900,8 +2900,8 @@ class Z80Cpu {
     ref[index.dec_ptr_ind] = this.dec_ptr_ind;
     ref[index.ld_ptr_ind_imm] = this.ld_ptr_ind_imm;
 
-    this.generate_ld_r8_ptr_ind(ref);
-    this.generate_ld_ptr_ind_r8(ref);
+    this.register_ld_r8_ptr_ind(ref);
+    this.register_ld_ptr_ind_r8(ref);
 
     ref[index.add_a_ptr_ind] = this.add_a_ptr_ind;
     ref[index.adc_a_ptr_ind] = this.adc_a_ptr_ind;
@@ -3026,6 +3026,44 @@ class Z80Cpu {
     });
   }
 
+  register_bit_b_ptr_ind(ref) {
+    for (let b = 0; b < 8; ++b) {
+      const opcode = `bit_${b}_ptr_ind`;
+      ref[index_bit[opcode]] = () => {
+        this.setT(20);
+        const addr = this.calculateBitOffsetAddress();
+        const value = this.readByte(addr);
+        this.bit_08(value, b);
+      };
+    }
+  }
+
+  register_res_b_ptr_ind(ref) {
+    for (let b = 0; b < 8; ++b) {
+      const opcode = `res_${b}_ptr_ind`;
+      ref[index_bit[opcode]] = () => {
+        this.setT(23);
+        const addr = this.calculateBitOffsetAddress();
+        const value = this.readByte(addr);
+        const result = this.res_08(value, b);
+        this.writeByte(addr, result);
+      };
+    }
+  }
+
+  register_set_b_ptr_ind(ref) {
+    for (let b = 0; b < 8; ++b) {
+      const opcode = `set_${b}_ptr_ind`;
+      ref[index_bit[opcode]] = () => {
+        this.setT(23);
+        const addr = this.calculateBitOffsetAddress();
+        const value = this.readByte(addr);
+        const result = this.set_08(value, b);
+        this.writeByte(addr, result);
+      };
+    }
+  }
+
   registerIndexBit() {
     this.index_bit = {};
     const ref = this.index_bit;
@@ -3037,35 +3075,12 @@ class Z80Cpu {
     ref[index_bit.sla_ptr_ind] = this.sla_ptr_ind;
     ref[index_bit.sra_ptr_ind] = this.sra_ptr_ind;
     ref[index_bit.srl_ptr_ind] = this.srl_ptr_ind;
+
+    this.register_bit_b_ptr_ind(ref);
+    this.register_res_b_ptr_ind(ref);
+    this.register_set_b_ptr_ind(ref);
   }
 }
-
-// remaining index inst to implement
-
-// Z80IndexBit.bit_0_ptr_ind = Z80Bit.bit_0_ptr_hl
-// Z80IndexBit.bit_1_ptr_ind = Z80Bit.bit_1_ptr_hl
-// Z80IndexBit.bit_2_ptr_ind = Z80Bit.bit_2_ptr_hl
-// Z80IndexBit.bit_3_ptr_ind = Z80Bit.bit_3_ptr_hl
-// Z80IndexBit.bit_4_ptr_ind = Z80Bit.bit_4_ptr_hl
-// Z80IndexBit.bit_5_ptr_ind = Z80Bit.bit_5_ptr_hl
-// Z80IndexBit.bit_6_ptr_ind = Z80Bit.bit_6_ptr_hl
-// Z80IndexBit.bit_7_ptr_ind = Z80Bit.bit_7_ptr_hl
-// Z80IndexBit.res_0_ptr_ind = Z80Bit.res_0_ptr_hl
-// Z80IndexBit.res_1_ptr_ind = Z80Bit.res_1_ptr_hl
-// Z80IndexBit.res_2_ptr_ind = Z80Bit.res_2_ptr_hl
-// Z80IndexBit.res_3_ptr_ind = Z80Bit.res_3_ptr_hl
-// Z80IndexBit.res_4_ptr_ind = Z80Bit.res_4_ptr_hl
-// Z80IndexBit.res_5_ptr_ind = Z80Bit.res_5_ptr_hl
-// Z80IndexBit.res_6_ptr_ind = Z80Bit.res_6_ptr_hl
-// Z80IndexBit.res_7_ptr_ind = Z80Bit.res_7_ptr_hl
-// Z80IndexBit.set_0_ptr_ind = Z80Bit.set_0_ptr_hl
-// Z80IndexBit.set_1_ptr_ind = Z80Bit.set_1_ptr_hl
-// Z80IndexBit.set_2_ptr_ind = Z80Bit.set_2_ptr_hl
-// Z80IndexBit.set_3_ptr_ind = Z80Bit.set_3_ptr_hl
-// Z80IndexBit.set_4_ptr_ind = Z80Bit.set_4_ptr_hl
-// Z80IndexBit.set_5_ptr_ind = Z80Bit.set_5_ptr_hl
-// Z80IndexBit.set_6_ptr_ind = Z80Bit.set_6_ptr_hl
-// Z80IndexBit.set_7_ptr_ind = Z80Bit.set_7_ptr_hl
 
 Z80Cpu.INT_MODE_0 = 0;
 Z80Cpu.INT_MODE_1 = 1;
