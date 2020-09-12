@@ -2690,11 +2690,15 @@ class Z80Cpu {
     this[ind] = word;
   }
 
-  inc_ptr_ind() {
+  calc_offset_addr() {
     const ind = this.indexRegister;
     const offset = this.readFromPcAdvance();
     const addr = this[ind];
-    const offset_addr = clamp16(addr + offset);
+    return clamp16(addr + offset);
+  }
+
+  inc_ptr_ind() {
+    const offset_addr = this.calc_offset_addr()
     const value = this.readByte(offset_addr);
     const after = this.inc_08(value);
     this.writeByte(offset_addr, after);
@@ -2702,14 +2706,19 @@ class Z80Cpu {
   }
 
   dec_ptr_ind() {
-    const ind = this.indexRegister;
-    const offset = this.readFromPcAdvance();
-    const addr = this[ind];
-    const offset_addr = clamp16(addr + offset);
+    const offset_addr = this.calc_offset_addr()
     const value = this.readByte(offset_addr);
     const after = this.dec_08(value);
     this.writeByte(offset_addr, after);
     this.setT(23);
+  }
+
+  ld_ptr_ind_imm() {
+    this.setT(19);
+    const offset_addr = this.calc_offset_addr()
+    const value = this.readFromPcAdvance();
+
+    this.writeByte(offset_addr, value);
   }
 
   registerIndex() {
@@ -2724,18 +2733,19 @@ class Z80Cpu {
     ref[index.ld_ind_ptr_imm] = this.ld_ind_ptr_imm;
     ref[index.inc_ptr_ind] = this.inc_ptr_ind;
     ref[index.dec_ptr_ind] = this.dec_ptr_ind;
+    ref[index.ld_ptr_ind_imm] = this.ld_ptr_ind_imm;
   }
 }
 
 // remaining index inst to implement
 
-// Z80Index.ld_ptr_ind_imm = Z80Instructions.ld_ptr_hl_imm
 // Z80Index.ld_b_ptr_ind = Z80Instructions.ld_b_ptr_hl
 // Z80Index.ld_c_ptr_ind = Z80Instructions.ld_c_ptr_hl
 // Z80Index.ld_d_ptr_ind = Z80Instructions.ld_d_ptr_hl
 // Z80Index.ld_e_ptr_ind = Z80Instructions.ld_e_ptr_hl
 // Z80Index.ld_h_ptr_ind = Z80Instructions.ld_h_ptr_hl
 // Z80Index.ld_l_ptr_ind = Z80Instructions.ld_l_ptr_hl
+// Z80Index.ld_a_ptr_ind = Z80Instructions.ld_a_ptr_hl
 // Z80Index.ld_ptr_ind_b = Z80Instructions.ld_ptr_hl_b
 // Z80Index.ld_ptr_ind_c = Z80Instructions.ld_ptr_hl_c
 // Z80Index.ld_ptr_ind_d = Z80Instructions.ld_ptr_hl_d
@@ -2743,7 +2753,6 @@ class Z80Cpu {
 // Z80Index.ld_ptr_ind_h = Z80Instructions.ld_ptr_hl_h
 // Z80Index.ld_ptr_ind_l = Z80Instructions.ld_ptr_hl_l
 // Z80Index.ld_ptr_ind_a = Z80Instructions.ld_ptr_hl_a
-// Z80Index.ld_a_ptr_ind = Z80Instructions.ld_a_ptr_hl
 // Z80Index.add_a_ptr_ind = Z80Instructions.add_a_ptr_hl
 // Z80Index.adc_a_ptr_ind = Z80Instructions.adc_a_ptr_hl
 // Z80Index.sub_ptr_ind = Z80Instructions.sub_ptr_hl
