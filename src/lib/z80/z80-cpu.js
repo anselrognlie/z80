@@ -64,6 +64,9 @@ class Z80Cpu {
     this.hasPendingInterrupt = false;
     this.pendingInterruptData = null;
 
+    this.indexRegister = null;
+    this.byteOffset = 0;
+
     this.registerInstructions();
   }
 
@@ -235,6 +238,20 @@ class Z80Cpu {
     this.pendingInterruptData = data;
   }
 
+  calculateOffsetAddress() {
+    const ind = this.indexRegister;
+    const offset = this.readFromPcAdvance();
+    const addr = this[ind];
+    return clamp16(addr + offset);
+  }
+
+  calculateBitOffsetAddress() {
+    const ind = this.indexRegister;
+    const offset = this.byteOffset;
+    const addr = this[ind];
+    return clamp16(addr + offset);
+  }
+
   overridePC(data) {
     if (! Array.isArray(data)) {
       data = [ data ];
@@ -247,6 +264,11 @@ class Z80Cpu {
   restorePcOverride() {
     this.overriddenPcData = null;
     this.overriddenPcOffset = 0;
+  }
+
+  clearIndexStates() {
+    this.indexRegister = null;
+    this.byteOffset = 0;
   }
 
   handleInterruptMode0() {
@@ -350,6 +372,8 @@ class Z80Cpu {
 
     this.restorePcOverride();
 
+    this.clearIndexStates();
+
     if (this.tStatesEnabled) {
       if (! this.tStates) {
         const instStr = inst.toString(16);
@@ -392,12 +416,12 @@ class Z80Cpu {
     this.bus.writePort(port, high, clamp8(byte));
   }
 
-  readFromPc() {
+  readFromPc(offset = 0) {
     if (this.overriddenPcData) {
-      return this.overriddenPcData[this.overriddenPcOffset];
+      return this.overriddenPcData[this.overriddenPcOffset + offset];
     }
 
-    return this.readByte(this.registers.pc);
+    return this.readByte(clamp16(this.registers.pc + offset));
   }
 
   readFromPcAdvance() {
@@ -1658,6 +1682,7 @@ class Z80Cpu {
     this.registerExtended();
     this.registerBit();
     this.registerIndex();
+    this.registerIndexBit();
   }
 
   registerBasic() {
@@ -2690,15 +2715,8 @@ class Z80Cpu {
     this[ind] = word;
   }
 
-  calc_offset_addr() {
-    const ind = this.indexRegister;
-    const offset = this.readFromPcAdvance();
-    const addr = this[ind];
-    return clamp16(addr + offset);
-  }
-
   inc_ptr_ind() {
-    const offset_addr = this.calc_offset_addr()
+    const offset_addr = this.calculateOffsetAddress()
     const value = this.readByte(offset_addr);
     const after = this.inc_08(value);
     this.writeByte(offset_addr, after);
@@ -2706,7 +2724,7 @@ class Z80Cpu {
   }
 
   dec_ptr_ind() {
-    const offset_addr = this.calc_offset_addr()
+    const offset_addr = this.calculateOffsetAddress()
     const value = this.readByte(offset_addr);
     const after = this.dec_08(value);
     this.writeByte(offset_addr, after);
@@ -2715,7 +2733,7 @@ class Z80Cpu {
 
   ld_ptr_ind_imm() {
     this.setT(19);
-    const offset_addr = this.calc_offset_addr()
+    const offset_addr = this.calculateOffsetAddress()
     const value = this.readFromPcAdvance();
 
     this.writeByte(offset_addr, value);
@@ -2724,7 +2742,7 @@ class Z80Cpu {
   make_ld_r8_ptr_ind(reg) {
     return () => {
       this.setT(19);
-      const offset_addr = this.calc_offset_addr()
+      const offset_addr = this.calculateOffsetAddress()
       const value = this.readByte(offset_addr);
       this.registers[reg] = value;
     };
@@ -2741,7 +2759,7 @@ class Z80Cpu {
   make_ld_ptr_ind_r8(reg) {
     return () => {
       this.setT(19);
-      const offset_addr = this.calc_offset_addr()
+      const offset_addr = this.calculateOffsetAddress()
       const value = this.registers[reg];
       this.writeByte(offset_addr, value);
     };
@@ -2756,56 +2774,56 @@ class Z80Cpu {
   }
 
   add_a_ptr_ind() {
-    const offset_addr = this.calc_offset_addr()
+    const offset_addr = this.calculateOffsetAddress()
     const value = this.readByte(offset_addr);
     this.setT(19);
     this.add_08(value);
   }
 
   adc_a_ptr_ind() {
-    const offset_addr = this.calc_offset_addr()
+    const offset_addr = this.calculateOffsetAddress()
     const value = this.readByte(offset_addr);
     this.setT(19);
     this.adc_08(value);
   }
 
   sub_ptr_ind() {
-    const offset_addr = this.calc_offset_addr()
+    const offset_addr = this.calculateOffsetAddress()
     const value = this.readByte(offset_addr);
     this.setT(19);
     this.sub_08(value);
   }
 
   sbc_a_ptr_ind() {
-    const offset_addr = this.calc_offset_addr()
+    const offset_addr = this.calculateOffsetAddress()
     const value = this.readByte(offset_addr);
     this.setT(19);
     this.sbc_08(value);
   }
 
   and_ptr_ind() {
-    const offset_addr = this.calc_offset_addr()
+    const offset_addr = this.calculateOffsetAddress()
     const value = this.readByte(offset_addr);
     this.setT(19);
     this.and_08(value);
   }
 
   xor_ptr_ind() {
-    const offset_addr = this.calc_offset_addr()
+    const offset_addr = this.calculateOffsetAddress()
     const value = this.readByte(offset_addr);
     this.setT(19);
     this.xor_08(value);
   }
 
   or_ptr_ind() {
-    const offset_addr = this.calc_offset_addr()
+    const offset_addr = this.calculateOffsetAddress()
     const value = this.readByte(offset_addr);
     this.setT(19);
     this.or_08(value);
   }
 
   cp_ptr_ind() {
-    const offset_addr = this.calc_offset_addr()
+    const offset_addr = this.calculateOffsetAddress()
     const value = this.readByte(offset_addr);
     this.setT(19);
     this.cp_08(value);
@@ -2851,6 +2869,22 @@ class Z80Cpu {
     this.registers.pc = this[ind];
   }
 
+  ind_pre_bit() {
+    const byte = this.readFromPc();
+    const inst = this.readFromPc(1);
+
+    const fn = this.index_bit[inst];
+    if (! fn) {
+      // treat the prefix as a nop
+      this.nop();
+    } else {
+      // consume the inst byte and invoke
+      this.advancePC(2);
+      this.byteOffset = byte;
+      fn.call(this);
+    }
+  }
+
   registerIndex() {
     this.index = {};
     const ref = this.index;
@@ -2885,13 +2919,49 @@ class Z80Cpu {
     ref[index.ld_sp_ind] = this.ld_sp_ind;
 
     ref[index.jp_ptr_ind] = this.jp_ptr_ind;
+
+    ref[inst.pre_bit] = this.ind_pre_bit;
+  }
+
+  rlc_ptr_ind() {
+    this.setT(23);
+    const addr = this.calculateBitOffsetAddress();
+    const value = this.readByte(addr);
+    const result = rlc8(value);
+    this.writeByte(addr, result.a);
+
+    result.p_v = result.p;
+    this.setFlags({
+      ...this.getFlags(),
+      ...result
+    });
+  }
+
+  rrc_ptr_ind() {
+    this.setT(23);
+    const addr = this.calculateBitOffsetAddress();
+    const value = this.readByte(addr);
+    const result = rrc8(value);
+    this.writeByte(addr, result.a);
+
+    result.p_v = result.p;
+    this.setFlags({
+      ...this.getFlags(),
+      ...result
+    });
+  }
+
+  registerIndexBit() {
+    this.index_bit = {};
+    const ref = this.index_bit;
+
+    ref[index_bit.rlc_ptr_ind] = this.rlc_ptr_ind;
+    ref[index_bit.rrc_ptr_ind] = this.rrc_ptr_ind;
   }
 }
 
 // remaining index inst to implement
 
-// Z80IndexBit.rlc_ptr_ind = Z80Bit.rlc_ptr_hl
-// Z80IndexBit.rrc_ptr_ind = Z80Bit.rrc_ptr_hl
 // Z80IndexBit.rl_ptr_ind = Z80Bit.rl_ptr_hl
 // Z80IndexBit.rr_ptr_ind = Z80Bit.rr_ptr_hl
 // Z80IndexBit.sla_ptr_ind = Z80Bit.sla_ptr_hl
