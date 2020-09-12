@@ -3646,3 +3646,28 @@ test('sp ind test', () => {
   }
 });
 
+test('jp ptr ind test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0x1000, [
+      inst.halt
+    ]);
+
+    mem.load(0, [
+      inst[preInst], index.ld_ind_imm, 0x00, 0x10,
+      inst[preInst], index.jp_ptr_ind,
+      inst.ld_a_imm, 0x0a,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(0x1001);
+    expect(proc.registers.a).toBe(0);
+  }
+});
+

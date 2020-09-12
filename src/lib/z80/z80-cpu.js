@@ -2845,6 +2845,12 @@ class Z80Cpu {
     this.registers.sp = this[ind];
   }
 
+  jp_ptr_ind() {
+    this.setT(8);
+    const ind = this.indexRegister;
+    this.registers.pc = this[ind];
+  }
+
   registerIndex() {
     this.index = {};
     const ref = this.index;
@@ -2877,12 +2883,12 @@ class Z80Cpu {
 
     ref[index.ex_ptr_sp_ind] = this.ex_ptr_sp_ind;
     ref[index.ld_sp_ind] = this.ld_sp_ind;
+
+    ref[index.jp_ptr_ind] = this.jp_ptr_ind;
   }
 }
 
 // remaining index inst to implement
-
-// Z80Index.jp_ptr_ind = Z80Instructions.jp_ptr_hl
 
 // Z80IndexBit.rlc_ptr_ind = Z80Bit.rlc_ptr_hl
 // Z80IndexBit.rrc_ptr_ind = Z80Bit.rrc_ptr_hl
