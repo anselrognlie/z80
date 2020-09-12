@@ -2951,23 +2951,97 @@ class Z80Cpu {
     });
   }
 
+  rl_ptr_ind() {
+    this.setT(23);
+    const f = this.getFlags();
+    const addr = this.calculateBitOffsetAddress();
+    const value = this.readByte(addr);
+    const result = rl8(value, f.c);
+    this.writeByte(addr, result.a);
+
+    result.p_v = result.p;
+    this.setFlags({
+      ...f,
+      ...result
+    });
+  }
+
+  rr_ptr_ind() {
+    this.setT(23);
+    const f = this.getFlags();
+    const addr = this.calculateBitOffsetAddress();
+    const value = this.readByte(addr);
+    const result = rr8(value, f.c);
+    this.writeByte(addr, result.a);
+
+    result.p_v = result.p;
+    this.setFlags({
+      ...f,
+      ...result
+    });
+  }
+
+  sla_ptr_ind() {
+    this.setT(23);
+    const f = this.getFlags();
+    const addr = this.calculateBitOffsetAddress();
+    const value = this.readByte(addr);
+    const result = sla8(value);
+    this.writeByte(addr, result.a);
+
+    result.p_v = result.p;
+    this.setFlags({
+      ...f,
+      ...result
+    });
+  }
+
+  sra_ptr_ind() {
+    this.setT(23);
+    const f = this.getFlags();
+    const addr = this.calculateBitOffsetAddress();
+    const value = this.readByte(addr);
+    const result = sra8(value);
+    this.writeByte(addr, result.a);
+
+    result.p_v = result.p;
+    this.setFlags({
+      ...f,
+      ...result
+    });
+  }
+
+  srl_ptr_ind() {
+    this.setT(23);
+    const f = this.getFlags();
+    const addr = this.calculateBitOffsetAddress();
+    const value = this.readByte(addr);
+    const result = srl8(value);
+    this.writeByte(addr, result.a);
+
+    result.p_v = result.p;
+    this.setFlags({
+      ...f,
+      ...result
+    });
+  }
+
   registerIndexBit() {
     this.index_bit = {};
     const ref = this.index_bit;
 
     ref[index_bit.rlc_ptr_ind] = this.rlc_ptr_ind;
     ref[index_bit.rrc_ptr_ind] = this.rrc_ptr_ind;
+    ref[index_bit.rl_ptr_ind] = this.rl_ptr_ind;
+    ref[index_bit.rr_ptr_ind] = this.rr_ptr_ind;
+    ref[index_bit.sla_ptr_ind] = this.sla_ptr_ind;
+    ref[index_bit.sra_ptr_ind] = this.sra_ptr_ind;
+    ref[index_bit.srl_ptr_ind] = this.srl_ptr_ind;
   }
 }
 
 // remaining index inst to implement
 
-// Z80IndexBit.rl_ptr_ind = Z80Bit.rl_ptr_hl
-// Z80IndexBit.rr_ptr_ind = Z80Bit.rr_ptr_hl
-// Z80IndexBit.sla_ptr_ind = Z80Bit.sla_ptr_hl
-// Z80IndexBit.sra_ptr_ind = Z80Bit.sra_ptr_hl
-// Z80IndexBit.sll_ptr_ind = Z80Bit.sll_ptr_hl
-// Z80IndexBit.srl_ptr_ind = Z80Bit.srl_ptr_hl
 // Z80IndexBit.bit_0_ptr_ind = Z80Bit.bit_0_ptr_hl
 // Z80IndexBit.bit_1_ptr_ind = Z80Bit.bit_1_ptr_hl
 // Z80IndexBit.bit_2_ptr_ind = Z80Bit.bit_2_ptr_hl
