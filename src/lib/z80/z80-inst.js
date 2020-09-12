@@ -764,7 +764,6 @@ Z80Index.pop_ind = Z80Instructions.pop_hl
 Z80Index.ex_ptr_sp_ind = Z80Instructions.ex_ptr_sp_hl
 Z80Index.push_ind = Z80Instructions.push_hl
 Z80Index.jp_ptr_ind = Z80Instructions.jp_ptr_hl
-Z80Index.ex_de_ind = Z80Instructions.ex_de_hl
 Z80Index.ld_sp_ind = Z80Instructions.ld_sp_hl
 
 Z80IndexBit.rlc_ptr_ind = Z80Bit.rlc_ptr_hl

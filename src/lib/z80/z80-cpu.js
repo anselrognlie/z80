@@ -2829,6 +2829,22 @@ class Z80Cpu {
     this.writeWord(sp, value);
   }
 
+  ex_ptr_sp_ind() {
+    this.setT(23);
+    const ind = this.indexRegister;
+    const sp = this.registers.sp;
+    const spWord = this.readWord(sp);
+    const indWord = this[ind];
+    this.writeWord(sp, indWord);
+    this[ind] = spWord;
+  }
+
+  ld_sp_ind() {
+    this.setT(10);
+    const ind = this.indexRegister;
+    this.registers.sp = this[ind];
+  }
+
   registerIndex() {
     this.index = {};
     const ref = this.index;
@@ -2858,17 +2874,15 @@ class Z80Cpu {
 
     ref[index.pop_ind] = this.pop_ind;
     ref[index.push_ind] = this.push_ind;
+
+    ref[index.ex_ptr_sp_ind] = this.ex_ptr_sp_ind;
+    ref[index.ld_sp_ind] = this.ld_sp_ind;
   }
 }
 
 // remaining index inst to implement
 
-// Z80Index.pop_ind = Z80Instructions.pop_hl
-// Z80Index.ex_ptr_sp_ind = Z80Instructions.ex_ptr_sp_hl
-// Z80Index.push_ind = Z80Instructions.push_hl
 // Z80Index.jp_ptr_ind = Z80Instructions.jp_ptr_hl
-// Z80Index.ex_de_ind = Z80Instructions.ex_de_hl
-// Z80Index.ld_sp_ind = Z80Instructions.ld_sp_hl
 
 // Z80IndexBit.rlc_ptr_ind = Z80Bit.rlc_ptr_hl
 // Z80IndexBit.rrc_ptr_ind = Z80Bit.rrc_ptr_hl

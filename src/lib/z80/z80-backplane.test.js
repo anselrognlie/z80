@@ -3620,3 +3620,29 @@ test('push pop ind test', () => {
   }
 });
 
+test('sp ind test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0, [
+      inst.ld_hl_imm, 0x10, 0x32,
+      inst.push_hl,
+      inst[preInst], index.ld_ind_imm, 0x23, 0x01,
+      inst[preInst], index.ex_ptr_sp_ind,
+      inst[preInst], index.ld_sp_ind,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(13);
+    expect(proc[ind]).toBe(0x3210);
+    expect(proc.registers.sp).toBe(0x3210);
+    expect(mem.readWord(0xfffe)).toBe(0x0123);
+  }
+});
+
