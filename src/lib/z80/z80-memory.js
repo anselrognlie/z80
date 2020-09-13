@@ -1,6 +1,6 @@
 import AddressError from './address-error';
 
-class Z80MemoryError extends Error {}
+export class Z80MemoryError extends Error {}
 
 class Z80Memory {
   constructor(size) {
