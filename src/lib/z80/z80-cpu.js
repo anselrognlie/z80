@@ -54,6 +54,7 @@ class Z80Cpu {
     this.tStates = 0;
     this.tStatesEnabled = true;
     this.eiCountdown = 0;
+    this.interruptsEnabled = false;
     this.respondsToInterrupts = true;
 
     this.overriddenPcData = null;
@@ -180,6 +181,7 @@ class Z80Cpu {
     this.registers = { ...reg, iff1: 0, iff2: 0, pc: 0, i: 0, r: 0 };
     this.intMode = Z80Cpu.INT_MODE_0;
     this.interruptHandler = this.handleInterruptMode0;
+    this.interruptsEnabled = false;
     this.inNmi = false;
     this.hasPendingNmi = false;
     this.hasPendingInterrupt = false;
@@ -1599,12 +1601,14 @@ class Z80Cpu {
 
   di() {
     this.setT(4);
+    this.interruptsEnabled = false;
     this.registers.iff1 = 0;
     this.registers.iff2 = 0;
   }
 
   ei() {
     this.setT(4);
+    this.interruptsEnabled = true;
     this.eiCountdown = 1;
   }
 

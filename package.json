@@ -2,6 +2,7 @@
   "name": "z80",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "dependencies": {
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
@@ -16,7 +17,9 @@
     "test": "react-scripts test --watchAll=false",
     "watch": "react-scripts test",
     "eject": "react-scripts eject",
-    "test-dbg": "react-scripts --inspect-brk test --runInBand"
+    "test-dbg": "react-scripts --inspect-brk test --runInBand",
+    "rom": "node --es-module-specifier-resolution=node src/ext/run-roms.js",
+    "rom-dbg": "node --inspect-brk --es-module-specifier-resolution=node src/ext/run-roms.js"
   },
   "eslintConfig": {
     "extends": "react-app"
