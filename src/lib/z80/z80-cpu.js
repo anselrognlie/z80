@@ -11,6 +11,7 @@ import { clamp8, clamp16, makeWord,
   and8, or8, xor8, sbc16, adc16,
   rlc8, rrc8, rl8, rr8,
   sla8, sra8, srl8 } from '../bin-ops';
+import Z80Command from './z80-command'
 
 export class Z80Flags {}
 
@@ -67,6 +68,8 @@ class Z80Cpu {
 
     this.indexRegister = null;
     this.byteOffset = 0;
+
+    this.pendingCommand = null;
 
     this.registerInstructions();
   }
@@ -165,11 +168,6 @@ class Z80Cpu {
 
   flagNotSet(mask) {
     return ! (this.registers.f & mask);
-  }
-
-  setT(t) {
-    // the inst that set this already consumed 1 t cycle
-    this.tStates = t - 1;
   }
 
   useTStates(use) {
@@ -342,7 +340,7 @@ class Z80Cpu {
 
   decodeInstruction() {
     // continue with handling the current instruction
-    const inst = this.readFromPcAdvance();
+    const inst = this.readFromPc();
 
     const fn = this.inst[inst];
     if (! fn) {
@@ -351,16 +349,41 @@ class Z80Cpu {
     }
 
     fn.call(this);
+
+    if (this.tStatesEnabled) {
+      if (!this.pendingCommand || this.pendingCommand.isReady()) {
+        const instStr = inst.toString(16);
+        throw new Z80Error(`inst [${instStr}] invoked without setting t states`);
+      }
+    }
+  }
+
+  handlePendingCommand() {
+    if (!this.pendingCommand) { return false; }
+
+    const command = this.pendingCommand;
+    this.pendingCommand = null;
+
+    command.apply();
+
+    return true;
+  }
+
+  inPendingCommand() {
+    if (this.tStatesEnabled) {
+      if (this.pendingCommand && !this.pendingCommand.isReady()) {
+        this.pendingCommand.tick();
+        if (!this.pendingCommand.isReady()) { return true; }
+      }
+    }
+
+    return false;
   }
 
   clock() {
     // consume any t states remaining from the previous instruction
-    if (this.tStatesEnabled) {
-      if (this.tStates) {
-        this.tStates--;
-        return;
-      }
-    }
+    if (this.inPendingCommand()) { return; }
+    if (this.handlePendingCommand()) { return; }
 
     // we have completed the previous instruction
 
@@ -376,14 +399,8 @@ class Z80Cpu {
 
     this.restorePcOverride();
 
+    // resets index settings (ix/iy and offset)
     this.clearIndexStates();
-
-    if (this.tStatesEnabled) {
-      if (! this.tStates) {
-        const instStr = inst.toString(16);
-        throw new Z80Error(`inst [${instStr}] invoked without setting t states`);
-      }
-    }
   }
 
   readWord(addr) {
@@ -483,142 +500,193 @@ class Z80Cpu {
     return { c, n, p_v, h, z, s };
   }
 
+  setNextCommand(tStates, command) {
+    this.pendingCommand = new Z80Command(tStates - 1, command)
+  }
+
   nop() {
-    this.setT(4);
+    this.setNextCommand(4, ()=>{
+      this.advancePC();
+    });
   }
 
   halt() {
-    this.setT(4);
-    this.halted = true;
+    this.setNextCommand(4, ()=>{
+      this.halted = true;
+      this.advancePC();
+    });
   }
 
   ld_16_imm() {
-    this.setT(10);
+    this.advancePC();
     return this.readWordPartsFromPcAdvance();
   }
 
   ld_bc_imm() {
-    const { lo, hi } = this.ld_16_imm()
+    this.setNextCommand(10, ()=>{
+      const { lo, hi } = this.ld_16_imm()
 
-    this.registers.c = lo;
-    this.registers.b = hi;
+      this.registers.c = lo;
+      this.registers.b = hi;
+    });
   }
 
   ld_hl_imm() {
-    const { lo, hi } = this.ld_16_imm()
+    this.setNextCommand(10, ()=>{
+      const { lo, hi } = this.ld_16_imm()
 
-    this.registers.l = lo;
-    this.registers.h = hi;
+      this.registers.l = lo;
+      this.registers.h = hi;
+    });
   }
 
   ld_de_imm() {
-    const { lo, hi } = this.ld_16_imm()
+    this.setNextCommand(10, ()=>{
+      const { lo, hi } = this.ld_16_imm()
 
-    this.registers.e = lo;
-    this.registers.d = hi;
+      this.registers.e = lo;
+      this.registers.d = hi;
+    });
   }
 
   ld_sp_imm() {
-    const bytes = this.ld_16_imm()
-    this.registers.sp = makeWord(bytes);
+    this.setNextCommand(10, ()=>{
+      const bytes = this.ld_16_imm()
+      this.registers.sp = makeWord(bytes);
+    });
   }
 
   ld_sp_hl() {
-    this.setT(6);
-    this.registers.sp = this.hl;
+    this.setNextCommand(6, () => {
+      this.advancePC();
+      this.registers.sp = this.hl;
+    });
   }
 
   ld_hl_ptr_imm() {
-    this.setT(20);
-    const addr = this.readWordFromPcAdvance();
-    const word  = this.readWord(addr);
-    this.hl = word;
+    this.setNextCommand(20, () => {
+      this.advancePC();
+      const addr = this.readWordFromPcAdvance();
+      const word  = this.readWord(addr);
+      this.hl = word;
+    });
   }
 
   ld_ptr_16_a(addr) {
-    this.setT(7);
     const a = this.registers.a;
-
     this.writeByte(addr, a);
   }
 
   ld_ptr_bc_a() {
-    this.ld_ptr_16_a(this.bc);
+    this.setNextCommand(7, () => {
+      this.advancePC();
+      this.ld_ptr_16_a(this.bc);
+    });
   }
 
   ld_ptr_de_a() {
-    this.ld_ptr_16_a(this.de);
+    this.setNextCommand(7, () => {
+      this.advancePC();
+      this.ld_ptr_16_a(this.de);
+    });
   }
 
   ld_ptr_hl_imm() {
-    this.setT(10);
-    const addr = this.hl;
-    const value = this.readFromPcAdvance();
+    this.setNextCommand(10, () => {
+      const addr = this.hl;
+      this.advancePC();
+      const value = this.readFromPcAdvance();
 
-    this.writeByte(addr, value);
+      this.writeByte(addr, value);
+    });
   }
 
   ld_ptr_imm_a() {
-    this.setT(13);
-    const addr = this.readWordFromPcAdvance();
+    this.setNextCommand(13, () => {
+      this.advancePC();
+      const addr = this.readWordFromPcAdvance();
 
-    this.writeByte(addr, this.registers.a);
+      this.writeByte(addr, this.registers.a);
+      });
   }
 
   ld_ptr_imm_hl() {
-    this.setT(20);
-    const addr = this.readWordFromPcAdvance();
-    this.writeWord(addr, this.hl);
+    this.setNextCommand(20, () => {
+      this.advancePC();
+      const addr = this.readWordFromPcAdvance();
+      this.writeWord(addr, this.hl);
+    });
   }
 
   inc_16(value) {
-    this.setT(6);
     const { a } = add16(value, 1);
 
     return a;
   }
 
   inc_bc() {
-    this.bc = this.inc_16(this.bc);
+    this.setNextCommand(6, () => {
+      this.advancePC();
+      this.bc = this.inc_16(this.bc);
+    });
   }
 
   inc_de() {
-    this.de = this.inc_16(this.de);
+    this.setNextCommand(6, () => {
+      this.advancePC();
+      this.de = this.inc_16(this.de);
+    });
   }
 
   inc_hl() {
-    this.hl = this.inc_16(this.hl);
+    this.setNextCommand(6, () => {
+      this.advancePC();
+      this.hl = this.inc_16(this.hl);
+    });
   }
 
   inc_sp() {
-    this.registers.sp = this.inc_16(this.registers.sp);
+    this.setNextCommand(6, () => {
+      this.advancePC();
+      this.registers.sp = this.inc_16(this.registers.sp);
+    });
   }
 
   dec_16(value) {
-    this.setT(6);
     const { a } = sub16(value, 1);
 
     return a;
   }
 
   dec_bc() {
-    this.bc = this.dec_16(this.bc);
+    this.setNextCommand(6, () => {
+      this.advancePC();
+      this.bc = this.dec_16(this.bc);
+    });
   }
 
   dec_de() {
-    this.de = this.dec_16(this.de);
+    this.setNextCommand(6, () => {
+      this.advancePC();
+      this.de = this.dec_16(this.de);
+    });
   }
 
   dec_hl() {
-    this.hl = this.dec_16(this.hl);
+    this.setNextCommand(6, () => {
+      this.advancePC();
+      this.hl = this.dec_16(this.hl);
+    });
   }
 
   dec_sp() {
-    this.registers.sp = this.dec_16(this.registers.sp);
+    this.setNextCommand(6, () => {
+      this.advancePC();
+      this.registers.sp = this.dec_16(this.registers.sp);
+    });
   }
 
   inc_08(value) {
-    this.setT(4);
     const { a, s, z, h, v, n } = add8(value, 1);
 
     const f = this.getFlags();
@@ -634,7 +702,10 @@ class Z80Cpu {
 
   make_inc_r8(dst) {
     return () => {
-      this.registers[dst] = this.inc_08(this.registers[dst]);
+      this.setNextCommand(4, () => {
+        this.advancePC();
+        this.registers[dst] = this.inc_08(this.registers[dst]);
+      });
     }
   }
 
@@ -657,7 +728,6 @@ class Z80Cpu {
   }
 
   dec_08(value) {
-    this.setT(4);
     const { a, s, z, h, v, n } = sub8(value, 1);
 
     const f = this.getFlags();
@@ -673,7 +743,10 @@ class Z80Cpu {
 
   make_dec_r8(dst) {
     return () => {
-      this.registers[dst] = this.dec_08(this.registers[dst]);
+      this.setNextCommand(4, () => {
+        this.advancePC();
+        this.registers[dst] = this.dec_08(this.registers[dst]);
+      });
     }
   }
 
@@ -695,14 +768,12 @@ class Z80Cpu {
     this.setT(11);
   }
 
-  ld_08_imm() {
-    this.setT(7);
-    return this.readFromPcAdvance();
-  }
-
   make_ld_r8_imm(dst) {
     return () => {
-      this.registers[dst] = this.ld_08_imm();
+      this.setNextCommand(7, () => {
+        this.advancePC();
+        this.registers[dst] = this.readFromPcAdvance();
+      });
     }
   }
 
@@ -717,7 +788,6 @@ class Z80Cpu {
   }
 
   rlXa() {
-    this.setT(4);
     const rla = this.registers.a << 1;
     const { hi, lo } = splitHiLo(rla);
     const c = hi;
@@ -732,17 +802,22 @@ class Z80Cpu {
   }
 
   rlca() {
-    const { a, c } = this.rlXa();
-    this.registers.a = a | c;
+    this.setNextCommand(4, () => {
+      this.advancePC();
+      const { a, c } = this.rlXa();
+      this.registers.a = a | c;
+    });
   }
 
   rla() {
-    const { a } = this.rlXa();
-    this.registers.a = a;
+    this.setNextCommand(4, () => {
+      this.advancePC();
+      const { a } = this.rlXa();
+      this.registers.a = a;
+    });
   }
 
   rrXa() {
-    this.setT(4);
     const c = this.registers.a % 2;
     const rra = this.registers.a >> 1;
 
@@ -756,13 +831,19 @@ class Z80Cpu {
   }
 
   rrca() {
-    const { a, c } = this.rrXa();
-    this.registers.a = a | (c << 7);;
+    this.setNextCommand(4, () => {
+      this.advancePC();
+      const { a, c } = this.rrXa();
+      this.registers.a = a | (c << 7);;
+    });
   }
 
   rra() {
-    const { a } = this.rrXa();
-    this.registers.a = a;
+    this.setNextCommand(4, () => {
+      this.advancePC();
+      const { a } = this.rrXa();
+      this.registers.a = a;
+    });
   }
 
   shadowPairs(regs) {
@@ -770,16 +851,17 @@ class Z80Cpu {
   }
 
   ex_ptr_sp_hl() {
-    this.setT(19);
-    const sp = this.registers.sp;
-    const spWord = this.readWord(sp);
-    const hl = this.hl;
-    this.writeWord(sp, hl);
-    this.hl = spWord;
+    this.setNextCommand(19, () => {
+      this.advancePC();
+      const sp = this.registers.sp;
+      const spWord = this.readWord(sp);
+      const hl = this.hl;
+      this.writeWord(sp, hl);
+      this.hl = spWord;
+    });
   }
 
   ex_r8_list(pairs) {
-    this.setT(4);
     const reg = this.registers;
     for (let [a, b] of pairs) {
       [reg[a], reg[b]] = [reg[b], reg[a]];
@@ -787,22 +869,30 @@ class Z80Cpu {
   }
 
   ex_af() {
-    const regs = ['a', 'f'];
-    this.ex_r8_list(this.shadowPairs(regs));
+    this.setNextCommand(4, () => {
+      const regs = ['a', 'f'];
+      this.advancePC();
+      this.ex_r8_list(this.shadowPairs(regs));
+    });
   }
 
   ex_de_hl() {
-    const pairs = [['d', 'h'], ['e', 'l']];
-    this.ex_r8_list(pairs);
+    this.setNextCommand(4, () => {
+      const pairs = [['d', 'h'], ['e', 'l']];
+      this.advancePC();
+      this.ex_r8_list(pairs);
+    });
   }
 
   exx() {
-    const regs = ['b', 'c', 'd', 'e', 'h', 'l'];
-    this.ex_r8_list(this.shadowPairs(regs));
+    this.setNextCommand(4, () => {
+      const regs = ['b', 'c', 'd', 'e', 'h', 'l'];
+      this.advancePC();
+      this.ex_r8_list(this.shadowPairs(regs));
+    });
   }
 
   add_hl_16(value) {
-    this.setT(11);
     const { a, h, n, c } = add16(this.hl, value);
     this.hl = a;
 
@@ -814,71 +904,97 @@ class Z80Cpu {
   }
 
   add_hl_bc() {
-    this.add_hl_16(this.bc);
+    this.setNextCommand(11, () => {
+      this.advancePC();
+      this.add_hl_16(this.bc);
+    });
   }
 
   add_hl_de() {
-    this.add_hl_16(this.de);
+    this.setNextCommand(11, () => {
+      this.advancePC();
+      this.add_hl_16(this.de);
+    });
   }
 
   add_hl_hl() {
-    this.add_hl_16(this.hl);
+    this.setNextCommand(11, () => {
+      this.advancePC();
+      this.add_hl_16(this.hl);
+    });
   }
 
   add_hl_sp() {
-    this.add_hl_16(this.registers.sp);
+    this.setNextCommand(11, () => {
+      this.advancePC();
+      this.add_hl_16(this.registers.sp);
+    });
   }
 
   ld_a_ptr_16(addr) {
-    this.setT(7);
     const a = this.readByte(addr);
     this.registers.a = a;
   }
 
   ld_a_ptr_bc() {
-    this.ld_a_ptr_16(this.bc);
+    this.setNextCommand(7, () => {
+      this.advancePC();
+      this.ld_a_ptr_16(this.bc);
+    });
   }
 
   ld_a_ptr_de() {
-    this.ld_a_ptr_16(this.bc);
+    this.setNextCommand(7, () => {
+      this.advancePC();
+      this.ld_a_ptr_16(this.de);
+    });
   }
 
   ld_a_ptr_imm() {
-    const addr = this.readWordFromPcAdvance();
-    this.ld_a_ptr_16(addr);
-    this.setT(13);
+    this.setNextCommand(13, () => {
+      this.advancePC();
+      const addr = this.readWordFromPcAdvance();
+      this.ld_a_ptr_16(addr);
+    });
   }
 
   jr_08() {
-    this.setT(12);
-    return signed8(this.readFromPcAdvance());
+    this.advancePC();
+    const offset = signed8(this.readFromPcAdvance());
+    this.registers.pc += offset;
   }
 
   djnz_imm() {
-    const offset = this.jr_08();
     const b = this.registers.b - 1;
-    this.registers.b = b;
 
     if (b) {
-      this.setT(13);
-      this.registers.pc += offset;
+      this.setNextCommand(13, () => {
+        this.jr_08();
+        this.registers.b = b;
+      });
     } else {
-      this.setT(8);
+      this.setNextCommand(8, () => {
+        this.advancePC(2);
+        this.registers.b = b;
+      });
     }
   }
 
   jr_imm() {
-    const offset = this.jr_08();
-    this.registers.pc += offset;
+    this.setNextCommand(12, () => {
+      this.jr_08();
+    });
   }
 
   jr_cond_imm(condFn) {
-    const offset = this.jr_08();
-
     if (condFn()) {
-      this.registers.pc += offset;
+      this.setNextCommand(12, () => {
+        this.jr_08();
+      });
     } else {
-      this.setT(7);
+      this.setNextCommand(7, () => {
+        this.advancePC(2);
+      });
     }
   }
 
@@ -907,95 +1023,97 @@ class Z80Cpu {
   }
 
   daa() {
-    this.setT(4);
+    this.setNextCommand(4, () => {
+      this.advancePC();
 
-    const f = this.getFlags();
-    let a = this.registers.a;
-    const hn = (a & 0x0f0) >> 4;
-    const ln = (a & 0x0f);
+      const f = this.getFlags();
+      let a = this.registers.a;
+      const hn = (a & 0x0f0) >> 4;
+      const ln = (a & 0x0f);
 
-    let diff;
-    if (f.c) {
-      if (ln >= 0x0a) {
-        diff = 0x066;
-      } else {
-        if (f.h) {
+      let diff;
+      if (f.c) {
+        if (ln >= 0x0a) {
           diff = 0x066;
         } else {
-          diff = 0x060;
+          if (f.h) {
+            diff = 0x066;
+          } else {
+            diff = 0x060;
+          }
         }
-      }
-    } else {  // !f.c
-      if (ln >= 0x0a) {
-        if (hn >= 0x09) {
-          diff = 0x066;
-        } else {
-          diff = 0x06;
-        }
-      } else {
-        if (f.h) {
-          if (hn >= 0x0a) {
+      } else {  // !f.c
+        if (ln >= 0x0a) {
+          if (hn >= 0x09) {
             diff = 0x066;
           } else {
             diff = 0x06;
           }
-        } else {  // !f.h
-          if (hn >= 0x0a) {
-            diff = 0x060;
-          } else {
-            diff = 0;
+        } else {
+          if (f.h) {
+            if (hn >= 0x0a) {
+              diff = 0x066;
+            } else {
+              diff = 0x06;
+            }
+          } else {  // !f.h
+            if (hn >= 0x0a) {
+              diff = 0x060;
+            } else {
+              diff = 0;
+            }
           }
         }
       }
-    }
 
-    a = (f.n) ? a - diff : a + diff;
+      a = (f.n) ? a - diff : a + diff;
 
-    let c;
-    if (f.c) {
-      c = f.c;
-    } else {
-      if (ln >= 0x0a) {
-        if (hn >= 0x09) {
-          c = 1;
-        } else {
-          c = 0;
-        }
+      let c;
+      if (f.c) {
+        c = f.c;
       } else {
-        if (hn >= 0x0a) {
-          c = 1;
+        if (ln >= 0x0a) {
+          if (hn >= 0x09) {
+            c = 1;
+          } else {
+            c = 0;
+          }
         } else {
-          c = 0;
+          if (hn >= 0x0a) {
+            c = 1;
+          } else {
+            c = 0;
+          }
         }
       }
-    }
 
-    let h;
-    if (f.n) {
-      if (f.h) {
-        if (ln >= 6) {
+      let h;
+      if (f.n) {
+        if (f.h) {
+          if (ln >= 6) {
+            h = 0;
+          } else {
+            h = 1;
+          }
+        } else {  // !f.h
           h = 0;
-        } else {
-          h = 1;
         }
-      } else {  // !f.h
-        h = 0;
+      } else {  // !f.n
+        if (ln >= 0x0a) {
+          h = 1;
+        } else {
+          h = 0;
+        }
       }
-    } else {  // !f.n
-      if (ln >= 0x0a) {
-        h = 1;
-      } else {
-        h = 0;
-      }
-    }
 
-    this.registers.a = a;
-    f.c = c;
-    f.h = h;
-    f.p_v = parity8(a);
-    f.z = toBit(a === 0);
-    f.s = toBit(a & 0x080);
-    this.setFlags(f);
+      this.registers.a = a;
+      f.c = c;
+      f.h = h;
+      f.p_v = parity8(a);
+      f.z = toBit(a === 0);
+      f.s = toBit(a & 0x080);
+      this.setFlags(f);
+    });
   }
 
   add_08(value) {
@@ -1013,8 +1131,10 @@ class Z80Cpu {
   }
 
   add_a_r8(value) {
-    this.setT(4);
-    this.add_08(value);
+    this.setNextCommand(4, () => {
+      this.advancePC();
+      this.add_08(value);
+    });
   }
 
   make_add_a_r8(src) {
@@ -1032,16 +1152,20 @@ class Z80Cpu {
   }
 
   add_a_ptr_hl() {
-    const addr = this.hl;
-    const value = this.readByte(addr);
-    this.setT(7);
-    this.add_08(value);
+    this.setNextCommand(7, () => {
+      this.advancePC();
+      const addr = this.hl;
+      const value = this.readByte(addr);
+      this.add_08(value);
+    });
   }
 
   add_a_imm() {
-    const value = this.readFromPcAdvance();
-    this.setT(7);
-    this.add_08(value);
+    this.setNextCommand(7, () => {
+      this.advancePC();
+      const value = this.readFromPcAdvance();
+      this.add_08(value);
+    });
   }
 
   adc_08(value) {
@@ -1059,8 +1183,10 @@ class Z80Cpu {
   }
 
   adc_a_r8(value) {
-    this.setT(4);
-    this.adc_08(value);
+    this.setNextCommand(4, () => {
+      this.advancePC();
+      this.adc_08(value);
+    });
   }
 
   make_adc_a_r8(src) {
@@ -1078,16 +1204,20 @@ class Z80Cpu {
   }
 
   adc_a_ptr_hl() {
-    const addr = this.hl;
-    const value = this.readByte(addr);
-    this.setT(7);
-    this.adc_08(value);
+    this.setNextCommand(7, () => {
+      this.advancePC();
+      const addr = this.hl;
+      const value = this.readByte(addr);
+      this.adc_08(value);
+    });
   }
 
   adc_a_imm() {
-    const value = this.readFromPcAdvance();
-    this.setT(7);
-    this.adc_08(value);
+    this.setNextCommand(7, () => {
+      this.advancePC();
+      const value = this.readFromPcAdvance();
+      this.adc_08(value);
+    });
   }
 
   sub_08(value) {
@@ -1105,8 +1235,10 @@ class Z80Cpu {
   }
 
   sub_r8(value) {
-    this.setT(4);
-    this.sub_08(value);
+    this.setNextCommand(4, () => {
+      this.advancePC();
+      this.sub_08(value);
+    });
   }
 
   make_sub_r8(src) {
@@ -1124,16 +1256,20 @@ class Z80Cpu {
   }
 
   sub_ptr_hl() {
-    const addr = this.hl;
-    const value = this.readByte(addr);
-    this.setT(7);
-    this.sub_08(value);
+    this.setNextCommand(7, () => {
+      this.advancePC();
+      const addr = this.hl;
+      const value = this.readByte(addr);
+      this.sub_08(value);
+    });
   }
 
   sub_imm() {
-    const value = this.readFromPcAdvance();
-    this.setT(7);
-    this.sub_08(value);
+    this.setNextCommand(7, () => {
+      this.advancePC();
+      const value = this.readFromPcAdvance();
+      this.sub_08(value);
+    });
   }
 
   sbc_08(value) {
@@ -1151,8 +1287,10 @@ class Z80Cpu {
   }
 
   sbc_a_r8(value) {
-    this.setT(4);
-    this.sbc_08(value);
+    this.setNextCommand(4, () => {
+      this.advancePC();
+      this.sbc_08(value);
+    });
   }
 
   make_sbc_a_r8(src) {
@@ -1170,47 +1308,59 @@ class Z80Cpu {
   }
 
   sbc_a_ptr_hl() {
-    const addr = this.hl;
-    const value = this.readByte(addr);
-    this.setT(7);
-    this.sbc_08(value);
+    this.setNextCommand(7, () => {
+      this.advancePC();
+      const addr = this.hl;
+      const value = this.readByte(addr);
+      this.sbc_08(value);
+    });
   }
 
   sbc_a_imm() {
-    const value = this.readFromPcAdvance();
-    this.setT(7);
-    this.sbc_08(value);
+    this.setNextCommand(7, () => {
+      this.advancePC();
+      const value = this.readFromPcAdvance();
+      this.sbc_08(value);
+    });
   }
 
   cpl() {
-    this.setT(4);
-    const a = clamp8(~this.registers.a);
-    this.registers.a = a;
+    this.setNextCommand(4, () => {
+      this.advancePC();
+      const a = clamp8(~this.registers.a);
+      this.registers.a = a;
 
-    const f = this.getFlags();
-    f.h = 1;
-    f.n = 1;
-    this.setFlags(f);
+      const f = this.getFlags();
+      f.h = 1;
+      f.n = 1;
+      this.setFlags(f);
+    });
   }
 
   scf() {
-    this.setT(4);
-    const f = { ...this.getFlags(), c:1, h:0, n:0 };
-    this.setFlags(f);
+    this.setNextCommand(4, () => {
+      this.advancePC();
+      const f = { ...this.getFlags(), c:1, h:0, n:0 };
+      this.setFlags(f);
+    });
   }
 
   ccf() {
-    this.setT(4);
-    const f = { ...this.getFlags(), n:0 };
-    f.h = f.c;
-    f.c = toBit(! f.c);
-    this.setFlags(f);
+    this.setNextCommand(4, () => {
+      this.advancePC();
+      const f = { ...this.getFlags(), n:0 };
+      f.h = f.c;
+      f.c = toBit(! f.c);
+      this.setFlags(f);
+    });
   }
 
   make_ld_r8_r8(dst, src) {
     return () => {
-      this.setT(4);
-      this.registers[dst] = this.registers[src];
+      this.setNextCommand(4, () => {
+        this.advancePC();
+        this.registers[dst] = this.registers[src];
+      });
     };
   }
 
@@ -1228,9 +1378,11 @@ class Z80Cpu {
 
   make_ld_r8_ptr_hl(dst) {
     return () => {
-      this.setT(7);
-      const value = this.readByte(this.hl);
-      this.registers[dst] = value;
+      this.setNextCommand(7, () => {
+        this.advancePC();
+        const value = this.readByte(this.hl);
+        this.registers[dst] = value;
+      });
     };
   }
 
@@ -1244,9 +1396,11 @@ class Z80Cpu {
 
   make_ld_ptr_hl_r8(src) {
     return () => {
-      this.setT(7);
-      const value = this.registers[src];
-      this.writeByte(this.hl, value);
+      this.setNextCommand(7, () => {
+        this.advancePC();
+        const value = this.registers[src];
+        this.writeByte(this.hl, value);
+      });
     };
   }
 
@@ -1273,8 +1427,10 @@ class Z80Cpu {
   }
 
   and_r8(value) {
-    this.setT(4);
-    this.and_08(value);
+    this.setNextCommand(4, () => {
+      this.advancePC();
+      this.and_08(value);
+    });
   }
 
   make_and_r8(src) {
@@ -1292,16 +1448,20 @@ class Z80Cpu {
   }
 
   and_ptr_hl() {
-    const addr = this.hl;
-    const value = this.readByte(addr);
-    this.setT(7);
-    this.and_08(value);
+    this.setNextCommand(7, () => {
+      this.advancePC();
+      const addr = this.hl;
+      const value = this.readByte(addr);
+      this.and_08(value);
+    });
   }
 
   and_imm() {
-    this.setT(7);
-    const value = this.readFromPcAdvance();
-    this.and_08(value);
+    this.setNextCommand(7, () => {
+      this.advancePC();
+      const value = this.readFromPcAdvance();
+      this.and_08(value);
+    });
   }
 
   or_08(value) {
@@ -1319,8 +1479,10 @@ class Z80Cpu {
   }
 
   or_r8(value) {
-    this.setT(4);
-    this.or_08(value);
+    this.setNextCommand(4, () => {
+      this.advancePC();
+      this.or_08(value);
+    });
   }
 
   make_or_r8(src) {
@@ -1338,16 +1500,20 @@ class Z80Cpu {
   }
 
   or_ptr_hl() {
-    const addr = this.hl;
-    const value = this.readByte(addr);
-    this.setT(7);
-    this.or_08(value);
+    this.setNextCommand(7, () => {
+      this.advancePC();
+      const addr = this.hl;
+      const value = this.readByte(addr);
+      this.or_08(value);
+    });
   }
 
   or_imm() {
-    this.setT(7);
-    const value = this.readFromPcAdvance();
-    this.or_08(value);
+    this.setNextCommand(7, () => {
+      this.advancePC();
+      const value = this.readFromPcAdvance();
+      this.or_08(value);
+    });
   }
 
   xor_08(value) {
@@ -1365,8 +1531,10 @@ class Z80Cpu {
   }
 
   xor_r8(value) {
-    this.setT(4);
-    this.xor_08(value);
+    this.setNextCommand(4, () => {
+      this.advancePC();
+      this.xor_08(value);
+    });
   }
 
   make_xor_r8(src) {
@@ -1384,16 +1552,20 @@ class Z80Cpu {
   }
 
   xor_ptr_hl() {
-    const addr = this.hl;
-    const value = this.readByte(addr);
-    this.setT(7);
-    this.xor_08(value);
+    this.setNextCommand(7, () => {
+      this.advancePC();
+      const addr = this.hl;
+      const value = this.readByte(addr);
+      this.xor_08(value);
+    });
   }
 
   xor_imm() {
-    this.setT(7);
-    const value = this.readFromPcAdvance();
-    this.xor_08(value);
+    this.setNextCommand(7, () => {
+      this.advancePC();
+      const value = this.readFromPcAdvance();
+      this.xor_08(value);
+    });
   }
 
   cp_08(value) {
@@ -1410,8 +1582,10 @@ class Z80Cpu {
   }
 
   cp_r8(value) {
-    this.setT(4);
-    this.cp_08(value);
+    this.setNextCommand(4, () => {
+      this.advancePC();
+      this.cp_08(value);
+    });
   }
 
   make_cp_r8(src) {
@@ -1429,26 +1603,34 @@ class Z80Cpu {
   }
 
   cp_ptr_hl() {
-    const addr = this.hl;
-    const value = this.readByte(addr);
-    this.setT(7);
-    this.cp_08(value);
+    this.setNextCommand(7, () => {
+      this.advancePC();
+      const addr = this.hl;
+      const value = this.readByte(addr);
+      this.cp_08(value);
+    });
   }
 
   cp_imm() {
-    this.setT(7);
-    const value = this.readFromPcAdvance();
-    this.cp_08(value);
+    this.setNextCommand(7, () => {
+      this.advancePC();
+      const value = this.readFromPcAdvance();
+      this.cp_08(value);
+    });
   }
 
   make_call_cond_imm(condFn) {
     return () => {
-      const newPc = this.readWordFromPcAdvance();
       if (condFn()) {
-        this.setT(17);
-        this.call_imm_internal(newPc);
+        this.setNextCommand(17, () => {
+          this.advancePC();
+          const newPc = this.readWordFromPcAdvance();
+          this.call_imm_internal(newPc);
+        });
       } else {
-        this.setT(10);
+        this.setNextCommand(10, () => {
+          this.advancePC();
+        });
       }
     };
   }
@@ -1467,10 +1649,14 @@ class Z80Cpu {
   make_ret_cond(condFn) {
     return () => {
       if (condFn()) {
-        this.setT(11);
-        this.ret_internal();
+        this.setNextCommand(11, () => {
+          this.advancePC();
+          this.ret_internal();
+        });
       } else {
-        this.setT(5);
+        this.setNextCommand(5, () => {
+          this.advancePC();
+        });
       }
     };
   }
@@ -1487,9 +1673,11 @@ class Z80Cpu {
   }
 
   call_imm() {
-    this.setT(17);
-    const newPc = this.readWordFromPcAdvance();
-    this.call_imm_internal(newPc);
+    this.setNextCommand(17, () => {
+      this.advancePC();
+      const newPc = this.readWordFromPcAdvance();
+      this.call_imm_internal(newPc);
+    });
   }
 
   call_imm_internal(pc) {
@@ -1500,8 +1688,10 @@ class Z80Cpu {
   }
 
   ret() {
-    this.setT(10);
-    this.ret_internal();
+    this.setNextCommand(10, () => {
+      this.advancePC();
+      this.ret_internal();
+    });
   }
 
   ret_internal() {
@@ -1512,8 +1702,10 @@ class Z80Cpu {
   }
 
   jp_ptr_hl() {
-    this.setT(4);
-    this.registers.pc = this.hl;
+    this.setNextCommand(4, () => {
+      this.advancePC();
+      this.registers.pc = this.hl;
+    });
   }
 
   jp_imm_internal(pc) {
@@ -1521,17 +1713,25 @@ class Z80Cpu {
   }
 
   jp_imm() {
-    this.setT(10)
-    const newPc = this.readWordFromPcAdvance();
-    this.jp_imm_internal(newPc);
+    this.setNextCommand(10, () => {
+      this.advancePC();
+      const newPc = this.readWordFromPcAdvance();
+      this.jp_imm_internal(newPc);
+    });
   }
 
   make_jp_cond_imm(condFn) {
     return () => {
-      const newPc = this.readWordFromPcAdvance();
-      this.setT(10);
       if (condFn()) {
-        this.jp_imm_internal(newPc);
+        this.setNextCommand(10, () => {
+          this.advancePC();
+          const newPc = this.readWordFromPcAdvance();
+          this.jp_imm_internal(newPc);
+        });
+      } else {
+        this.setNextCommand(10, () => {
+          this.advancePC(3);
+        });
       }
     };
   }
@@ -1549,10 +1749,12 @@ class Z80Cpu {
 
   make_push_r16(getter) {
     return () => {
-      this.setT(11);
-      const sp = clamp16(this.registers.sp - 2);
-      this.writeWord(sp, getter());
-      this.registers.sp = sp;
+      this.setNextCommand(11, () => {
+        this.advancePC();
+        const sp = clamp16(this.registers.sp - 2);
+        this.writeWord(sp, getter());
+        this.registers.sp = sp;
+      });
     };
   }
 
@@ -1565,11 +1767,13 @@ class Z80Cpu {
 
   make_pop_r16(setter) {
     return () => {
-      this.setT(10);
-      const sp = this.registers.sp;
-      const value = this.readWord(sp);
-      this.registers.sp = clamp16(sp + 2);
-      setter(value);
+      this.setNextCommand(10, () => {
+        this.advancePC();
+        const sp = this.registers.sp;
+        const value = this.readWord(sp);
+        this.registers.sp = clamp16(sp + 2);
+        setter(value);
+      });
     };
   }
 
@@ -1582,11 +1786,13 @@ class Z80Cpu {
 
   make_rst_off(offset) {
     return () => {
-      this.setT(11);
-      const sp = clamp16(this.registers.sp - 2);
-      this.writeWord(sp, this.registers.pc);
-      this.registers.sp = sp;
-      this.registers.pc = offset;
+      this.setNextCommand(11, () => {
+        this.advancePC();
+        const sp = clamp16(this.registers.sp - 2);
+        this.writeWord(sp, this.registers.pc);
+        this.registers.sp = sp;
+        this.registers.pc = offset;
+      });
     };
   }
 
@@ -1600,29 +1806,37 @@ class Z80Cpu {
   }
 
   di() {
-    this.setT(4);
-    this.interruptsEnabled = false;
-    this.registers.iff1 = 0;
-    this.registers.iff2 = 0;
+    this.setNextCommand(4, () => {
+      this.advancePC();
+      this.interruptsEnabled = false;
+      this.registers.iff1 = 0;
+      this.registers.iff2 = 0;
+    });
   }
 
   ei() {
-    this.setT(4);
-    this.interruptsEnabled = true;
-    this.eiCountdown = 1;
+    this.setNextCommand(4, () => {
+      this.advancePC();
+      this.interruptsEnabled = true;
+      this.eiCountdown = 1;
+    });
   }
 
   out_ptr_imm_a() {
-    this.setT(11);
-    const port = this.readFromPcAdvance();
-    const a = this.registers.a;
-    this.writePort(port, a, a);
+    this.setNextCommand(11, () => {
+      this.advancePC();
+      const port = this.readFromPcAdvance();
+      const a = this.registers.a;
+      this.writePort(port, a, a);
+    });
   }
 
   in_a_ptr_imm() {
-    this.setT(11);
-    const port = this.readFromPcAdvance();
-    this.registers.a = this.readPort(port, this.registers.a);
+    this.setNextCommand(11, () => {
+      this.advancePC();
+      const port = this.readFromPcAdvance();
+      this.registers.a = this.readPort(port, this.registers.a);
+    });
   }
 
   pre_80() {
