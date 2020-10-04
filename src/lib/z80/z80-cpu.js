@@ -1840,15 +1840,16 @@ class Z80Cpu {
   }
 
   pre_80() {
-    const inst = this.readFromPc();
+    const inst = this.readFromPc(1);
 
     const fn = this.ext[inst];
     if (! fn) {
       // treat the prefix as a nop
-      this.nop();
+      this.setNextCommand(4, () => {
+        this.advancePC(2);
+      });
     } else {
       // consume the inst byte and invoke
-      this.advancePC();
       fn.call(this);
     }
   }
@@ -2041,9 +2042,11 @@ class Z80Cpu {
 
   make_in_r8_ptr_c(reg) {
     return () => {
-      this.setT(12);
-      const port = this.registers.c;
-      this.registers[reg] = this.readPort(port, this.registers.b);
+      this.setNextCommand(12, () => {
+        this.advancePC(2);
+        const port = this.registers.c;
+        this.registers[reg] = this.readPort(port, this.registers.b);
+      });
     };
   }
 
@@ -2057,9 +2060,11 @@ class Z80Cpu {
 
   make_out_ptr_c_r8(reg) {
     return () => {
-      this.setT(12);
-      const port = this.registers.c;
-      this.writePort(port, this.registers.b, this.registers[reg]);
+      this.setNextCommand(12, () => {
+        this.advancePC(2);
+        const port = this.registers.c;
+        this.writePort(port, this.registers.b, this.registers[reg]);
+      });
     };
   }
 
@@ -2073,10 +2078,12 @@ class Z80Cpu {
 
   make_ld_ptr_imm_r16(reg) {
     return () => {
-      this.setT(20);
-      const value = this[reg];
-      const addr = this.readWordFromPcAdvance();
-      this.writeWord(addr, value);
+      this.setNextCommand(20, () => {
+        this.advancePC(2);
+        const value = this[reg];
+        const addr = this.readWordFromPcAdvance();
+        this.writeWord(addr, value);
+      });
     };
   }
 
@@ -2090,10 +2097,12 @@ class Z80Cpu {
 
   make_ld_r16_ptr_imm(reg) {
     return () => {
-      this.setT(20);
-      const addr = this.readWordFromPcAdvance();
-      const value = this.readWord(addr);
-      this[reg] = value;
+      this.setNextCommand(20, () => {
+        this.advancePC(2);
+        const addr = this.readWordFromPcAdvance();
+        const value = this.readWord(addr);
+        this[reg] = value;
+      });
     };
   }
 
@@ -2107,13 +2116,15 @@ class Z80Cpu {
 
   make_sbc_hl_r16(reg) {
     return () => {
-      this.setT(15);
-      const hl = this.hl;
-      const { c } = this.getFlags();
-      const result = sbc16(hl, this[reg], c);
-      result.p_v = result.v;
-      this.setFlags(result);
-      this.hl = result.a;
+      this.setNextCommand(15, () => {
+        this.advancePC(2);
+        const hl = this.hl;
+        const { c } = this.getFlags();
+        const result = sbc16(hl, this[reg], c);
+        result.p_v = result.v;
+        this.setFlags(result);
+        this.hl = result.a;
+      });
     };
   }
 
@@ -2127,13 +2138,15 @@ class Z80Cpu {
 
   make_adc_hl_r16(reg) {
     return () => {
-      this.setT(15);
-      const hl = this.hl;
-      const { c } = this.getFlags();
-      const result = adc16(hl, this[reg], c);
-      result.p_v = result.v;
-      this.setFlags(result);
-      this.hl = result.a;
+      this.setNextCommand(15, () => {
+        this.advancePC(2);
+        const hl = this.hl;
+        const { c } = this.getFlags();
+        const result = adc16(hl, this[reg], c);
+        result.p_v = result.v;
+        this.setFlags(result);
+        this.hl = result.a;
+      });
     };
   }
 
@@ -2146,31 +2159,37 @@ class Z80Cpu {
   }
 
   neg() {
-    this.setT(8);
-    const result = sub8(0, this.registers.a)
-    this.registers.a = result.a;
-    result.p_v = result.v;
-    this.setFlags(result);
+    this.setNextCommand(8, () => {
+      this.advancePC(2);
+      const result = sub8(0, this.registers.a)
+      this.registers.a = result.a;
+      result.p_v = result.v;
+      this.setFlags(result);
+    });
   }
 
   ld_i_a() {
-    this.setT(9)
-    this.registers.i = this.registers.a;
+    this.setNextCommand(9, () => {
+      this.advancePC(2);
+      this.registers.i = this.registers.a;
+    });
   }
 
   ld_a_ri(reg) {
-    this.setT(9)
-    const value = this.registers[reg];
-    this.registers.a = value;
-    const f = {
-      ...this.getFlags(),
-      s: toBit(value & 0x080),
-      z: toBit(value === 0),
-      h: 0,
-      p_v: toBit(this.registers.iff2),
-      n: 0,
-    };
-    this.setFlags(f);
+    this.setNextCommand(9, () => {
+      this.advancePC(2);
+      const value = this.registers[reg];
+      this.registers.a = value;
+      const f = {
+        ...this.getFlags(),
+        s: toBit(value & 0x080),
+        z: toBit(value === 0),
+        h: 0,
+        p_v: toBit(this.registers.iff2),
+        n: 0,
+      };
+      this.setFlags(f);
+    });
   }
 
   ld_a_i() {
@@ -2178,8 +2197,10 @@ class Z80Cpu {
   }
 
   ld_r_a() {
-    this.setT(9)
-    this.registers.r = this.registers.a;
+    this.setNextCommand(9, () => {
+      this.advancePC(2);
+      this.registers.r = this.registers.a;
+    });
   }
 
   ld_a_r() {
@@ -2187,30 +2208,32 @@ class Z80Cpu {
   }
 
   rotate12(rotateFn) {
-    this.setT(18);
-    const a = this.registers.a;
-    const addr = this.hl;
-    const value = this.readByte(addr);
+    this.setNextCommand(18, () => {
+      this.advancePC(2);
+      const a = this.registers.a;
+      const addr = this.hl;
+      const value = this.readByte(addr);
 
-    const ah = (a & 0x0f0) >> 4;
-    const al = a & 0x0f;
-    const vh = (value & 0x0f0) >> 4;
-    const vl = value & 0x0f;
+      const ah = (a & 0x0f0) >> 4;
+      const al = a & 0x0f;
+      const vh = (value & 0x0f0) >> 4;
+      const vl = value & 0x0f;
 
-    const { a: rotA, v: rotV } = rotateFn(ah, al, vh, vl);
+      const { a: rotA, v: rotV } = rotateFn(ah, al, vh, vl);
 
-    this.registers.a = rotA;
-    this.writeByte(addr, rotV);
+      this.registers.a = rotA;
+      this.writeByte(addr, rotV);
 
-    const f = {
-      ...this.getFlags(),
-      s: toBit(rotA & 0x080),
-      z: toBit(rotA === 0),
-      h: 0,
-      p_v: parity8(rotA),
-      n: 0,
-    };
-    this.setFlags(f);
+      const f = {
+        ...this.getFlags(),
+        s: toBit(rotA & 0x080),
+        z: toBit(rotA === 0),
+        h: 0,
+        p_v: parity8(rotA),
+        n: 0,
+      };
+      this.setFlags(f);
+    });
   }
 
   rld() {
