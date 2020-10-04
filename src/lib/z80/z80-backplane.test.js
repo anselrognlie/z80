@@ -3179,497 +3179,497 @@ test('set ptr hl test', () => {
 //   expect(proc.registers.a).toBe(0x0a);
 // })
 
-// test('add ind 16 test', () => {
-//   const inds = ['ix', 'iy'];
-//   for (let ind of inds) {
-//     const regs = ['bc', 'de', 'sp'];
-//     for (let reg of regs) {
-//       const [mainboard, proc, mem ] = build_cpu();
-//       const ld16Inst = `ld_${reg}_imm`;
-//       const ldIndInst = `ld_ind_imm`;
-//       const addIndInst = `add_ind_${reg}`;
-//       const preInst = `pre_${ind}`;
-
-//       mem.load(0, [
-//         inst[ld16Inst], 0x10, 0x32,
-//         inst[preInst], index[ldIndInst], 0x10, 0x32,
-//         inst[preInst], index[addIndInst],
-//         inst.halt,
-//       ]);
-
-//       while (! proc.halted) {
-//         mainboard.clock();
-//       }
-
-//       expect(proc.registers.pc).toBe(10);
-//       expect(proc[ind]).toBe(0x6420);
-//     }
-//   }
-// });
-
-// test('add ind ind test', () => {
-//   const inds = ['ix', 'iy'];
-//   for (let ind of inds) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const preInst = `pre_${ind}`;
-
-//     mem.load(0, [
-//       inst[preInst], index.ld_ind_imm, 0x10, 0x32,
-//       inst[preInst], index.add_ind_ind,
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(7);
-//     expect(proc[ind]).toBe(0x6420);
-//   }
-// });
-
-// test('ld ptr imm ind test', () => {
-//   const inds = ['ix', 'iy'];
-//   for (let ind of inds) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const preInst = `pre_${ind}`;
-
-//     mem.load(0, [
-//       inst[preInst], index.ld_ind_imm, 0x10, 0x32,
-//       inst[preInst], index.ld_ptr_imm_ind, 0x00, 0x10,
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(9);
-//     expect(mem.readWord(0x1000)).toBe(0x3210);
-//   }
-// });
-
-// test('inc ind test', () => {
-//   const inds = ['ix', 'iy'];
-//   for (let ind of inds) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const preInst = `pre_${ind}`;
-
-//     mem.load(0, [
-//       inst[preInst], index.ld_ind_imm, 0x10, 0x32,
-//       inst[preInst], index.inc_ind,
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(7);
-//     expect(proc[ind]).toBe(0x3211);
-//   }
-// });
-
-// test('dec ind test', () => {
-//   const inds = ['ix', 'iy'];
-//   for (let ind of inds) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const preInst = `pre_${ind}`;
-
-//     mem.load(0, [
-//       inst[preInst], index.ld_ind_imm, 0x10, 0x32,
-//       inst[preInst], index.dec_ind,
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(7);
-//     expect(proc[ind]).toBe(0x320f);
-//   }
-// });
-
-// test('ld ind ptr imm test', () => {
-//   const inds = ['ix', 'iy'];
-//   for (let ind of inds) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const preInst = `pre_${ind}`;
-
-//     mem.load(0, [
-//       inst.ld_hl_imm, 0x10, 0x32,
-//       inst.ld_ptr_imm_hl, 0x00, 0x10,
-//       inst[preInst], index.ld_ind_ptr_imm, 0x00, 0x10,
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(11);
-//     expect(proc[ind]).toBe(0x3210);
-//   }
-// });
-
-// test('inc ptr ind test', () => {
-//   const inds = ['ix', 'iy'];
-//   for (let ind of inds) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const preInst = `pre_${ind}`;
-
-//     mem.load(0, [
-//       inst.ld_a_imm, 0x0a,
-//       inst.ld_hl_imm, 0x70, 0x10,
-//       inst.ld_ptr_hl_a,
-//       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-//       inst[preInst], index.inc_ptr_ind, 0x70,
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(14);
-//     expect(mem.readOne(0x1070)).toBe(0x0b);
-//   }
-// });
-
-// test('dec ptr ind test', () => {
-//   const inds = ['ix', 'iy'];
-//   for (let ind of inds) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const preInst = `pre_${ind}`;
-
-//     mem.load(0, [
-//       inst.ld_a_imm, 0x0a,
-//       inst.ld_hl_imm, 0x70, 0x10,
-//       inst.ld_ptr_hl_a,
-//       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-//       inst[preInst], index.dec_ptr_ind, 0x70,
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(14);
-//     expect(mem.readOne(0x1070)).toBe(0x09);
-//   }
-// });
-
-// test('ld ptr ind imm test', () => {
-//   const inds = ['ix', 'iy'];
-//   for (let ind of inds) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const preInst = `pre_${ind}`;
-
-//     mem.load(0, [
-//       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-//       inst[preInst], index.ld_ptr_ind_imm, 0x70, 0x0a,
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(9);
-//     expect(mem.readOne(0x1070)).toBe(0x0a);
-//   }
-// });
-
-// test('ld to and from r8 and ptr ind test', () => {
-//   const inds = ['ix', 'iy'];
-//   for (let ind of inds) {
-//     const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
-//     for (let reg of regs) {
-//       const [mainboard, proc, mem ] = build_cpu();
-//       const ld8Inst = `ld_${reg}_imm`;
-//       const ldPtrIndR8Inst = `ld_ptr_ind_${reg}`;
-//       const ldR8PtrIndInst = `ld_${reg}_ptr_ind`;
-//       const preInst = `pre_${ind}`;
-
-//       mem.load(0, [
-//         inst[ld8Inst], 0xc9,
-//         inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-//         inst[preInst], index[ldPtrIndR8Inst], 0x70,
-//         inst[ld8Inst], 0,
-//         inst[preInst], index[ldR8PtrIndInst], 0x70,
-//         inst.halt,
-//       ]);
-
-//       while (! proc.halted) {
-//         mainboard.clock();
-//       }
-
-//       expect(proc.registers.pc).toBe(15);
-//       expect(proc.registers[reg]).toBe(0xc9);
-//       expect(mem.readOne(0x1070)).toBe(0xc9);
-//     }
-//   }
-// });
-
-// test('and ptr ind test', () => {
-//   const inds = ['ix', 'iy'];
-//   for (let ind of inds) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const preInst = `pre_${ind}`;
-
-//     mem.load(0, [
-//       inst.ld_a_imm, 0x0aa,
-//       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-//       inst[preInst], index.ld_ptr_ind_imm, 0x70, 0x0a,
-//       inst[preInst], index.and_ptr_ind, 0x70,
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(14);
-//     expect(proc.registers.a).toBe(0x0a);
-//   }
-// });
-
-// test('xor ptr ind test', () => {
-//   const inds = ['ix', 'iy'];
-//   for (let ind of inds) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const preInst = `pre_${ind}`;
-
-//     mem.load(0, [
-//       inst.ld_a_imm, 0x0aa,
-//       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-//       inst[preInst], index.ld_ptr_ind_imm, 0x70, 0xff,
-//       inst[preInst], index.xor_ptr_ind, 0x70,
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(14);
-//     expect(proc.registers.a).toBe(0x55);
-//   }
-// });
-
-// test('or ptr ind test', () => {
-//   const inds = ['ix', 'iy'];
-//   for (let ind of inds) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const preInst = `pre_${ind}`;
-
-//     mem.load(0, [
-//       inst.ld_a_imm, 0x0aa,
-//       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-//       inst[preInst], index.ld_ptr_ind_imm, 0x70, 0x55,
-//       inst[preInst], index.or_ptr_ind, 0x70,
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(14);
-//     expect(proc.registers.a).toBe(0xff);
-//   }
-// });
-
-// test('cp ptr ind test', () => {
-//   const inds = ['ix', 'iy'];
-//   for (let ind of inds) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const preInst = `pre_${ind}`;
-
-//     mem.load(0, [
-//       inst.ld_a_imm, 0x0aa,
-//       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-//       inst[preInst], index.ld_ptr_ind_imm, 0x70, 0xaa,
-//       inst[preInst], index.cp_ptr_ind, 0x70,
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(14);
-//     expect(proc.getFlags().z).toBe(1);
-//   }
-// });
-
-// test('add a ptr ind test', () => {
-//   const inds = ['ix', 'iy'];
-//   for (let ind of inds) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const preInst = `pre_${ind}`;
-
-//     mem.load(0, [
-//       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-//       inst[preInst], index.ld_ptr_ind_imm, 0x70, 0x0a,
-//       inst[preInst], index.add_a_ptr_ind, 0x70,
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(12);
-//     expect(proc.registers.a).toBe(10);
-//     }
-// });
-
-// test('adc a ptr ind test', () => {
-//   const inds = ['ix', 'iy'];
-//   for (let ind of inds) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const preInst = `pre_${ind}`;
-
-//     mem.load(0, [
-//       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-//       inst[preInst], index.ld_ptr_ind_imm, 0x70, 0xff,
-//       inst.ld_a_imm, 0xff,
-//       inst[preInst], index.adc_a_ptr_ind, 0x70,
-//       inst[preInst], index.adc_a_ptr_ind, 0x70,
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(17);
-//     expect(proc.registers.a).toBe(0x0fe);
-//   }
-// });
-
-// test('sub ptr ind test', () => {
-//   const inds = ['ix', 'iy'];
-//   for (let ind of inds) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const preInst = `pre_${ind}`;
-
-//     mem.load(0, [
-//       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-//       inst[preInst], index.ld_ptr_ind_imm, 0x70, 0x0a,
-//       inst[preInst], index.sub_ptr_ind, 0x70,
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(12);
-//     expect(proc.registers.a).toBe(0xf6);
-//   }
-// });
-
-// test('sbc a ptr ind test', () => {
-//   const inds = ['ix', 'iy'];
-//   for (let ind of inds) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const preInst = `pre_${ind}`;
-
-//     mem.load(0, [
-//       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-//       inst[preInst], index.ld_ptr_ind_imm, 0x70, 0x1,
-//       inst.ld_a_imm, 0x00,
-//       inst[preInst], index.sbc_a_ptr_ind, 0x70,
-//       inst[preInst], index.sbc_a_ptr_ind, 0x70,
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(17);
-//     expect(proc.registers.a).toBe(0x0fd);
-//   }
-// });
-
-// test('push pop ind test', () => {
-//   const inds = ['ix', 'iy'];
-//   for (let ind of inds) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const preInst = `pre_${ind}`;
-
-//     mem.load(0, [
-//       inst[preInst], index.ld_ind_imm, 0x20, 0x10,
-//       inst[preInst], index.push_ind,
-//       inst[preInst], index.ld_ind_imm, 0x00, 0x00,
-//       inst[preInst], index.pop_ind,
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(13);
-//     expect(proc[ind]).toBe(0x1020);
-//   }
-// });
-
-// test('sp ind test', () => {
-//   const inds = ['ix', 'iy'];
-//   for (let ind of inds) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const preInst = `pre_${ind}`;
-
-//     mem.load(0, [
-//       inst.ld_hl_imm, 0x10, 0x32,
-//       inst.push_hl,
-//       inst[preInst], index.ld_ind_imm, 0x23, 0x01,
-//       inst[preInst], index.ex_ptr_sp_ind,
-//       inst[preInst], index.ld_sp_ind,
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(13);
-//     expect(proc[ind]).toBe(0x3210);
-//     expect(proc.registers.sp).toBe(0x3210);
-//     expect(mem.readWord(0xfffe)).toBe(0x0123);
-//   }
-// });
-
-// test('jp ptr ind test', () => {
-//   const inds = ['ix', 'iy'];
-//   for (let ind of inds) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const preInst = `pre_${ind}`;
-
-//     mem.load(0x1000, [
-//       inst.halt
-//     ]);
-
-//     mem.load(0, [
-//       inst[preInst], index.ld_ind_imm, 0x00, 0x10,
-//       inst[preInst], index.jp_ptr_ind,
-//       inst.ld_a_imm, 0x0a,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(0x1001);
-//     expect(proc.registers.a).toBe(0);
-//   }
-// });
+test('add ind 16 test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const regs = ['bc', 'de', 'sp'];
+    for (let reg of regs) {
+      const [mainboard, proc, mem ] = build_cpu();
+      const ld16Inst = `ld_${reg}_imm`;
+      const ldIndInst = `ld_ind_imm`;
+      const addIndInst = `add_ind_${reg}`;
+      const preInst = `pre_${ind}`;
+
+      mem.load(0, [
+        inst[ld16Inst], 0x10, 0x32,
+        inst[preInst], index[ldIndInst], 0x10, 0x32,
+        inst[preInst], index[addIndInst],
+        inst.halt,
+      ]);
+
+      while (! proc.halted) {
+        mainboard.clock();
+      }
+
+      expect(proc.registers.pc).toBe(10);
+      expect(proc[ind]).toBe(0x6420);
+    }
+  }
+});
+
+test('add ind ind test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0, [
+      inst[preInst], index.ld_ind_imm, 0x10, 0x32,
+      inst[preInst], index.add_ind_ind,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(7);
+    expect(proc[ind]).toBe(0x6420);
+  }
+});
+
+test('ld ptr imm ind test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0, [
+      inst[preInst], index.ld_ind_imm, 0x10, 0x32,
+      inst[preInst], index.ld_ptr_imm_ind, 0x00, 0x10,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(9);
+    expect(mem.readWord(0x1000)).toBe(0x3210);
+  }
+});
+
+test('inc ind test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0, [
+      inst[preInst], index.ld_ind_imm, 0x10, 0x32,
+      inst[preInst], index.inc_ind,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(7);
+    expect(proc[ind]).toBe(0x3211);
+  }
+});
+
+test('dec ind test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0, [
+      inst[preInst], index.ld_ind_imm, 0x10, 0x32,
+      inst[preInst], index.dec_ind,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(7);
+    expect(proc[ind]).toBe(0x320f);
+  }
+});
+
+test('ld ind ptr imm test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0, [
+      inst.ld_hl_imm, 0x10, 0x32,
+      inst.ld_ptr_imm_hl, 0x00, 0x10,
+      inst[preInst], index.ld_ind_ptr_imm, 0x00, 0x10,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(11);
+    expect(proc[ind]).toBe(0x3210);
+  }
+});
+
+test('inc ptr ind test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0, [
+      inst.ld_a_imm, 0x0a,
+      inst.ld_hl_imm, 0x70, 0x10,
+      inst.ld_ptr_hl_a,
+      inst[preInst], index.ld_ind_imm, 0x00, 0x10,
+      inst[preInst], index.inc_ptr_ind, 0x70,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(14);
+    expect(mem.readOne(0x1070)).toBe(0x0b);
+  }
+});
+
+test('dec ptr ind test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0, [
+      inst.ld_a_imm, 0x0a,
+      inst.ld_hl_imm, 0x70, 0x10,
+      inst.ld_ptr_hl_a,
+      inst[preInst], index.ld_ind_imm, 0x00, 0x10,
+      inst[preInst], index.dec_ptr_ind, 0x70,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(14);
+    expect(mem.readOne(0x1070)).toBe(0x09);
+  }
+});
+
+test('ld ptr ind imm test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0, [
+      inst[preInst], index.ld_ind_imm, 0x00, 0x10,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0x0a,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(9);
+    expect(mem.readOne(0x1070)).toBe(0x0a);
+  }
+});
+
+test('ld to and from r8 and ptr ind test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
+    for (let reg of regs) {
+      const [mainboard, proc, mem ] = build_cpu();
+      const ld8Inst = `ld_${reg}_imm`;
+      const ldPtrIndR8Inst = `ld_ptr_ind_${reg}`;
+      const ldR8PtrIndInst = `ld_${reg}_ptr_ind`;
+      const preInst = `pre_${ind}`;
+
+      mem.load(0, [
+        inst[ld8Inst], 0xc9,
+        inst[preInst], index.ld_ind_imm, 0x00, 0x10,
+        inst[preInst], index[ldPtrIndR8Inst], 0x70,
+        inst[ld8Inst], 0,
+        inst[preInst], index[ldR8PtrIndInst], 0x70,
+        inst.halt,
+      ]);
+
+      while (! proc.halted) {
+        mainboard.clock();
+      }
+
+      expect(proc.registers.pc).toBe(15);
+      expect(proc.registers[reg]).toBe(0xc9);
+      expect(mem.readOne(0x1070)).toBe(0xc9);
+    }
+  }
+});
+
+test('and ptr ind test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0, [
+      inst.ld_a_imm, 0x0aa,
+      inst[preInst], index.ld_ind_imm, 0x00, 0x10,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0x0a,
+      inst[preInst], index.and_ptr_ind, 0x70,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(14);
+    expect(proc.registers.a).toBe(0x0a);
+  }
+});
+
+test('xor ptr ind test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0, [
+      inst.ld_a_imm, 0x0aa,
+      inst[preInst], index.ld_ind_imm, 0x00, 0x10,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0xff,
+      inst[preInst], index.xor_ptr_ind, 0x70,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(14);
+    expect(proc.registers.a).toBe(0x55);
+  }
+});
+
+test('or ptr ind test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0, [
+      inst.ld_a_imm, 0x0aa,
+      inst[preInst], index.ld_ind_imm, 0x00, 0x10,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0x55,
+      inst[preInst], index.or_ptr_ind, 0x70,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(14);
+    expect(proc.registers.a).toBe(0xff);
+  }
+});
+
+test('cp ptr ind test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0, [
+      inst.ld_a_imm, 0x0aa,
+      inst[preInst], index.ld_ind_imm, 0x00, 0x10,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0xaa,
+      inst[preInst], index.cp_ptr_ind, 0x70,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(14);
+    expect(proc.getFlags().z).toBe(1);
+  }
+});
+
+test('add a ptr ind test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0, [
+      inst[preInst], index.ld_ind_imm, 0x00, 0x10,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0x0a,
+      inst[preInst], index.add_a_ptr_ind, 0x70,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(12);
+    expect(proc.registers.a).toBe(10);
+    }
+});
+
+test('adc a ptr ind test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0, [
+      inst[preInst], index.ld_ind_imm, 0x00, 0x10,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0xff,
+      inst.ld_a_imm, 0xff,
+      inst[preInst], index.adc_a_ptr_ind, 0x70,
+      inst[preInst], index.adc_a_ptr_ind, 0x70,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(17);
+    expect(proc.registers.a).toBe(0x0fe);
+  }
+});
+
+test('sub ptr ind test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0, [
+      inst[preInst], index.ld_ind_imm, 0x00, 0x10,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0x0a,
+      inst[preInst], index.sub_ptr_ind, 0x70,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(12);
+    expect(proc.registers.a).toBe(0xf6);
+  }
+});
+
+test('sbc a ptr ind test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0, [
+      inst[preInst], index.ld_ind_imm, 0x00, 0x10,
+      inst[preInst], index.ld_ptr_ind_imm, 0x70, 0x1,
+      inst.ld_a_imm, 0x00,
+      inst[preInst], index.sbc_a_ptr_ind, 0x70,
+      inst[preInst], index.sbc_a_ptr_ind, 0x70,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(17);
+    expect(proc.registers.a).toBe(0x0fd);
+  }
+});
+
+test('push pop ind test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0, [
+      inst[preInst], index.ld_ind_imm, 0x20, 0x10,
+      inst[preInst], index.push_ind,
+      inst[preInst], index.ld_ind_imm, 0x00, 0x00,
+      inst[preInst], index.pop_ind,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(13);
+    expect(proc[ind]).toBe(0x1020);
+  }
+});
+
+test('sp ind test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0, [
+      inst.ld_hl_imm, 0x10, 0x32,
+      inst.push_hl,
+      inst[preInst], index.ld_ind_imm, 0x23, 0x01,
+      inst[preInst], index.ex_ptr_sp_ind,
+      inst[preInst], index.ld_sp_ind,
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(13);
+    expect(proc[ind]).toBe(0x3210);
+    expect(proc.registers.sp).toBe(0x3210);
+    expect(mem.readWord(0xfffe)).toBe(0x0123);
+  }
+});
+
+test('jp ptr ind test', () => {
+  const inds = ['ix', 'iy'];
+  for (let ind of inds) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const preInst = `pre_${ind}`;
+
+    mem.load(0x1000, [
+      inst.halt
+    ]);
+
+    mem.load(0, [
+      inst[preInst], index.ld_ind_imm, 0x00, 0x10,
+      inst[preInst], index.jp_ptr_ind,
+      inst.ld_a_imm, 0x0a,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(0x1001);
+    expect(proc.registers.a).toBe(0);
+  }
+});
 
 // test('rlc ptr ind test', () => {
 //   const inds = ['ix', 'iy'];

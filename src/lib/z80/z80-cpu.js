@@ -366,6 +366,11 @@ class Z80Cpu {
 
     command.apply();
 
+    this.restorePcOverride();
+
+    // resets index settings (ix/iy and offset)
+    this.clearIndexStates();
+
     return true;
   }
 
@@ -396,11 +401,6 @@ class Z80Cpu {
     this.handleHalt();
 
     this.decodeInstruction();
-
-    this.restorePcOverride();
-
-    // resets index settings (ix/iy and offset)
-    this.clearIndexStates();
   }
 
   readWord(addr) {
@@ -1849,7 +1849,7 @@ class Z80Cpu {
         this.advancePC();
       });
     } else {
-      // consume the inst byte and invoke
+      // invoke
       fn.call(this);
     }
   }
@@ -1864,36 +1864,38 @@ class Z80Cpu {
         this.advancePC();
       });
     } else {
-      // consume the inst byte and invoke
+      // invoke
       fn.call(this);
     }
   }
 
   pre_ix() {
-    const inst = this.readFromPc();
+    const inst = this.readFromPc(1);
 
     const fn = this.index[inst];
     if (! fn) {
       // treat the prefix as a nop
-      this.nop();
+      this.setNextCommand(4, () => {
+        this.advancePC();
+      });
     } else {
-      // consume the inst byte and invoke
-      this.advancePC();
+      // invoke
       this.indexRegister = 'ix';
       fn.call(this);
     }
   }
 
   pre_iy() {
-    const inst = this.readFromPc();
+    const inst = this.readFromPc(1);
 
     const fn = this.index[inst];
     if (! fn) {
       // treat the prefix as a nop
-      this.nop();
+      this.setNextCommand(4, () => {
+        this.advancePC();
+      });
     } else {
-      // consume the inst byte and invoke
-      this.advancePC();
+      // invoke
       this.indexRegister = 'iy';
       fn.call(this);
     }
@@ -2967,15 +2969,17 @@ class Z80Cpu {
   }
 
   add_ind_16(value) {
-    this.setT(15);
-    const { a, h, n, c } = add16(this[this.indexRegister], value);
-    this[this.indexRegister] = a;
+    this.setNextCommand(15, () => {
+      this.advancePC(2);
+      const { a, h, n, c } = add16(this[this.indexRegister], value);
+      this[this.indexRegister] = a;
 
-    const f = this.getFlags();
-    f.n = n;
-    f.c = c;
-    f.h = h;
-    this.setFlags(f);
+      const f = this.getFlags();
+      f.n = n;
+      f.c = c;
+      f.h = h;
+      this.setFlags(f);
+    });
   }
 
   register_add_ind_16(ref) {
@@ -2992,67 +2996,85 @@ class Z80Cpu {
   }
 
   ld_ind_imm() {
-    this.setT(14);
-    const word = this.readWordFromPcAdvance();
-    this[this.indexRegister] = word;
+    this.setNextCommand(14, () => {
+      this.advancePC(2);
+      const word = this.readWordFromPcAdvance();
+      this[this.indexRegister] = word;
+    });
   }
 
   ld_ptr_imm_ind() {
-    this.setT(20);
-    const addr = this.readWordFromPcAdvance();
-    this.writeWord(addr, this[this.indexRegister]);
+    this.setNextCommand(20, () => {
+      this.advancePC(2);
+      const addr = this.readWordFromPcAdvance();
+      this.writeWord(addr, this[this.indexRegister]);
+    });
   }
 
   inc_ind() {
-    const ind = this.indexRegister;
-    this[ind] = this.inc_16(this[ind]);
-    this.setT(10);
+    this.setNextCommand(10, () => {
+      this.advancePC(2);
+      const ind = this.indexRegister;
+      this[ind] = this.inc_16(this[ind]);
+    });
   }
 
   dec_ind() {
-    const ind = this.indexRegister;
-    this[ind] = this.dec_16(this[ind]);
-    this.setT(10);
+    this.setNextCommand(10, () => {
+      this.advancePC(2);
+      const ind = this.indexRegister;
+      this[ind] = this.dec_16(this[ind]);
+    });
   }
 
   ld_ind_ptr_imm() {
-    this.setT(20);
-    const ind = this.indexRegister;
-    const addr = this.readWordFromPcAdvance();
-    const word  = this.readWord(addr);
-    this[ind] = word;
+    this.setNextCommand(20, () => {
+      this.advancePC(2);
+      const ind = this.indexRegister;
+      const addr = this.readWordFromPcAdvance();
+      const word  = this.readWord(addr);
+      this[ind] = word;
+    });
   }
 
   inc_ptr_ind() {
-    const offset_addr = this.calculateOffsetAddress()
-    const value = this.readByte(offset_addr);
-    const after = this.inc_08(value);
-    this.writeByte(offset_addr, after);
-    this.setT(23);
+    this.setNextCommand(23, () => {
+      this.advancePC(2);
+      const offset_addr = this.calculateOffsetAddress()
+      const value = this.readByte(offset_addr);
+      const after = this.inc_08(value);
+      this.writeByte(offset_addr, after);
+    });
   }
 
   dec_ptr_ind() {
-    const offset_addr = this.calculateOffsetAddress()
-    const value = this.readByte(offset_addr);
-    const after = this.dec_08(value);
-    this.writeByte(offset_addr, after);
-    this.setT(23);
+    this.setNextCommand(23, () => {
+      this.advancePC(2);
+      const offset_addr = this.calculateOffsetAddress()
+      const value = this.readByte(offset_addr);
+      const after = this.dec_08(value);
+      this.writeByte(offset_addr, after);
+    });
   }
 
   ld_ptr_ind_imm() {
-    this.setT(19);
-    const offset_addr = this.calculateOffsetAddress()
-    const value = this.readFromPcAdvance();
+    this.setNextCommand(19, () => {
+      this.advancePC(2);
+      const offset_addr = this.calculateOffsetAddress()
+      const value = this.readFromPcAdvance();
 
-    this.writeByte(offset_addr, value);
+      this.writeByte(offset_addr, value);
+    });
   }
 
   make_ld_r8_ptr_ind(reg) {
     return () => {
-      this.setT(19);
-      const offset_addr = this.calculateOffsetAddress()
-      const value = this.readByte(offset_addr);
-      this.registers[reg] = value;
+      this.setNextCommand(19, () => {
+        this.advancePC(2);
+        const offset_addr = this.calculateOffsetAddress()
+        const value = this.readByte(offset_addr);
+        this.registers[reg] = value;
+      });
     };
   }
 
@@ -3066,10 +3088,12 @@ class Z80Cpu {
 
   make_ld_ptr_ind_r8(reg) {
     return () => {
-      this.setT(19);
-      const offset_addr = this.calculateOffsetAddress()
-      const value = this.registers[reg];
-      this.writeByte(offset_addr, value);
+      this.setNextCommand(19, () => {
+        this.advancePC(2);
+        const offset_addr = this.calculateOffsetAddress()
+        const value = this.registers[reg];
+        this.writeByte(offset_addr, value);
+      });
     };
   }
 
@@ -3082,99 +3106,125 @@ class Z80Cpu {
   }
 
   add_a_ptr_ind() {
-    const offset_addr = this.calculateOffsetAddress()
-    const value = this.readByte(offset_addr);
-    this.setT(19);
-    this.add_08(value);
+    this.setNextCommand(19, () => {
+      this.advancePC(2);
+      const offset_addr = this.calculateOffsetAddress()
+      const value = this.readByte(offset_addr);
+      this.add_08(value);
+    });
   }
 
   adc_a_ptr_ind() {
-    const offset_addr = this.calculateOffsetAddress()
-    const value = this.readByte(offset_addr);
-    this.setT(19);
-    this.adc_08(value);
+    this.setNextCommand(19, () => {
+      this.advancePC(2);
+      const offset_addr = this.calculateOffsetAddress()
+      const value = this.readByte(offset_addr);
+      this.adc_08(value);
+    });
   }
 
   sub_ptr_ind() {
-    const offset_addr = this.calculateOffsetAddress()
-    const value = this.readByte(offset_addr);
-    this.setT(19);
-    this.sub_08(value);
+    this.setNextCommand(19, () => {
+      this.advancePC(2);
+      const offset_addr = this.calculateOffsetAddress()
+      const value = this.readByte(offset_addr);
+      this.sub_08(value);
+    });
   }
 
   sbc_a_ptr_ind() {
-    const offset_addr = this.calculateOffsetAddress()
-    const value = this.readByte(offset_addr);
-    this.setT(19);
-    this.sbc_08(value);
+    this.setNextCommand(19, () => {
+      this.advancePC(2);
+      const offset_addr = this.calculateOffsetAddress()
+      const value = this.readByte(offset_addr);
+      this.sbc_08(value);
+    });
   }
 
   and_ptr_ind() {
-    const offset_addr = this.calculateOffsetAddress()
-    const value = this.readByte(offset_addr);
-    this.setT(19);
-    this.and_08(value);
+    this.setNextCommand(19, () => {
+      this.advancePC(2);
+      const offset_addr = this.calculateOffsetAddress()
+      const value = this.readByte(offset_addr);
+      this.and_08(value);
+    });
   }
 
   xor_ptr_ind() {
-    const offset_addr = this.calculateOffsetAddress()
-    const value = this.readByte(offset_addr);
-    this.setT(19);
-    this.xor_08(value);
+    this.setNextCommand(19, () => {
+      this.advancePC(2);
+      const offset_addr = this.calculateOffsetAddress()
+      const value = this.readByte(offset_addr);
+      this.xor_08(value);
+    });
   }
 
   or_ptr_ind() {
-    const offset_addr = this.calculateOffsetAddress()
-    const value = this.readByte(offset_addr);
-    this.setT(19);
-    this.or_08(value);
+    this.setNextCommand(19, () => {
+      this.advancePC(2);
+      const offset_addr = this.calculateOffsetAddress()
+      const value = this.readByte(offset_addr);
+      this.or_08(value);
+    });
   }
 
   cp_ptr_ind() {
-    const offset_addr = this.calculateOffsetAddress()
-    const value = this.readByte(offset_addr);
-    this.setT(19);
-    this.cp_08(value);
+    this.setNextCommand(19, () => {
+      this.advancePC(2);
+      const offset_addr = this.calculateOffsetAddress()
+      const value = this.readByte(offset_addr);
+      this.cp_08(value);
+    });
   }
 
   pop_ind() {
-    this.setT(14);
-    const ind = this.indexRegister;
-    const sp = this.registers.sp;
-    const value = this.readWord(sp);
-    this.registers.sp = clamp16(sp + 2)
-    this[ind] = value;
+    this.setNextCommand(14, () => {
+      this.advancePC(2);
+      const ind = this.indexRegister;
+      const sp = this.registers.sp;
+      const value = this.readWord(sp);
+      this.registers.sp = clamp16(sp + 2)
+      this[ind] = value;
+    });
   }
 
   push_ind() {
-    this.setT(15);
-    const ind = this.indexRegister;
-    const sp = clamp16(this.registers.sp - 2);
-    this.registers.sp = sp;
-    const value = this[ind];
-    this.writeWord(sp, value);
+    this.setNextCommand(15, () => {
+      this.advancePC(2);
+      const ind = this.indexRegister;
+      const sp = clamp16(this.registers.sp - 2);
+      this.registers.sp = sp;
+      const value = this[ind];
+      this.writeWord(sp, value);
+    });
   }
 
   ex_ptr_sp_ind() {
-    this.setT(23);
-    const ind = this.indexRegister;
-    const sp = this.registers.sp;
-    const spWord = this.readWord(sp);
-    const indWord = this[ind];
-    this.writeWord(sp, indWord);
-    this[ind] = spWord;
+    this.setNextCommand(23, () => {
+      this.advancePC(2);
+      const ind = this.indexRegister;
+      const sp = this.registers.sp;
+      const spWord = this.readWord(sp);
+      const indWord = this[ind];
+      this.writeWord(sp, indWord);
+      this[ind] = spWord;
+    });
   }
 
   ld_sp_ind() {
-    this.setT(10);
-    const ind = this.indexRegister;
-    this.registers.sp = this[ind];
+    this.setNextCommand(10, () => {
+      this.advancePC(2);
+      const ind = this.indexRegister;
+      this.registers.sp = this[ind];
+    });
   }
 
   jp_ptr_ind() {
-    this.setT(8);
-    const ind = this.indexRegister;
-    this.registers.pc = this[ind];
+    this.setNextCommand(8, () => {
+      this.advancePC(2);
+      const ind = this.indexRegister;
+      this.registers.pc = this[ind];
+    });
   }
 
   ind_pre_bit() {
