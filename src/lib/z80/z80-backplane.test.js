@@ -89,7 +89,7 @@ const build_cpu = () => {
 
   mainboard.registerDevice(proc);
   mainboard.mapAddress(0, mem);
-  // proc.useTStates(false);
+  proc.useTStates(false);
 
   return [mainboard, proc, mem];
 }
@@ -2458,64 +2458,64 @@ test('otir test', () => {
   ]);
 });
 
-// test('im test', () => {
-//   const modes = [[0, cpu.INT_MODE_0], [1, cpu.INT_MODE_1], [2, cpu.INT_MODE_2]];
-//   for (let [mode, result] of modes) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const imInst = `im_${mode}`;
+test('im test', () => {
+  const modes = [[0, cpu.INT_MODE_0], [1, cpu.INT_MODE_1], [2, cpu.INT_MODE_2]];
+  for (let [mode, result] of modes) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const imInst = `im_${mode}`;
 
-//     mem.load(0, [
-//       inst.pre_80, ext[imInst],
-//       inst.halt,
-//     ]);
+    mem.load(0, [
+      inst.pre_80, ext[imInst],
+      inst.halt,
+    ]);
 
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
+    while (! proc.halted) {
+      mainboard.clock();
+    }
 
-//     expect(proc.registers.pc).toBe(3);
-//     expect(proc.intMode).toBe(result);
-//   }
-// });
+    expect(proc.registers.pc).toBe(3);
+    expect(proc.intMode).toBe(result);
+  }
+});
 
-// test('ei off test', () => {
-//   const [mainboard, proc, mem ] = build_cpu();
+test('ei off test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
 
-//   mem.load(0, [
-//     inst.di,
-//     inst.ei,
-//     inst.nop,
-//     inst.halt,
-//   ]);
+  mem.load(0, [
+    inst.di,
+    inst.ei,
+    inst.nop,
+    inst.halt,
+  ]);
 
-//   while (! proc.halted) {
-//     mainboard.clock();
-//     if (proc.registers.pc === 2 ) { break; }
-//   }
+  while (! proc.halted) {
+    mainboard.clock();
+    if (proc.registers.pc === 2 ) { break; }
+  }
 
-//   expect(proc.registers.iff1).toBe(0);
-//   expect(proc.registers.iff2).toBe(0);
-// });
+  expect(proc.registers.iff1).toBe(0);
+  expect(proc.registers.iff2).toBe(0);
+});
 
 
-// test('ei on test', () => {
-//   const [mainboard, proc, mem ] = build_cpu();
+test('ei on test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
 
-//   mem.load(0, [
-//     inst.di,
-//     inst.ei,
-//     inst.nop,
-//     inst.halt,
-//   ]);
+  mem.load(0, [
+    inst.di,
+    inst.ei,
+    inst.nop,
+    inst.halt,
+  ]);
 
-//   while (! proc.halted) {
-//     mainboard.clock();
-//     if (proc.registers.pc === 3 ) { break; }
-//   }
+  while (! proc.halted) {
+    mainboard.clock();
+    if (proc.registers.pc === 3 ) { break; }
+  }
 
-//   expect(proc.registers.iff1).toBe(1);
-//   expect(proc.registers.iff2).toBe(1);
-// });
+  expect(proc.registers.iff1).toBe(1);
+  expect(proc.registers.iff2).toBe(1);
+});
 
 test('rlc r8 test', () => {
   const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
@@ -2978,206 +2978,206 @@ test('set ptr hl test', () => {
   }
 });
 
-// test('nmi test', () => {
-//   const [mainboard, proc, mem ] = build_cpu();
-//   const source = new NmiSource();
+test('nmi test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+  const source = new NmiSource();
 
-//   mem.load(0x66, [
-//     inst.inc_a,
-//     inst.pre_80, ext.retn,
-//   ]);
+  mem.load(0x66, [
+    inst.inc_a,
+    inst.pre_80, ext.retn,
+  ]);
 
-//   mem.load(0, [
-//     inst.ld_c_imm, 0x0a,
-//     inst.halt,
-//     inst.cp_c,
-//     inst.jr_nz_imm, 0xfc,
-//     inst.ld_b_imm, 0x0b,
-//     inst.halt,
-//   ]);
+  mem.load(0, [
+    inst.ld_c_imm, 0x0a,
+    inst.halt,
+    inst.cp_c,
+    inst.jr_nz_imm, 0xfc,
+    inst.ld_b_imm, 0x0b,
+    inst.halt,
+  ]);
 
-//   while (proc.registers.b !== 0x0b) {
-//     mainboard.clock();
-//     if (proc.halted) {
-//       mainboard.raiseNmi(source);
-//     }
-//   }
+  while (proc.registers.b !== 0x0b) {
+    mainboard.clock();
+    if (proc.halted) {
+      mainboard.raiseNmi(source);
+    }
+  }
 
-//   expect(proc.registers.pc).toBe(8);
-//   expect(proc.registers.a).toBe(0x0a);
-//   expect(source.count).toBe(10);
-// })
+  expect(proc.registers.pc).toBe(8);
+  expect(proc.registers.a).toBe(0x0a);
+  expect(source.count).toBe(10);
+})
 
-// test('raise im1 test', () => {
-//   const [mainboard, proc, mem ] = build_cpu();
-//   const source = new InterruptSource();
+test('raise im1 test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+  const source = new InterruptSource();
 
-//   mem.load(0x38, [
-//     inst.di,
-//     inst.inc_a,
-//     inst.ei,
-//     inst.pre_80, ext.reti,
-//   ]);
+  mem.load(0x38, [
+    inst.di,
+    inst.inc_a,
+    inst.ei,
+    inst.pre_80, ext.reti,
+  ]);
 
-//   mem.load(0, [
-//     inst.pre_80, ext.im_1,
-//     inst.ei,
-//     inst.ld_c_imm, 0x0a,
-//     inst.halt,
-//     inst.cp_c,
-//     inst.jr_nz_imm, 0xfc,
-//     inst.ld_b_imm, 0x0b,
-//     inst.halt,
-//   ]);
+  mem.load(0, [
+    inst.pre_80, ext.im_1,
+    inst.ei,
+    inst.ld_c_imm, 0x0a,
+    inst.halt,
+    inst.cp_c,
+    inst.jr_nz_imm, 0xfc,
+    inst.ld_b_imm, 0x0b,
+    inst.halt,
+  ]);
 
-//   while (proc.registers.b !== 0x0b) {
-//     mainboard.clock();
-//     if (proc.halted) {
-//       mainboard.raiseInterrupt(source);
-//     }
-//   }
+  while (proc.registers.b !== 0x0b) {
+    mainboard.clock();
+    if (proc.halted) {
+      mainboard.raiseInterrupt(source);
+    }
+  }
 
-//   expect(proc.registers.pc).toBe(11);
-//   expect(proc.registers.a).toBe(0x0a);
-//   expect(source.count).toBe(10);
-// })
+  expect(proc.registers.pc).toBe(11);
+  expect(proc.registers.a).toBe(0x0a);
+  expect(source.count).toBe(10);
+})
 
-// test('raise im2 test', () => {
-//   const [mainboard, proc, mem ] = build_cpu();
-//   const source = new InterruptSource();
+test('raise im2 test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+  const source = new InterruptSource();
 
-//   mem.load(0x1000, [ 0x00, 0x0f ]);
+  mem.load(0x1000, [ 0x00, 0x0f ]);
 
-//   mem.load(0x0f00, [
-//     inst.di,
-//     inst.inc_a,
-//     inst.ei,
-//     inst.pre_80, ext.reti,
-//   ]);
+  mem.load(0x0f00, [
+    inst.di,
+    inst.inc_a,
+    inst.ei,
+    inst.pre_80, ext.reti,
+  ]);
 
-//   mem.load(0, [
-//     inst.pre_80, ext.im_2,
-//     inst.ld_a_imm, 0x10,
-//     inst.pre_80, ext.ld_i_a,
-//     inst.xor_a,
-//     inst.ei,
-//     inst.ld_c_imm, 0x0a,
-//     inst.halt,
-//     inst.cp_c,
-//     inst.jr_nz_imm, 0xfc,
-//     inst.ld_b_imm, 0x0b,
-//     inst.halt,
-//   ]);
+  mem.load(0, [
+    inst.pre_80, ext.im_2,
+    inst.ld_a_imm, 0x10,
+    inst.pre_80, ext.ld_i_a,
+    inst.xor_a,
+    inst.ei,
+    inst.ld_c_imm, 0x0a,
+    inst.halt,
+    inst.cp_c,
+    inst.jr_nz_imm, 0xfc,
+    inst.ld_b_imm, 0x0b,
+    inst.halt,
+  ]);
 
-//   while (proc.registers.b !== 0x0b) {
-//     mainboard.clock();
-//     if (proc.halted) {
-//       mainboard.raiseInterrupt(source, 0x00);
-//     }
-//   }
+  while (proc.registers.b !== 0x0b) {
+    mainboard.clock();
+    if (proc.halted) {
+      mainboard.raiseInterrupt(source, 0x00);
+    }
+  }
 
-//   expect(proc.registers.pc).toBe(16);
-//   expect(proc.registers.a).toBe(0x0a);
-//   expect(source.count).toBe(10);
-// })
+  expect(proc.registers.pc).toBe(16);
+  expect(proc.registers.a).toBe(0x0a);
+  expect(source.count).toBe(10);
+})
 
-// test('raise im0 single byte test', () => {
-//   const [mainboard, proc, mem ] = build_cpu();
-//   const source = new InterruptSource();
+test('raise im0 single byte test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+  const source = new InterruptSource();
 
-//   mem.load(0x30, [
-//     inst.di,
-//     inst.inc_a,
-//     inst.ei,
-//     inst.pre_80, ext.reti,
-//   ]);
+  mem.load(0x30, [
+    inst.di,
+    inst.inc_a,
+    inst.ei,
+    inst.pre_80, ext.reti,
+  ]);
 
-//   mem.load(0, [
-//     inst.ei,
-//     inst.ld_c_imm, 0x0a,
-//     inst.halt,
-//     inst.cp_c,
-//     inst.jr_nz_imm, 0xfc,
-//     inst.ld_b_imm, 0x0b,
-//     inst.halt,
-//   ]);
+  mem.load(0, [
+    inst.ei,
+    inst.ld_c_imm, 0x0a,
+    inst.halt,
+    inst.cp_c,
+    inst.jr_nz_imm, 0xfc,
+    inst.ld_b_imm, 0x0b,
+    inst.halt,
+  ]);
 
-//   while (proc.registers.b !== 0x0b) {
-//     mainboard.clock();
-//     if (proc.halted) {
-//       mainboard.raiseInterrupt(source, inst.rst_30);
-//     }
-//   }
+  while (proc.registers.b !== 0x0b) {
+    mainboard.clock();
+    if (proc.halted) {
+      mainboard.raiseInterrupt(source, inst.rst_30);
+    }
+  }
 
-//   expect(proc.registers.pc).toBe(9);
-//   expect(proc.registers.a).toBe(0x0a);
-//   expect(source.count).toBe(10);
-// })
+  expect(proc.registers.pc).toBe(9);
+  expect(proc.registers.a).toBe(0x0a);
+  expect(source.count).toBe(10);
+})
 
-// test('raise im0 multi-byte call test', () => {
-//   const [mainboard, proc, mem ] = build_cpu();
-//   const source = new InterruptSource();
+test('raise im0 multi-byte call test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+  const source = new InterruptSource();
 
-//   mem.load(0x0f00, [
-//     inst.di,
-//     inst.inc_a,
-//     inst.ei,
-//     // inst.jp_imm, 0x03, 0x00,
-//     inst.pre_80, ext.reti,
-//   ]);
+  mem.load(0x0f00, [
+    inst.di,
+    inst.inc_a,
+    inst.ei,
+    // inst.jp_imm, 0x03, 0x00,
+    inst.pre_80, ext.reti,
+  ]);
 
-//   mem.load(0, [
-//     inst.ei,
-//     inst.ld_c_imm, 0x0a,
-//     inst.halt,
-//     inst.cp_c,
-//     inst.jr_nz_imm, 0xfc,
-//     inst.ld_b_imm, 0x0b,
-//     inst.halt,
-//   ]);
+  mem.load(0, [
+    inst.ei,
+    inst.ld_c_imm, 0x0a,
+    inst.halt,
+    inst.cp_c,
+    inst.jr_nz_imm, 0xfc,
+    inst.ld_b_imm, 0x0b,
+    inst.halt,
+  ]);
 
-//   while (proc.registers.b !== 0x0b) {
-//     mainboard.clock();
-//     if (proc.halted) {
-//       mainboard.raiseInterrupt(source, [ inst.call_imm, 0x00, 0x0f ]);
-//     }
-//   }
+  while (proc.registers.b !== 0x0b) {
+    mainboard.clock();
+    if (proc.halted) {
+      mainboard.raiseInterrupt(source, [ inst.call_imm, 0x00, 0x0f ]);
+    }
+  }
 
-//   expect(proc.registers.pc).toBe(9);
-//   expect(proc.registers.a).toBe(0x0a);
-//   expect(source.count).toBe(10);
-// })
+  expect(proc.registers.pc).toBe(9);
+  expect(proc.registers.a).toBe(0x0a);
+  expect(source.count).toBe(10);
+})
 
-// test('raise im0 multi-byte jp test', () => {
-//   const [mainboard, proc, mem ] = build_cpu();
+test('raise im0 multi-byte jp test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
 
-//   mem.load(0x0f00, [
-//     inst.di,
-//     inst.inc_a,
-//     inst.ei,
-//     inst.jp_imm, 0x04, 0x00,
-//   ]);
+  mem.load(0x0f00, [
+    inst.di,
+    inst.inc_a,
+    inst.ei,
+    inst.jp_imm, 0x04, 0x00,
+  ]);
 
-//   mem.load(0, [
-//     inst.ei,
-//     inst.ld_c_imm, 0x0a,
-//     inst.halt,
-//     inst.cp_c,
-//     inst.jr_nz_imm, 0xfc,
-//     inst.ld_b_imm, 0x0b,
-//     inst.halt,
-//   ]);
+  mem.load(0, [
+    inst.ei,
+    inst.ld_c_imm, 0x0a,
+    inst.halt,
+    inst.cp_c,
+    inst.jr_nz_imm, 0xfc,
+    inst.ld_b_imm, 0x0b,
+    inst.halt,
+  ]);
 
-//   while (proc.registers.b !== 0x0b) {
-//     mainboard.clock();
-//     if (proc.halted) {
-//       mainboard.raiseInterrupt(null, [ inst.jp_imm, 0x00, 0x0f ]);
-//     }
-//   }
+  while (proc.registers.b !== 0x0b) {
+    mainboard.clock();
+    if (proc.halted) {
+      mainboard.raiseInterrupt(null, [ inst.jp_imm, 0x00, 0x0f ]);
+    }
+  }
 
-//   expect(proc.registers.pc).toBe(9);
-//   expect(proc.registers.a).toBe(0x0a);
-// })
+  expect(proc.registers.pc).toBe(9);
+  expect(proc.registers.a).toBe(0x0a);
+})
 
 test('add ind 16 test', () => {
   const inds = ['ix', 'iy'];

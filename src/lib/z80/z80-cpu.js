@@ -60,6 +60,7 @@ class Z80Cpu {
 
     this.overriddenPcData = null;
     this.overriddenPcOffset = 0;
+    this.overriddenPcCountdown = 0;
 
     this.inNmi = false;
     this.hasPendingNmi = false;
@@ -205,15 +206,17 @@ class Z80Cpu {
   }
 
   handleNmi() {
-    const reg = this.registers;
-    reg.iff1 = 0;
-    const addr = clamp16(reg.sp - 2);
-    this.writeWord(addr, reg.pc);
-    reg.sp = addr;
-    reg.pc = 0x0066;
-    this.halted = false;
-    this.hasPendingNmi = false;
-    this.inNmi = true;
+    this.setNextCommand(11, () => {
+      const reg = this.registers;
+      reg.iff1 = 0;
+      const addr = clamp16(reg.sp - 2);
+      this.writeWord(addr, reg.pc);
+      reg.sp = addr;
+      reg.pc = 0x0066;
+      this.halted = false;
+      this.hasPendingNmi = false;
+      this.inNmi = true;
+    });
   }
 
   completeNmi() {
@@ -221,14 +224,16 @@ class Z80Cpu {
   }
 
   retn() {
-    this.setT(14);
-    const reg = this.registers;
-    reg.iff1 = reg.iff2;
-    const addr = reg.sp;
-    reg.pc = this.readWord(addr);
-    reg.sp = clamp16(addr + 2);
-    this.inNmi = false;
-    this.completeNmi();
+    this.setNextCommand(14, () => {
+      this.advancePC();
+      const reg = this.registers;
+      reg.iff1 = reg.iff2;
+      const addr = reg.sp;
+      reg.pc = this.readWord(addr);
+      reg.sp = clamp16(addr + 2);
+      this.inNmi = false;
+      this.completeNmi();
+    });
   }
 
   raiseInterrupt(data) {
@@ -261,11 +266,16 @@ class Z80Cpu {
 
     this.overriddenPcData = data;
     this.overriddenPcOffset = 0;
+    this.overriddenPcCountdown = 1;
   }
 
   restorePcOverride() {
-    this.overriddenPcData = null;
-    this.overriddenPcOffset = 0;
+    if (this.overriddenPcCountdown === 0) {
+      this.overriddenPcData = null;
+      this.overriddenPcOffset = 0;
+    } else {
+      --this.overriddenPcCountdown;
+    }
   }
 
   clearIndexStates() {
@@ -274,15 +284,20 @@ class Z80Cpu {
   }
 
   handleInterruptMode0() {
-    this.overridePC(this.pendingInterruptData);
+    const data = this.pendingInterruptData;
+    this.setNextCommand(2, () => {
+      this.overridePC(data);
+    });
   }
 
   handleInterruptMode1() {
-    const reg = this.registers;
-    const addr = clamp16(reg.sp - 2);
-    this.writeWord(addr, reg.pc);
-    reg.sp = addr;
-    reg.pc = 0x0038;
+    this.setNextCommand(2, () => {
+      const reg = this.registers;
+      const addr = clamp16(reg.sp - 2);
+      this.writeWord(addr, reg.pc);
+      reg.sp = addr;
+      reg.pc = 0x0038;
+    });
   }
 
   interruptDataAsByte() {
@@ -294,14 +309,16 @@ class Z80Cpu {
   }
 
   handleInterruptMode2() {
-    const reg = this.registers;
-    const byte = this.interruptDataAsByte();
-    const addr = clamp16((reg.i << 8) | byte);
-    const newLoc = this.readWord(addr);
-    const newSp = clamp16(reg.sp - 2);
-    this.writeWord(newSp, reg.pc);
-    reg.sp = newSp;
-    reg.pc = newLoc;
+    this.setNextCommand(19, () => {
+      const reg = this.registers;
+      const byte = this.interruptDataAsByte();
+      const addr = clamp16((reg.i << 8) | byte);
+      const newLoc = this.readWord(addr);
+      const newSp = clamp16(reg.sp - 2);
+      this.writeWord(newSp, reg.pc);
+      reg.sp = newSp;
+      reg.pc = newLoc;
+    });
   }
 
   handleInterrupt() {
@@ -316,12 +333,14 @@ class Z80Cpu {
   }
 
   reti() {
-    this.setT(14);
-    const reg = this.registers;
-    const addr = reg.sp;
-    reg.pc = this.readWord(addr);
-    reg.sp = clamp16(addr + 2);
-    this.completeInterrupt();
+    this.setNextCommand(14, () => {
+      this.advancePC();
+      const reg = this.registers;
+      const addr = reg.sp;
+      reg.pc = this.readWord(addr);
+      reg.sp = clamp16(addr + 2);
+      this.completeInterrupt();
+    });
   }
 
   handleHalt() {
@@ -333,9 +352,13 @@ class Z80Cpu {
   handleInterrupts() {
     if (this.hasPendingNmi) {
       this.handleNmi();
+      return true;
     } else if (this.hasPendingInterrupt) {
       this.handleInterrupt();
+      return true;
     }
+
+    return false;
   }
 
   decodeInstruction() {
@@ -375,10 +398,10 @@ class Z80Cpu {
   }
 
   inPendingCommand() {
-    if (this.tStatesEnabled) {
-      if (this.pendingCommand && !this.pendingCommand.isReady()) {
+    if (this.pendingCommand && this.tStatesEnabled) {
+      if (!this.pendingCommand.isReady()) {
         this.pendingCommand.tick();
-        if (!this.pendingCommand.isReady()) { return true; }
+        return !this.pendingCommand.isReady();
       }
     }
 
@@ -393,7 +416,7 @@ class Z80Cpu {
     // we have completed the previous instruction
 
     // check whether we need to handle an interrupt here
-    this.handleInterrupts();
+    if (this.handleInterrupts()) { return; }
 
     // check whether we are ready to enable inturrupts
     this.checkEnableInterrupts();
@@ -2442,21 +2465,27 @@ class Z80Cpu {
   }
 
   im_0() {
-    this.setT(8);
-    this.intMode = Z80Cpu.INT_MODE_0;
-    this.interruptHandler = this.handleInterruptMode0;
+    this.setNextCommand(8, () => {
+      this.advancePC();
+      this.intMode = Z80Cpu.INT_MODE_0;
+      this.interruptHandler = this.handleInterruptMode0;
+    });
   }
 
   im_1() {
-    this.setT(8);
-    this.intMode = Z80Cpu.INT_MODE_1;
-    this.interruptHandler = this.handleInterruptMode1;
+    this.setNextCommand(8, () => {
+      this.advancePC();
+      this.intMode = Z80Cpu.INT_MODE_1;
+      this.interruptHandler = this.handleInterruptMode1;
+    });
   }
 
   im_2() {
-    this.setT(8);
-    this.intMode = Z80Cpu.INT_MODE_2;
-    this.interruptHandler = this.handleInterruptMode2;
+    this.setNextCommand(8, () => {
+      this.advancePC();
+      this.intMode = Z80Cpu.INT_MODE_2;
+      this.interruptHandler = this.handleInterruptMode2;
+    });
   }
 
   registerExtended() {
