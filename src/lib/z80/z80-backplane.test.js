@@ -2517,466 +2517,466 @@ test('otir test', () => {
 //   expect(proc.registers.iff2).toBe(1);
 // });
 
-// test('rlc r8 test', () => {
-//   const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
-//   for (let r of regs) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const ldInst = `ld_${r}_imm`;
-//     const rlcInst = `rlc_${r}`;
-
-//     mem.load(0, [
-//       inst[ldInst], 0xaa,
-//       inst.pre_bit, bit[rlcInst],
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(5);
-//     expect(proc.registers[r]).toBe(0x55);
-//     expect(proc.getFlags().c).toBe(1);
-//   }
-// });
-
-// test('rlc ptr hl test', () => {
-//   const [mainboard, proc, mem ] = build_cpu();
-
-//   mem.load(0, [
-//     inst.ld_hl_imm, 0x00, 0x10,
-//     inst.ld_ptr_hl_imm, 0xaa,
-//     inst.pre_bit, bit.rlc_ptr_hl,
-//     inst.halt,
-//   ]);
-
-//   while (! proc.halted) {
-//     mainboard.clock();
-//   }
-
-//   expect(proc.registers.pc).toBe(8);
-//   expect(mem.readOne(0x1000)).toBe(0x55);
-//   expect(proc.getFlags().c).toBe(1);
-// });
-
-// test('rrc r8 test', () => {
-//   const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
-//   for (let r of regs) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const ldInst = `ld_${r}_imm`;
-//     const rrcInst = `rrc_${r}`;
-
-//     mem.load(0, [
-//       inst[ldInst], 0x55,
-//       inst.pre_bit, bit[rrcInst],
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(5);
-//     expect(proc.registers[r]).toBe(0xaa);
-//     expect(proc.getFlags().c).toBe(1);
-//   }
-// });
-
-// test('rrc ptr hl test', () => {
-//   const [mainboard, proc, mem ] = build_cpu();
-
-//   mem.load(0, [
-//     inst.ld_hl_imm, 0x00, 0x10,
-//     inst.ld_ptr_hl_imm, 0x55,
-//     inst.pre_bit, bit.rrc_ptr_hl,
-//     inst.halt,
-//   ]);
-
-//   while (! proc.halted) {
-//     mainboard.clock();
-//   }
-
-//   expect(proc.registers.pc).toBe(8);
-//   expect(mem.readOne(0x1000)).toBe(0xaa);
-//   expect(proc.getFlags().c).toBe(1);
-// });
-
-// test('rl r8 test', () => {
-//   const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
-//   for (let r of regs) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const ldInst = `ld_${r}_imm`;
-//     const rlInst = `rl_${r}`;
-
-//     mem.load(0, [
-//       inst[ldInst], 0xaa,
-//       inst.pre_bit, bit[rlInst],
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(5);
-//     expect(proc.registers[r]).toBe(0x54);
-//     expect(proc.getFlags().c).toBe(1);
-//   }
-// });
-
-// test('rl ptr hl test', () => {
-//   const [mainboard, proc, mem ] = build_cpu();
-
-//   mem.load(0, [
-//     inst.ld_hl_imm, 0x00, 0x10,
-//     inst.ld_ptr_hl_imm, 0xaa,
-//     inst.pre_bit, bit.rl_ptr_hl,
-//     inst.halt,
-//   ]);
-
-//   while (! proc.halted) {
-//     mainboard.clock();
-//   }
-
-//   expect(proc.registers.pc).toBe(8);
-//   expect(mem.readOne(0x1000)).toBe(0x54);
-//   expect(proc.getFlags().c).toBe(1);
-// });
-
-// test('rr r8 test', () => {
-//   const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
-//   for (let r of regs) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const ldInst = `ld_${r}_imm`;
-//     const rrInst = `rr_${r}`;
-
-//     mem.load(0, [
-//       inst[ldInst], 0x55,
-//       inst.pre_bit, bit[rrInst],
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(5);
-//     expect(proc.registers[r]).toBe(0x2a);
-//     expect(proc.getFlags().c).toBe(1);
-//   }
-// });
-
-// test('rr ptr hl test', () => {
-//   const [mainboard, proc, mem ] = build_cpu();
-
-//   mem.load(0, [
-//     inst.ld_hl_imm, 0x00, 0x10,
-//     inst.ld_ptr_hl_imm, 0x55,
-//     inst.pre_bit, bit.rr_ptr_hl,
-//     inst.halt,
-//   ]);
-
-//   while (! proc.halted) {
-//     mainboard.clock();
-//   }
-
-//   expect(proc.registers.pc).toBe(8);
-//   expect(mem.readOne(0x1000)).toBe(0x2a);
-//   expect(proc.getFlags().c).toBe(1);
-// });
-
-// test('sla r8 test', () => {
-//   const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
-//   for (let r of regs) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const ldInst = `ld_${r}_imm`;
-//     const slaInst = `sla_${r}`;
-
-//     mem.load(0, [
-//       inst[ldInst], 0xaa,
-//       inst.pre_bit, bit[slaInst],
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(5);
-//     expect(proc.registers[r]).toBe(0x54);
-//     expect(proc.getFlags().c).toBe(1);
-//   }
-// });
-
-// test('sla ptr hl test', () => {
-//   const [mainboard, proc, mem ] = build_cpu();
-
-//   mem.load(0, [
-//     inst.ld_hl_imm, 0x00, 0x10,
-//     inst.ld_ptr_hl_imm, 0xaa,
-//     inst.pre_bit, bit.sla_ptr_hl,
-//     inst.halt,
-//   ]);
-
-//   while (! proc.halted) {
-//     mainboard.clock();
-//   }
-
-//   expect(proc.registers.pc).toBe(8);
-//   expect(mem.readOne(0x1000)).toBe(0x54);
-//   expect(proc.getFlags().c).toBe(1);
-// });
-
-// test('sra r8 test', () => {
-//   const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
-//   for (let r of regs) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const ldInst = `ld_${r}_imm`;
-//     const sraInst = `sra_${r}`;
-
-//     mem.load(0, [
-//       inst[ldInst], 0xa5,
-//       inst.pre_bit, bit[sraInst],
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(5);
-//     expect(proc.registers[r]).toBe(0xd2);
-//     expect(proc.getFlags().c).toBe(1);
-//   }
-// });
-
-// test('sra ptr hl test', () => {
-//   const [mainboard, proc, mem ] = build_cpu();
-
-//   mem.load(0, [
-//     inst.ld_hl_imm, 0x00, 0x10,
-//     inst.ld_ptr_hl_imm, 0xa5,
-//     inst.pre_bit, bit.sra_ptr_hl,
-//     inst.halt,
-//   ]);
-
-//   while (! proc.halted) {
-//     mainboard.clock();
-//   }
-
-//   expect(proc.registers.pc).toBe(8);
-//   expect(mem.readOne(0x1000)).toBe(0xd2);
-//   expect(proc.getFlags().c).toBe(1);
-// });
-
-// test('srl r8 test', () => {
-//   const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
-//   for (let r of regs) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const ldInst = `ld_${r}_imm`;
-//     const srlInst = `srl_${r}`;
-
-//     mem.load(0, [
-//       inst[ldInst], 0xa5,
-//       inst.pre_bit, bit[srlInst],
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(5);
-//     expect(proc.registers[r]).toBe(0x52);
-//     expect(proc.getFlags().c).toBe(1);
-//   }
-// });
-
-// test('srl ptr hl test', () => {
-//   const [mainboard, proc, mem ] = build_cpu();
-
-//   mem.load(0, [
-//     inst.ld_hl_imm, 0x00, 0x10,
-//     inst.ld_ptr_hl_imm, 0xa5,
-//     inst.pre_bit, bit.srl_ptr_hl,
-//     inst.halt,
-//   ]);
-
-//   while (! proc.halted) {
-//     mainboard.clock();
-//   }
-
-//   expect(proc.registers.pc).toBe(8);
-//   expect(mem.readOne(0x1000)).toBe(0x52);
-//   expect(proc.getFlags().c).toBe(1);
-// });
-
-// test('bit r8 test', () => {
-//   const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
-//   for (let r of regs) {
-//     for (let b = 0; b < 8; ++b) {
-//       const [mainboard, proc, mem ] = build_cpu();
-//       const ldInst = `ld_${r}_imm`;
-//       const bitInst = `bit_${b}_${r}`;
-
-//       const value = 1 << b;
-
-//       mem.load(0, [
-//         inst[ldInst], value,  // load with known mask
-//         inst.pre_bit, bit[bitInst],
-//         inst.jr_nz_imm, 4,  // skip next ld if bit is set
-//         inst[ldInst], 3,
-//         inst.jr_imm, 12,  // skip to end with a failure code 3
-//         inst[ldInst], 0,  // load with 0
-//         inst.pre_bit, bit[bitInst],
-//         inst.jr_z_imm, 4,  // skip next ld if bit not set
-//         inst[ldInst], 7,
-//         inst.jr_imm, 2,  // skip to end with a failure code 7
-//         inst[ldInst], 15,  // success code 15
-//         inst.halt,
-//       ]);
-
-//       while (! proc.halted) {
-//         mainboard.clock();
-//       }
-
-//       expect(proc.registers.pc).toBe(23);
-//       expect(proc.registers[r]).toBe(15);
-//     }
-//   }
-// });
-
-// test('bit ptr hl test', () => {
-//   for (let b = 0; b < 8; ++b) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const bitInst = `bit_${b}_ptr_hl`;
-
-//     const value = 1 << b;
-
-//     mem.load(0, [
-//       inst.ld_hl_imm, 0x00, 0x10,
-//       inst.ld_ptr_hl_imm, value,  // load with known mask
-//       inst.pre_bit, bit[bitInst],
-//       inst.jr_nz_imm, 4,  // skip next ld if bit is set
-//       inst.ld_a_imm, 3,
-//       inst.jr_imm, 12,  // skip to end with a failure code 3
-//       inst.ld_ptr_hl_imm, 0,  // load with 0
-//       inst.pre_bit, bit[bitInst],
-//       inst.jr_z_imm, 4,  // skip next ld if bit not set
-//       inst.ld_a_imm, 7,
-//       inst.jr_imm, 2,  // skip to end with a failure code 7
-//       inst.ld_a_imm, 15,  // success code 15
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(26);
-//     expect(proc.registers.a).toBe(15);
-//   }
-// });
-
-// test('res r8 test', () => {
-//   const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
-//   for (let r of regs) {
-//     for (let b = 0; b < 8; ++b) {
-//       const [mainboard, proc, mem ] = build_cpu();
-//       const ldInst = `ld_${r}_imm`;
-//       const resInst = `res_${b}_${r}`;
-
-//       const value = 1 << b;
-//       const result = ~value & 0xff;
-
-//       mem.load(0, [
-//         inst[ldInst], 0xff,
-//         inst.pre_bit, bit[resInst],
-//         inst.halt,
-//       ]);
-
-//       while (! proc.halted) {
-//         mainboard.clock();
-//       }
-
-//       expect(proc.registers.pc).toBe(5);
-//       expect(proc.registers[r]).toBe(result);
-//     }
-//   }
-// });
-
-// test('res ptr hl test', () => {
-//   for (let b = 0; b < 8; ++b) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const resInst = `res_${b}_ptr_hl`;
-
-//     const value = 1 << b;
-//     const result = ~value & 0xff;
-
-//     mem.load(0, [
-//       inst.ld_hl_imm, 0x00, 0x10,
-//       inst.ld_ptr_hl_imm, 0xff,
-//       inst.pre_bit, bit[resInst],
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(8);
-//     expect(mem.readOne(0x1000)).toBe(result);
-//   }
-// });
-
-// test('set r8 test', () => {
-//   const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
-//   for (let r of regs) {
-//     for (let b = 0; b < 8; ++b) {
-//       const [mainboard, proc, mem ] = build_cpu();
-//       const ldInst = `ld_${r}_imm`;
-//       const setInst = `set_${b}_${r}`;
-
-//       const result = 1 << b;
-
-//       mem.load(0, [
-//         inst[ldInst], 0x00,
-//         inst.pre_bit, bit[setInst],
-//         inst.halt,
-//       ]);
-
-//       while (! proc.halted) {
-//         mainboard.clock();
-//       }
-
-//       expect(proc.registers.pc).toBe(5);
-//       expect(proc.registers[r]).toBe(result);
-//     }
-//   }
-// });
-
-// test('set ptr hl test', () => {
-//   for (let b = 0; b < 8; ++b) {
-//     const [mainboard, proc, mem ] = build_cpu();
-//     const setInst = `set_${b}_ptr_hl`;
-
-//     const result = 1 << b;
-
-//     mem.load(0, [
-//       inst.ld_hl_imm, 0x00, 0x10,
-//       inst.ld_ptr_hl_imm, 0x00,
-//       inst.pre_bit, bit[setInst],
-//       inst.halt,
-//     ]);
-
-//     while (! proc.halted) {
-//       mainboard.clock();
-//     }
-
-//     expect(proc.registers.pc).toBe(8);
-//     expect(mem.readOne(0x1000)).toBe(result);
-//   }
-// });
+test('rlc r8 test', () => {
+  const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
+  for (let r of regs) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const ldInst = `ld_${r}_imm`;
+    const rlcInst = `rlc_${r}`;
+
+    mem.load(0, [
+      inst[ldInst], 0xaa,
+      inst.pre_bit, bit[rlcInst],
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(5);
+    expect(proc.registers[r]).toBe(0x55);
+    expect(proc.getFlags().c).toBe(1);
+  }
+});
+
+test('rlc ptr hl test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x00, 0x10,
+    inst.ld_ptr_hl_imm, 0xaa,
+    inst.pre_bit, bit.rlc_ptr_hl,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(8);
+  expect(mem.readOne(0x1000)).toBe(0x55);
+  expect(proc.getFlags().c).toBe(1);
+});
+
+test('rrc r8 test', () => {
+  const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
+  for (let r of regs) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const ldInst = `ld_${r}_imm`;
+    const rrcInst = `rrc_${r}`;
+
+    mem.load(0, [
+      inst[ldInst], 0x55,
+      inst.pre_bit, bit[rrcInst],
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(5);
+    expect(proc.registers[r]).toBe(0xaa);
+    expect(proc.getFlags().c).toBe(1);
+  }
+});
+
+test('rrc ptr hl test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x00, 0x10,
+    inst.ld_ptr_hl_imm, 0x55,
+    inst.pre_bit, bit.rrc_ptr_hl,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(8);
+  expect(mem.readOne(0x1000)).toBe(0xaa);
+  expect(proc.getFlags().c).toBe(1);
+});
+
+test('rl r8 test', () => {
+  const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
+  for (let r of regs) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const ldInst = `ld_${r}_imm`;
+    const rlInst = `rl_${r}`;
+
+    mem.load(0, [
+      inst[ldInst], 0xaa,
+      inst.pre_bit, bit[rlInst],
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(5);
+    expect(proc.registers[r]).toBe(0x54);
+    expect(proc.getFlags().c).toBe(1);
+  }
+});
+
+test('rl ptr hl test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x00, 0x10,
+    inst.ld_ptr_hl_imm, 0xaa,
+    inst.pre_bit, bit.rl_ptr_hl,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(8);
+  expect(mem.readOne(0x1000)).toBe(0x54);
+  expect(proc.getFlags().c).toBe(1);
+});
+
+test('rr r8 test', () => {
+  const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
+  for (let r of regs) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const ldInst = `ld_${r}_imm`;
+    const rrInst = `rr_${r}`;
+
+    mem.load(0, [
+      inst[ldInst], 0x55,
+      inst.pre_bit, bit[rrInst],
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(5);
+    expect(proc.registers[r]).toBe(0x2a);
+    expect(proc.getFlags().c).toBe(1);
+  }
+});
+
+test('rr ptr hl test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x00, 0x10,
+    inst.ld_ptr_hl_imm, 0x55,
+    inst.pre_bit, bit.rr_ptr_hl,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(8);
+  expect(mem.readOne(0x1000)).toBe(0x2a);
+  expect(proc.getFlags().c).toBe(1);
+});
+
+test('sla r8 test', () => {
+  const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
+  for (let r of regs) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const ldInst = `ld_${r}_imm`;
+    const slaInst = `sla_${r}`;
+
+    mem.load(0, [
+      inst[ldInst], 0xaa,
+      inst.pre_bit, bit[slaInst],
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(5);
+    expect(proc.registers[r]).toBe(0x54);
+    expect(proc.getFlags().c).toBe(1);
+  }
+});
+
+test('sla ptr hl test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x00, 0x10,
+    inst.ld_ptr_hl_imm, 0xaa,
+    inst.pre_bit, bit.sla_ptr_hl,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(8);
+  expect(mem.readOne(0x1000)).toBe(0x54);
+  expect(proc.getFlags().c).toBe(1);
+});
+
+test('sra r8 test', () => {
+  const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
+  for (let r of regs) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const ldInst = `ld_${r}_imm`;
+    const sraInst = `sra_${r}`;
+
+    mem.load(0, [
+      inst[ldInst], 0xa5,
+      inst.pre_bit, bit[sraInst],
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(5);
+    expect(proc.registers[r]).toBe(0xd2);
+    expect(proc.getFlags().c).toBe(1);
+  }
+});
+
+test('sra ptr hl test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x00, 0x10,
+    inst.ld_ptr_hl_imm, 0xa5,
+    inst.pre_bit, bit.sra_ptr_hl,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(8);
+  expect(mem.readOne(0x1000)).toBe(0xd2);
+  expect(proc.getFlags().c).toBe(1);
+});
+
+test('srl r8 test', () => {
+  const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
+  for (let r of regs) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const ldInst = `ld_${r}_imm`;
+    const srlInst = `srl_${r}`;
+
+    mem.load(0, [
+      inst[ldInst], 0xa5,
+      inst.pre_bit, bit[srlInst],
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(5);
+    expect(proc.registers[r]).toBe(0x52);
+    expect(proc.getFlags().c).toBe(1);
+  }
+});
+
+test('srl ptr hl test', () => {
+  const [mainboard, proc, mem ] = build_cpu();
+
+  mem.load(0, [
+    inst.ld_hl_imm, 0x00, 0x10,
+    inst.ld_ptr_hl_imm, 0xa5,
+    inst.pre_bit, bit.srl_ptr_hl,
+    inst.halt,
+  ]);
+
+  while (! proc.halted) {
+    mainboard.clock();
+  }
+
+  expect(proc.registers.pc).toBe(8);
+  expect(mem.readOne(0x1000)).toBe(0x52);
+  expect(proc.getFlags().c).toBe(1);
+});
+
+test('bit r8 test', () => {
+  const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
+  for (let r of regs) {
+    for (let b = 0; b < 8; ++b) {
+      const [mainboard, proc, mem ] = build_cpu();
+      const ldInst = `ld_${r}_imm`;
+      const bitInst = `bit_${b}_${r}`;
+
+      const value = 1 << b;
+
+      mem.load(0, [
+        inst[ldInst], value,  // load with known mask
+        inst.pre_bit, bit[bitInst],
+        inst.jr_nz_imm, 4,  // skip next ld if bit is set
+        inst[ldInst], 3,
+        inst.jr_imm, 12,  // skip to end with a failure code 3
+        inst[ldInst], 0,  // load with 0
+        inst.pre_bit, bit[bitInst],
+        inst.jr_z_imm, 4,  // skip next ld if bit not set
+        inst[ldInst], 7,
+        inst.jr_imm, 2,  // skip to end with a failure code 7
+        inst[ldInst], 15,  // success code 15
+        inst.halt,
+      ]);
+
+      while (! proc.halted) {
+        mainboard.clock();
+      }
+
+      expect(proc.registers.pc).toBe(23);
+      expect(proc.registers[r]).toBe(15);
+    }
+  }
+});
+
+test('bit ptr hl test', () => {
+  for (let b = 0; b < 8; ++b) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const bitInst = `bit_${b}_ptr_hl`;
+
+    const value = 1 << b;
+
+    mem.load(0, [
+      inst.ld_hl_imm, 0x00, 0x10,
+      inst.ld_ptr_hl_imm, value,  // load with known mask
+      inst.pre_bit, bit[bitInst],
+      inst.jr_nz_imm, 4,  // skip next ld if bit is set
+      inst.ld_a_imm, 3,
+      inst.jr_imm, 12,  // skip to end with a failure code 3
+      inst.ld_ptr_hl_imm, 0,  // load with 0
+      inst.pre_bit, bit[bitInst],
+      inst.jr_z_imm, 4,  // skip next ld if bit not set
+      inst.ld_a_imm, 7,
+      inst.jr_imm, 2,  // skip to end with a failure code 7
+      inst.ld_a_imm, 15,  // success code 15
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(26);
+    expect(proc.registers.a).toBe(15);
+  }
+});
+
+test('res r8 test', () => {
+  const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
+  for (let r of regs) {
+    for (let b = 0; b < 8; ++b) {
+      const [mainboard, proc, mem ] = build_cpu();
+      const ldInst = `ld_${r}_imm`;
+      const resInst = `res_${b}_${r}`;
+
+      const value = 1 << b;
+      const result = ~value & 0xff;
+
+      mem.load(0, [
+        inst[ldInst], 0xff,
+        inst.pre_bit, bit[resInst],
+        inst.halt,
+      ]);
+
+      while (! proc.halted) {
+        mainboard.clock();
+      }
+
+      expect(proc.registers.pc).toBe(5);
+      expect(proc.registers[r]).toBe(result);
+    }
+  }
+});
+
+test('res ptr hl test', () => {
+  for (let b = 0; b < 8; ++b) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const resInst = `res_${b}_ptr_hl`;
+
+    const value = 1 << b;
+    const result = ~value & 0xff;
+
+    mem.load(0, [
+      inst.ld_hl_imm, 0x00, 0x10,
+      inst.ld_ptr_hl_imm, 0xff,
+      inst.pre_bit, bit[resInst],
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(8);
+    expect(mem.readOne(0x1000)).toBe(result);
+  }
+});
+
+test('set r8 test', () => {
+  const regs = ['a', 'b', 'c', 'd', 'e', 'h', 'l'];
+  for (let r of regs) {
+    for (let b = 0; b < 8; ++b) {
+      const [mainboard, proc, mem ] = build_cpu();
+      const ldInst = `ld_${r}_imm`;
+      const setInst = `set_${b}_${r}`;
+
+      const result = 1 << b;
+
+      mem.load(0, [
+        inst[ldInst], 0x00,
+        inst.pre_bit, bit[setInst],
+        inst.halt,
+      ]);
+
+      while (! proc.halted) {
+        mainboard.clock();
+      }
+
+      expect(proc.registers.pc).toBe(5);
+      expect(proc.registers[r]).toBe(result);
+    }
+  }
+});
+
+test('set ptr hl test', () => {
+  for (let b = 0; b < 8; ++b) {
+    const [mainboard, proc, mem ] = build_cpu();
+    const setInst = `set_${b}_ptr_hl`;
+
+    const result = 1 << b;
+
+    mem.load(0, [
+      inst.ld_hl_imm, 0x00, 0x10,
+      inst.ld_ptr_hl_imm, 0x00,
+      inst.pre_bit, bit[setInst],
+      inst.halt,
+    ]);
+
+    while (! proc.halted) {
+      mainboard.clock();
+    }
+
+    expect(proc.registers.pc).toBe(8);
+    expect(mem.readOne(0x1000)).toBe(result);
+  }
+});
 
 // test('nmi test', () => {
 //   const [mainboard, proc, mem ] = build_cpu();

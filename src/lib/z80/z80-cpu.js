@@ -1846,7 +1846,7 @@ class Z80Cpu {
     if (! fn) {
       // treat the prefix as a nop
       this.setNextCommand(4, () => {
-        this.advancePC(2);
+        this.advancePC();
       });
     } else {
       // consume the inst byte and invoke
@@ -1855,15 +1855,16 @@ class Z80Cpu {
   }
 
   pre_bit() {
-    const inst = this.readFromPc();
+    const inst = this.readFromPc(1);
 
     const fn = this.bit[inst];
     if (! fn) {
       // treat the prefix as a nop
-      this.nop();
+      this.setNextCommand(4, () => {
+        this.advancePC();
+      });
     } else {
       // consume the inst byte and invoke
-      this.advancePC();
       fn.call(this);
     }
   }
@@ -2513,15 +2514,17 @@ class Z80Cpu {
 
   make_rlc_r8(reg) {
     return () => {
-      this.setT(8);
-      const value = this.registers[reg];
-      const result = rlc8(value);
-      this.registers[reg] = result.a;
+      this.setNextCommand(8, () => {
+        this.advancePC(2);
+        const value = this.registers[reg];
+        const result = rlc8(value);
+        this.registers[reg] = result.a;
 
-      result.p_v = result.p;
-      this.setFlags({
-        ...this.getFlags(),
-        ...result
+        result.p_v = result.p;
+        this.setFlags({
+          ...this.getFlags(),
+          ...result
+        });
       });
     };
   }
@@ -2534,30 +2537,34 @@ class Z80Cpu {
   }
 
   rlc_ptr_hl() {
-    this.setT(15);
-    const addr = this.hl;
-    const value = this.readByte(addr);
-    const result = rlc8(value);
-    this.writeByte(addr, result.a);
-
-    result.p_v = result.p;
-    this.setFlags({
-      ...this.getFlags(),
-      ...result
-    });
-  }
-
-  make_rrc_r8(reg) {
-    return () => {
-      this.setT(8);
-      const value = this.registers[reg];
-      const result = rrc8(value);
-      this.registers[reg] = result.a;
+    this.setNextCommand(15, () => {
+      this.advancePC(2);
+      const addr = this.hl;
+      const value = this.readByte(addr);
+      const result = rlc8(value);
+      this.writeByte(addr, result.a);
 
       result.p_v = result.p;
       this.setFlags({
         ...this.getFlags(),
         ...result
+      });
+    });
+  }
+
+  make_rrc_r8(reg) {
+    return () => {
+      this.setNextCommand(8, () => {
+        this.advancePC(2);
+        const value = this.registers[reg];
+        const result = rrc8(value);
+        this.registers[reg] = result.a;
+
+        result.p_v = result.p;
+        this.setFlags({
+          ...this.getFlags(),
+          ...result
+        });
       });
     };
   }
@@ -2570,31 +2577,35 @@ class Z80Cpu {
   }
 
   rrc_ptr_hl() {
-    this.setT(15);
-    const addr = this.hl;
-    const value = this.readByte(addr);
-    const result = rrc8(value);
-    this.writeByte(addr, result.a);
+    this.setNextCommand(15, () => {
+      this.advancePC(2);
+      const addr = this.hl;
+      const value = this.readByte(addr);
+      const result = rrc8(value);
+      this.writeByte(addr, result.a);
 
-    result.p_v = result.p;
-    this.setFlags({
-      ...this.getFlags(),
-      ...result
+      result.p_v = result.p;
+      this.setFlags({
+        ...this.getFlags(),
+        ...result
+      });
     });
   }
 
   make_rl_r8(reg) {
     return () => {
-      this.setT(8);
-      const f = this.getFlags();
-      const value = this.registers[reg];
-      const result = rl8(value, f.c);
-      this.registers[reg] = result.a;
+      this.setNextCommand(8, () => {
+        this.advancePC(2);
+        const f = this.getFlags();
+        const value = this.registers[reg];
+        const result = rl8(value, f.c);
+        this.registers[reg] = result.a;
 
-      result.p_v = result.p;
-      this.setFlags({
-        ...f,
-        ...result
+        result.p_v = result.p;
+        this.setFlags({
+          ...f,
+          ...result
+        });
       });
     };
   }
@@ -2607,32 +2618,36 @@ class Z80Cpu {
   }
 
   rl_ptr_hl() {
-    this.setT(15);
-    const f = this.getFlags();
-    const addr = this.hl;
-    const value = this.readByte(addr);
-    const result = rl8(value, f.c);
-    this.writeByte(addr, result.a);
-
-    result.p_v = result.p;
-    this.setFlags({
-      ...f,
-      ...result
-    });
-  }
-
-  make_rr_r8(reg) {
-    return () => {
-      this.setT(8);
+    this.setNextCommand(15, () => {
+      this.advancePC(2);
       const f = this.getFlags();
-      const value = this.registers[reg];
-      const result = rr8(value, f.c);
-      this.registers[reg] = result.a;
+      const addr = this.hl;
+      const value = this.readByte(addr);
+      const result = rl8(value, f.c);
+      this.writeByte(addr, result.a);
 
       result.p_v = result.p;
       this.setFlags({
         ...f,
         ...result
+      });
+    });
+  }
+
+  make_rr_r8(reg) {
+    return () => {
+      this.setNextCommand(8, () => {
+        this.advancePC(2);
+        const f = this.getFlags();
+        const value = this.registers[reg];
+        const result = rr8(value, f.c);
+        this.registers[reg] = result.a;
+
+        result.p_v = result.p;
+        this.setFlags({
+          ...f,
+          ...result
+        });
       });
     };
   }
@@ -2645,32 +2660,36 @@ class Z80Cpu {
   }
 
   rr_ptr_hl() {
-    this.setT(15);
-    const f = this.getFlags();
-    const addr = this.hl;
-    const value = this.readByte(addr);
-    const result = rr8(value, f.c);
-    this.writeByte(addr, result.a);
-
-    result.p_v = result.p;
-    this.setFlags({
-      ...f,
-      ...result
-    });
-  }
-
-  make_sla_r8(reg) {
-    return () => {
-      this.setT(8);
+    this.setNextCommand(15, () => {
+      this.advancePC(2);
       const f = this.getFlags();
-      const value = this.registers[reg];
-      const result = sla8(value);
-      this.registers[reg] = result.a;
+      const addr = this.hl;
+      const value = this.readByte(addr);
+      const result = rr8(value, f.c);
+      this.writeByte(addr, result.a);
 
       result.p_v = result.p;
       this.setFlags({
         ...f,
         ...result
+      });
+    });
+  }
+
+  make_sla_r8(reg) {
+    return () => {
+      this.setNextCommand(8, () => {
+        this.advancePC(2);
+        const f = this.getFlags();
+        const value = this.registers[reg];
+        const result = sla8(value);
+        this.registers[reg] = result.a;
+
+        result.p_v = result.p;
+        this.setFlags({
+          ...f,
+          ...result
+        });
       });
     };
   }
@@ -2683,32 +2702,36 @@ class Z80Cpu {
   }
 
   sla_ptr_hl() {
-    this.setT(15);
-    const f = this.getFlags();
-    const addr = this.hl;
-    const value = this.readByte(addr);
-    const result = sla8(value);
-    this.writeByte(addr, result.a);
-
-    result.p_v = result.p;
-    this.setFlags({
-      ...f,
-      ...result
-    });
-  }
-
-  make_sra_r8(reg) {
-    return () => {
-      this.setT(8);
+    this.setNextCommand(15, () => {
+      this.advancePC(2);
       const f = this.getFlags();
-      const value = this.registers[reg];
-      const result = sra8(value);
-      this.registers[reg] = result.a;
+      const addr = this.hl;
+      const value = this.readByte(addr);
+      const result = sla8(value);
+      this.writeByte(addr, result.a);
 
       result.p_v = result.p;
       this.setFlags({
         ...f,
         ...result
+      });
+    });
+  }
+
+  make_sra_r8(reg) {
+    return () => {
+      this.setNextCommand(8, () => {
+        this.advancePC(2);
+        const f = this.getFlags();
+        const value = this.registers[reg];
+        const result = sra8(value);
+        this.registers[reg] = result.a;
+
+        result.p_v = result.p;
+        this.setFlags({
+          ...f,
+          ...result
+        });
       });
     };
   }
@@ -2721,32 +2744,36 @@ class Z80Cpu {
   }
 
   sra_ptr_hl() {
-    this.setT(15);
-    const f = this.getFlags();
-    const addr = this.hl;
-    const value = this.readByte(addr);
-    const result = sra8(value);
-    this.writeByte(addr, result.a);
-
-    result.p_v = result.p;
-    this.setFlags({
-      ...f,
-      ...result
-    });
-  }
-
-  make_srl_r8(reg) {
-    return () => {
-      this.setT(8);
+    this.setNextCommand(15, () => {
+      this.advancePC(2);
       const f = this.getFlags();
-      const value = this.registers[reg];
-      const result = srl8(value);
-      this.registers[reg] = result.a;
+      const addr = this.hl;
+      const value = this.readByte(addr);
+      const result = sra8(value);
+      this.writeByte(addr, result.a);
 
       result.p_v = result.p;
       this.setFlags({
         ...f,
         ...result
+      });
+    });
+  }
+
+  make_srl_r8(reg) {
+    return () => {
+      this.setNextCommand(8, () => {
+        this.advancePC(2);
+        const f = this.getFlags();
+        const value = this.registers[reg];
+        const result = srl8(value);
+        this.registers[reg] = result.a;
+
+        result.p_v = result.p;
+        this.setFlags({
+          ...f,
+          ...result
+        });
       });
     };
   }
@@ -2759,17 +2786,19 @@ class Z80Cpu {
   }
 
   srl_ptr_hl() {
-    this.setT(15);
-    const f = this.getFlags();
-    const addr = this.hl;
-    const value = this.readByte(addr);
-    const result = srl8(value);
-    this.writeByte(addr, result.a);
+    this.setNextCommand(15, () => {
+      this.advancePC(2);
+      const f = this.getFlags();
+      const addr = this.hl;
+      const value = this.readByte(addr);
+      const result = srl8(value);
+      this.writeByte(addr, result.a);
 
-    result.p_v = result.p;
-    this.setFlags({
-      ...f,
-      ...result
+      result.p_v = result.p;
+      this.setFlags({
+        ...f,
+        ...result
+      });
     });
   }
 
@@ -2787,9 +2816,11 @@ class Z80Cpu {
 
   make_bit_r8(reg, bit) {
     return () => {
-      this.setT(8);
-      const value = this.registers[reg];
-      this.bit_08(value, bit);
+      this.setNextCommand(8, () => {
+        this.advancePC(2);
+        const value = this.registers[reg];
+        this.bit_08(value, bit);
+      });
     };
   }
 
@@ -2804,10 +2835,12 @@ class Z80Cpu {
 
   make_bit_ptr_hl(bit) {
     return () => {
-      this.setT(12);
-      const addr = this.hl;
-      const value = this.readByte(addr);
-      this.bit_08(value, bit);
+      this.setNextCommand(12, () => {
+        this.advancePC(2);
+        const addr = this.hl;
+        const value = this.readByte(addr);
+        this.bit_08(value, bit);
+      });
     };
   }
 
@@ -2823,10 +2856,12 @@ class Z80Cpu {
 
   make_res_r8(reg, bit) {
     return () => {
-      this.setT(8);
-      const value = this.registers[reg];
-      const result = this.res_08(value, bit);
-      this.registers[reg] = result;
+      this.setNextCommand(8, () => {
+        this.advancePC(2);
+        const value = this.registers[reg];
+        const result = this.res_08(value, bit);
+        this.registers[reg] = result;
+      });
     };
   }
 
@@ -2841,11 +2876,13 @@ class Z80Cpu {
 
   make_res_ptr_hl(bit) {
     return () => {
-      this.setT(15);
-      const addr = this.hl;
-      const value = this.readByte(addr);
-      const result = this.res_08(value, bit);
-      this.writeByte(addr, result);
+      this.setNextCommand(15, () => {
+        this.advancePC(2);
+        const addr = this.hl;
+        const value = this.readByte(addr);
+        const result = this.res_08(value, bit);
+        this.writeByte(addr, result);
+      });
     };
   }
 
@@ -2862,10 +2899,12 @@ class Z80Cpu {
 
   make_set_r8(reg, bit) {
     return () => {
-      this.setT(8);
-      const value = this.registers[reg];
-      const result = this.set_08(value, bit);
-      this.registers[reg] = result;
+      this.setNextCommand(8, () => {
+        this.advancePC(2)
+        const value = this.registers[reg];
+        const result = this.set_08(value, bit);
+        this.registers[reg] = result;
+      });
     };
   }
 
@@ -2880,11 +2919,13 @@ class Z80Cpu {
 
   make_set_ptr_hl(bit) {
     return () => {
-      this.setT(15);
-      const addr = this.hl;
-      const value = this.readByte(addr);
-      const result = this.set_08(value, bit);
-      this.writeByte(addr, result);
+      this.setNextCommand(15, () => {
+        this.advancePC(2);
+        const addr = this.hl;
+        const value = this.readByte(addr);
+        const result = this.set_08(value, bit);
+        this.writeByte(addr, result);
+      });
     };
   }
 
