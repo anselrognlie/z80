@@ -2251,27 +2251,34 @@ class Z80Cpu {
   }
 
   ld_id_r(memOp, repeat = false) {
-    this.setT(16);
-    const src = this.hl;
-    const dst = this.de;
     const count = clamp16(this.bc - 1);
-    const byte = this.readByte(src);
-    this.writeByte(dst, byte);
-    this.hl = clamp16(memOp(src));
-    this.de = clamp16(memOp(dst));
-    this.bc = count;
+    const shared = () => {
+      const src = this.hl;
+      const dst = this.de;
+      const byte = this.readByte(src);
+      this.writeByte(dst, byte);
+      this.hl = clamp16(memOp(src));
+      this.de = clamp16(memOp(dst));
+      this.bc = count;
 
-    const f = {
-      ...this.getFlags(),
-      h: 0,
-      p_v: toBit(count),
-      n: 0,
-    };
-    this.setFlags(f);
+      const f = {
+        ...this.getFlags(),
+        h: 0,
+        p_v: toBit(count),
+        n: 0,
+      };
+      this.setFlags(f);
+    }
 
     if (repeat && count !== 0) {
-      this.setT(21);
-      this.reversePC(2);
+      this.setNextCommand(21, () => {
+        shared();
+      });
+    } else {
+      this.setNextCommand(16, () => {
+        this.advancePC(2);
+        shared();
+      });
     }
   }
 
@@ -2291,16 +2298,12 @@ class Z80Cpu {
     this.ld_id_r(decVal, true);
   }
 
-
   cp_id_r(memOp, repeat = false) {
-    this.setT(16);
     const src = this.hl;
     const a = this.registers.a;
     const byte = this.readByte(src);
     const count = clamp16(this.bc - 1);
     const r = sub8(a, byte)
-    this.hl = clamp16(memOp(src));
-    this.bc = count;
 
     const f = {
       ...this.getFlags(),
@@ -2310,11 +2313,20 @@ class Z80Cpu {
       p_v: toBit(count),
       n: r.n
     };
-    this.setFlags(f);
+
+    const shared = () => {
+      this.hl = clamp16(memOp(src));
+      this.bc = count;
+      this.setFlags(f);
+    };
 
     if (repeat && count !== 0 && ! r.z) {
-      this.setT(21);
-      this.reversePC(2);
+      this.setNextCommand(21, shared);
+    } else {
+      this.setNextCommand(16, () => {
+        this.advancePC(2);
+        shared();
+      });
     }
   }
 
@@ -2335,26 +2347,32 @@ class Z80Cpu {
   }
 
   in_id_r(memOp, repeat = false) {
-    this.setT(16);
     const port = this.registers.c;
     const high = this.registers.b;
-    const byte = this.readPort(port, high);
     const count = clamp8(high - 1);
     const addr = this.hl;
-    this.writeByte(addr, byte);
-    this.hl = clamp16(addr + 1);
-    this.registers.b = count;
 
-    const f = {
-      ...this.getFlags(),
-      z: toBit(count === 0),
-      n: 1,
+    const shared = () => {
+      const byte = this.readPort(port, high);
+      this.writeByte(addr, byte);
+      this.hl = clamp16(memOp(addr));
+      this.registers.b = count;
+
+      const f = {
+        ...this.getFlags(),
+        z: toBit(count === 0),
+        n: 1,
+      };
+      this.setFlags(f);
     };
-    this.setFlags(f);
 
     if (repeat && count !== 0) {
-      this.setT(21);
-      this.reversePC(2);
+      this.setNextCommand(21, shared);
+    } else {
+      this.setNextCommand(16, () => {
+        this.advancePC(2);
+        shared();
+      });
     }
   }
 
@@ -2375,26 +2393,32 @@ class Z80Cpu {
   }
 
   out_id_r(memOp, repeat = false) {
-    this.setT(16);
     const addr = this.hl;
     const byte = this.readByte(addr);
     const port = this.registers.c;
     const high = this.registers.b;
-    this.writePort(port, high, byte);
     const count = clamp8(high - 1);
-    this.hl = clamp16(addr + 1);
-    this.registers.b = count;
 
-    const f = {
-      ...this.getFlags(),
-      z: toBit(count === 0),
-      n: 1,
+    const shared = () => {
+      this.writePort(port, high, byte);
+      this.hl = clamp16(memOp(addr));
+      this.registers.b = count;
+
+      const f = {
+        ...this.getFlags(),
+        z: toBit(count === 0),
+        n: 1,
+      };
+      this.setFlags(f);
     };
-    this.setFlags(f);
 
     if (repeat && count !== 0) {
-      this.setT(21);
-      this.reversePC(2);
+      this.setNextCommand(21, shared);
+    } else {
+      this.setNextCommand(16, () => {
+        this.advancePC(2);
+        shared();
+      });
     }
   }
 
